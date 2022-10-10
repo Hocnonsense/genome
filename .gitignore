@@ -1,0 +1,7 @@
+!.gitignore
+!*.md
+
+!*.sh
+!*.py
+!*.smk
+!*.yaml

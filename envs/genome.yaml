@@ -1,0 +1,10 @@
+name: drep
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - biopython
+  - checkm-genome
+  - gunc
+  - prokka
