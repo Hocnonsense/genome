@@ -1,9 +1,13 @@
-name: drep
+name: genome
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
   - biopython
-  - checkm-genome
-  - gunc
+  - bcbio-gff
+  - snakemake
+  - pandas
+  - pip
+  - pip:
+      - checkm-genome

@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-11 15:49:54
+ * @LastEditTime: 2022-10-11 20:09:36
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -27,6 +27,7 @@ rule prokka:
         kingdom = "{kingdom}",
     wildcard_constraints:
         kingdom = "Archaea|Bacteria|Mitochondria|Viruses",
+    threads: 8
     shadow: "shallow"
     shell:
         """
@@ -35,6 +36,7 @@ rule prokka:
         prokka \
             --outdir smk-prokka \
             --kingdom {params.kingdom} \
+            --cpus {threads} \
             --prefix genome \
             {input.genome}
 
