@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-11 15:36:24
+ * @LastEditTime: 2022-10-11 15:49:54
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -23,7 +23,7 @@ rule prokka:
     conda: "../envs/prokka.yaml"
     params:
         filetypes = prokka_output_suffixes,
-        output_prefix = "{any}-prokka.",
+        output_prefix = "{any}-prokka.{kingdom}.",
         kingdom = "{kingdom}",
     wildcard_constraints:
         kingdom = "Archaea|Bacteria|Mitochondria|Viruses",
@@ -34,13 +34,13 @@ rule prokka:
 
         prokka \
             --outdir smk-prokka \
-            --kingdom {params.kingdom}
+            --kingdom {params.kingdom} \
             --prefix genome \
             {input.genome}
 
         for i in {params.filetypes}
         do
-            mv smk-prokka/prokka.$i \
+            mv smk-prokka/genome.$i \
                {params.output_prefix}$i
         done
         """
