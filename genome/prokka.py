@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 19:02:29
+ * @LastEditTime: 2022-10-12 19:34:40
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -11,17 +11,14 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple, Iterable, Literal, Union
-import math
-from numpy import mean
+from typing import Iterable, Literal, Union
 
-from BCBio import GFF
-from Bio import SeqIO, SeqRecord, SeqFeature
+from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
 
 
-prokka_kindom = Literal["Archaea", "Bacteria", "Mitochondria", "Viruses"]
 PathLike = Union[str, Path]
+prokka_kindom = Literal["Archaea", "Bacteria", "Mitochondria", "Viruses"]
 
 
 def prokka_gff_onethread(
@@ -133,192 +130,3 @@ def prokka_gff_multithread(
         Path(f"{tpmf_out[:-3]}log").unlink()
 
     return [Path(tpmf_out) for tpmf_out in tpmf_outs]
-
-
-gff_out_format = Literal["faa", "fna"]
-
-
-def prokka_gff_extract_protein_fa(
-    gff_file: PathLike, out_format: gff_out_format = "faa"
-):
-    with open(gff_file) as in_handle:
-        rec: SeqRecord.SeqRecord = None
-        for rec in GFF.parse(in_handle):
-            fet: SeqFeature.SeqFeature = None
-            for fet in rec.features:
-                if fet.type != "CDS":
-                    continue
-                seq: SeqRecord.SeqRecord = fet.extract(rec)
-                if out_format == "faa":
-                    seq = seq.translate()
-                seq.id = rec.id + "_" + str(int(fet.id.rsplit("_", 1)[1]))
-                seq.description = " # ".join(
-                    (
-                        str(i)
-                        for i in (
-                            "",
-                            fet.location.start,
-                            fet.location.end,
-                            fet.location.strand,
-                            ";".join(
-                                f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
-                            ),
-                        )
-                    )
-                ).strip()
-                yield seq
-
-
-def calculate_gc(
-    seqs: Iterable[SeqRecord.SeqRecord],
-    seqStats: dict[str, dict[str, float]] = None,
-    min_seq_len_gc_std=1000,
-):
-    """
-    Calculate fraction of nucleotides that are G or C.
-    modified from checkm
-    """
-    totalGC = 0
-    totalAT = 0
-    gcPerSeq = []
-    for seq in seqs:
-        a, c, g, t, u = (seq.seq.lower().count(base) for base in "acgtu")
-
-        at = a + u + t
-        gc = g + c
-
-        totalGC += gc
-        totalAT += at
-
-        if (gc + at) > 0:
-            gcContent = float(gc) / (gc + at)
-        else:
-            gcContent = 0.0
-
-        if seqStats:
-            seqStats[seq.id]["GC"] = gcContent
-
-        if len(seq) > min_seq_len_gc_std:
-            gcPerSeq.append(gcContent)
-
-    if (totalGC + totalAT) > 0:
-        GC = float(totalGC) / (totalGC + totalAT)
-    else:
-        GC = 0.0
-
-    varGC = 0
-    if len(gcPerSeq) > 1:
-        varGC = mean(list(map(lambda x: (x - GC) ** 2, gcPerSeq)))
-
-    return GC, math.sqrt(varGC)
-
-
-def calculateN50(seqLens):
-    thresholdN50 = sum(seqLens) / 2.0
-
-    seqLens.sort(reverse=True)
-
-    testSum = 0
-    for seqLen in seqLens:
-        testSum += seqLen
-        if testSum >= thresholdN50:
-            N50 = seqLen
-            break
-
-    return N50
-
-
-class GenomeSeqsStatistics(NamedTuple):
-    sum: int
-    max: int
-    num: int
-    n50: int
-    numN: int
-
-
-def calculate_seq_stats(contigs: Iterable[SeqRecord.SeqRecord], seqStats=None):
-    """Calculate scaffold length statistics (min length, max length, total length, N50, # contigs)."""
-    contig_lens = []
-    numAmbiguousBases = 0
-    for contig in contigs:
-        contig_len = len(contig)
-        contig_lens.append(contig_len)
-
-        if seqStats:
-            seqStats[contig.id]["Length"] = contig_len
-
-        numAmbiguousBases += contig.seq.lower().count("n")
-
-    contig_N50 = calculateN50(contig_lens)
-
-    return GenomeSeqsStatistics(
-        sum(contig_lens),
-        max(contig_lens),
-        len(contig_lens),
-        contig_N50,
-        numAmbiguousBases,
-    )
-
-
-class _ContigCodings(NamedTuple):
-    contig_len: int
-    coding_lens: list[int]
-
-
-def calculate_prot_coding_length(contigs: Iterable[SeqRecord.SeqRecord]):
-    """Calculate coding density of putative genome bin."""
-    contigs_codings: dict[str, _ContigCodings] = {}
-    rec: SeqRecord.SeqRecord
-    for rec in contigs:
-        cc = contigs_codings.setdefault(rec.id, _ContigCodings(len(rec.seq), []))
-
-        fet: SeqFeature.SeqFeature
-        for fet in rec.features:
-            if fet.type != "CDS":
-                continue
-            cc.coding_lens.append(int(fet.location.end - fet.location.start))
-
-    return sum(
-        coding_len for cc in contigs_codings.values() for coding_len in cc.coding_lens
-    ), sum(len(cc.coding_lens) for cc in contigs_codings.values())
-
-
-class BinStatistic(NamedTuple):
-    gc: float
-    gc_std: float
-    bp_size: int
-    max_contig_len: int
-    contigs_num: int
-    contig_n50: int
-    ambiguous_bases_num: int
-    coding_density: float
-    genes_size: int
-
-
-def prokka_gff_bin_statistic(gff_file: PathLike):
-
-    # read scaffolds
-    contigs = [rec for rec in GFF.parse(gff_file)]
-
-    # calculate GC statistics
-    gc, gc_std = calculate_gc(contigs)
-
-    # calculate statistics related to contigs and scaffolds
-    gss = calculate_seq_stats(contigs)
-
-    # calculate coding density statistics
-    coding_len, num_orfs = calculate_prot_coding_length(contigs)
-
-    bin_stats = BinStatistic(
-        gc,
-        gc_std,
-        gss.sum,
-        gss.max,
-        gss.num,
-        gss.n50,
-        gss.numN,
-        (float(coding_len) / gss.sum if coding_len > 0 and gss.sum else -1),
-        num_orfs,
-    )
-
-    return bin_stats
