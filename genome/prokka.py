@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 18:58:24
+ * @LastEditTime: 2022-10-12 19:02:29
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -129,7 +129,8 @@ def prokka_gff_multithread(
         for new_file in genome_files:
             if new_file not in _genome_files:
                 shutil.rmtree(new_file)
-    [Path(f"{tpmf_out[:-3]}log").unlink() for tpmf_out in tpmf_outs]
+    for tpmf_out in tpmf_outs:
+        Path(f"{tpmf_out[:-3]}log").unlink()
 
     return [Path(tpmf_out) for tpmf_out in tpmf_outs]
 

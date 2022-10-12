@@ -4,10 +4,21 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  # coding
+  - mypy
+  - black
+
+  # data analysis
+  - pandas
+
+  # bioinformation
   - biopython
   - bcbio-gff
+
+  # pipeline
   - snakemake
-  - pandas
+
+  # pipe
   - pip
   - pip:
       - checkm-genome
