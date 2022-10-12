@@ -2,11 +2,12 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 20:32:45
+ * @LastEditTime: 2022-10-12 23:12:31
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
 
+import gzip
 import math
 from pathlib import Path
 from typing import Any, Final, Generator, Literal, NamedTuple, TextIO, Union
@@ -30,6 +31,8 @@ def parse(
     High level interface to parse GFF files into SeqRecords and SeqFeatures.
     Add type hints to this function.
     """
+    if str(gff_files).endswith(".gz"):
+        gff_files = gzip.open(gff_files, "r")  # type: ignore  # I'm sure this will return a TextIO
     return GFF.parse(gff_files, base_dict, limit_info, target_lines)
 
 
@@ -91,10 +94,18 @@ class BinStatistic:
     modified from checkm
     """
 
+    class _SeqStat(NamedTuple):
+        len: int = 0
+        gc_pct: float = 0.0
+        gc: int = 0
+        at: int = 0
+        n: int = 0
+
     def __init__(self, gff_file: PathLike):
         # def prokka_gff_bin_statistic(gff_file: PathLike):
 
         self.gff_file = Path(gff_file)
+        self._seq_stat: dict[str, "BinStatistic._SeqStat"] = {}
 
         gc, gc_std = self.calculate_gc_std()
         gss = self.calculate_seq_stats()
@@ -130,47 +141,50 @@ class BinStatistic:
         # read contigs
         return (rec for rec in parse(self.gff_file))
 
+    @property
+    def seq_stats(self):
+        if not self._seq_stat:
+            for seq in self.contigs():
+                a, c, g, t, u, n = (seq.seq.lower().count(base) for base in "acgtun")
+
+                at = a + u + t
+                gc = g + c
+
+                if (gc + at) > 0:
+                    gcContent = float(gc) / (gc + at)
+                else:
+                    gcContent = 0.0
+
+            self._seq_stat[seq.id] = type(self)._SeqStat(len(seq), gcContent, gc, at, n)
+        return self._seq_stat.items()
+
     def calculate_gc_std(
         self,
-        seqStats: dict[str, dict[str, float]] = None,
         min_seq_len_gc_std=1000,
     ):
         """
         Calculate fraction of nucleotides that are G or C.
         """
-        totalGC = 0
-        totalAT = 0
-        gcPerSeq = []
-        for seq in self.contigs():
-            a, c, g, t, u = (seq.seq.lower().count(base) for base in "acgtu")
+        total_gc = 0
+        total_at = 0
+        gc_pct_per_seq = []
+        for _, seq_stat in self.seq_stats:
+            total_gc += seq_stat.gc
+            total_at += seq_stat.at
 
-            at = a + u + t
-            gc = g + c
+            if seq_stat.len > min_seq_len_gc_std:
+                gc_pct_per_seq.append(seq_stat.gc_pct)
 
-            totalGC += gc
-            totalAT += at
-
-            if (gc + at) > 0:
-                gcContent = float(gc) / (gc + at)
-            else:
-                gcContent = 0.0
-
-            if seqStats:
-                seqStats[seq.id]["GC"] = gcContent
-
-            if len(seq) > min_seq_len_gc_std:
-                gcPerSeq.append(gcContent)
-
-        if (totalGC + totalAT) > 0:
-            GC = float(totalGC) / (totalGC + totalAT)
+        if (total_gc + total_at) > 0:
+            gc_pct = float(total_gc) / (total_gc + total_at)
         else:
-            GC = 0.0
+            gc_pct = 0.0
 
-        varGC = 0
-        if len(gcPerSeq) > 1:
-            varGC = mean(list(map(lambda x: (x - GC) ** 2, gcPerSeq)))
+        var_gc = 0
+        if len(gc_pct_per_seq) > 1:
+            var_gc = mean(list(map(lambda x: (x - gc_pct) ** 2, gc_pct_per_seq)))
 
-        return GC, math.sqrt(varGC)
+        return gc_pct, math.sqrt(var_gc)
 
     class _GenomeSeqsStatistics(NamedTuple):
         sum: int
@@ -179,18 +193,14 @@ class BinStatistic:
         n50: int
         numN: int
 
-    def calculate_seq_stats(self, seqStats=None):
+    def calculate_seq_stats(self):
         """Calculate scaffold length statistics (min length, max length, total length, N50, # contigs)."""
         contig_lens = []
         numAmbiguousBases = 0
-        for contig in self.contigs():
-            contig_len = len(contig)
-            contig_lens.append(contig_len)
+        for _, seq_stat in self.seq_stats:
+            contig_lens.append(seq_stat.len)
 
-            if seqStats:
-                seqStats[contig.id]["Length"] = contig_len
-
-            numAmbiguousBases += contig.seq.lower().count("n")
+            numAmbiguousBases += seq_stat.n
 
         contig_N50 = calculateN50(contig_lens)
 
@@ -221,8 +231,11 @@ class BinStatistic:
                     continue
                 cc.coding_lens.append(int(fet.location.end - fet.location.start))
 
-        return sum(
-            coding_len
-            for cc in contigs_codings.values()
-            for coding_len in cc.coding_lens
-        ), sum(len(cc.coding_lens) for cc in contigs_codings.values())
+        return (
+            sum(
+                coding_len
+                for cc in contigs_codings.values()
+                for coding_len in cc.coding_lens
+            ),
+            sum(len(cc.coding_lens) for cc in contigs_codings.values()),
+        )
