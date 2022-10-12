@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 18:42:12
+ * @LastEditTime: 2022-10-12 19:28:33
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -89,7 +89,7 @@ rule prodigal_raw:
         gff = "{any}-prodigal.{mode}.gff",
     conda: "../envs/prokka.yaml"
     params:
-        mode = "--{mode}",
+        mode = "{mode}",
     wildcard_constraints:
         mode = "single|meta",
     threads: 1
@@ -97,13 +97,13 @@ rule prodigal_raw:
         """
         prodigal \
             -i {input.genome} \
-            {params.mode} \
+            -p {params.mode} \
             -d {output.fna} \
             -a {output.faa} \
             -f gff \
             -o {output.gff} \
             -q
 
-        echo '##FASTA' >> output.gff
-        cat {input.genome} output.gff
+        echo '##FASTA' >> {output.gff}
+        cat {input.genome} >> {output.gff}
         """
