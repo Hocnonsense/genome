@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 23:12:31
+ * @LastEditTime: 2022-10-12 23:33:48
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -10,12 +10,12 @@
 import gzip
 import math
 from pathlib import Path
+from pickle import dump, load
 from typing import Any, Final, Generator, Literal, NamedTuple, TextIO, Union
 
 from BCBio import GFF
 from Bio import SeqFeature, SeqRecord
 from numpy import mean
-
 
 PathLike = Union[str, Path]
 gff_out_format = Literal["faa", "fna"]
@@ -239,3 +239,17 @@ class BinStatistic:
             ),
             sum(len(cc.coding_lens) for cc in contigs_codings.values()),
         )
+
+    def dump(self, filename: PathLike = None):
+        if filename is None:
+            pickle_filename = Path(f"{self.gff_file}-stat.pkl")
+        else:
+            pickle_filename = Path(filename)
+        pickle_filename.parent.mkdir(parents=True, exist_ok=True)
+        with open(pickle_filename, "wb") as po:
+            dump(self, po)
+
+    @classmethod
+    def load(cls, filename: PathLike):
+        with open(filename, "rb") as pi:
+            return load(pi)
