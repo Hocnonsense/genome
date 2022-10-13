@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 23:33:48
+ * @LastEditTime: 2022-10-13 14:14:27
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -11,7 +11,7 @@ import gzip
 import math
 from pathlib import Path
 from pickle import dump, load
-from typing import Any, Final, Generator, Literal, NamedTuple, TextIO, Union
+from typing import Any, Final, Generator, Literal, NamedTuple, TextIO, Union, Iterable
 
 from BCBio import GFF
 from Bio import SeqFeature, SeqRecord
@@ -30,10 +30,24 @@ def parse(
     """
     High level interface to parse GFF files into SeqRecords and SeqFeatures.
     Add type hints to this function.
+    Can automatically read gzip files.
     """
     if str(gff_files).endswith(".gz"):
         gff_files = gzip.open(gff_files, "r")  # type: ignore  # I'm sure this will return a TextIO
     return GFF.parse(gff_files, base_dict, limit_info, target_lines)
+
+
+def write(
+    recs: Iterable[SeqRecord.SeqRecord], out_handle: Union[PathLike, TextIO], include_fasta=False
+):
+    """
+    High level interface to write GFF files into SeqRecords and SeqFeatures.
+    Add type hints to this function.
+    Can automatically write gzip files.
+    """
+    if str(out_handle).endswith(".gz"):
+        out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
+    return GFF.write(recs, out_handle, include_fasta)
 
 
 def gff_extract_protein_fa(
