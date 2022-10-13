@@ -1,0 +1,5 @@
+recursive-include genome *.py
+
+recursive-include envs *.yaml *-deploy.sh
+recursive-include workflow *.smk
+include snakefile Snakefile workflow/snakefile workflow/Snakefile
