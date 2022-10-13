@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-13 10:45:29
+ * @LastEditTime: 2022-10-13 16:23:04
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -27,9 +27,9 @@ python setup.py develop
 ### update
 ```bash
 conda activate genome
-mamba env update -f envs/genome.yaml
 cd $(dirname $(python -c "import genome; print(genome.__file__)"))/..
 git pull
+mamba env update -f envs/genome.yaml
 ```
 
 ## compositon
