@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-13 14:14:27
+ * @LastEditTime: 2022-10-14 15:06:46
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -38,7 +38,9 @@ def parse(
 
 
 def write(
-    recs: Iterable[SeqRecord.SeqRecord], out_handle: Union[PathLike, TextIO], include_fasta=False
+    recs: Iterable[SeqRecord.SeqRecord],
+    out_handle: Union[PathLike, TextIO],
+    include_fasta=False,
 ):
     """
     High level interface to write GFF files into SeqRecords and SeqFeatures.
@@ -169,7 +171,10 @@ class BinStatistic:
                 else:
                     gcContent = 0.0
 
-            self._seq_stat[seq.id] = type(self)._SeqStat(len(seq), gcContent, gc, at, n)
+                self._seq_stat[seq.id] = type(self)._SeqStat(
+                    len(seq), gcContent, gc, at, n
+                )
+
         return self._seq_stat.items()
 
     def calculate_gc_std(
