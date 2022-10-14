@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-14 19:17:38
+ * @LastEditTime: 2022-10-14 22:18:09
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -18,11 +18,12 @@ from typing import (
     Literal,
     NamedTuple,
     TextIO,
+    overload,
     Union,
 )
 
 import gffutils
-from BCBio import GFF
+from BCBio import GFF as _GFF
 from Bio import SeqFeature, SeqIO, SeqRecord
 from gffutils.biopython_integration import to_seqfeature
 from gffutils.iterators import (
@@ -30,6 +31,7 @@ from gffutils.iterators import (
     six,
     _FileIterator as _GffutilsFileIterator,
 )
+from gffutils.exceptions import EmptyInputError
 from numpy import mean
 
 
@@ -54,11 +56,26 @@ def as_test_io(data: GeneralInput) -> TextIO:
     return open(data, "r")
 
 
+def write(
+    recs: Iterable[SeqRecord.SeqRecord],
+    out_handle: Union[PathLike, TextIO],
+    include_fasta=False,
+):
+    """
+    High level interface to write GFF files into SeqRecords and SeqFeatures.
+    Add type hints to this function.
+    """
+    if str(out_handle).endswith(".gz"):
+        out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
+    return _GFF.write(recs, out_handle, include_fasta)
+
+
 class _FastaGffFileIterator(_GffutilsFileIterator):
     def open_function(self, data: GeneralInput):
         return as_test_io(data)
 
     def _custom_iter(self):
+        self.fasta_start_pointer = -1
         self.directives = []
         valid_lines = 0
 
@@ -74,13 +91,17 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
 
                 if isinstance(line, six.binary_type):
                     line = line.decode("utf-8")
-                line = line.rstrip("\n\r")
                 self.current_item = line
                 self.current_item_number = i
 
-                if line == "##FASTA" or line.startswith(">"):
+                if line.startswith("##FASTA"):
                     self.fasta_start_pointer: int = fh.tell()
                     return
+                if line.startswith(">"):
+                    self.fasta_start_pointer: int = fh.tell() - len(line)
+                    return
+
+                line = line.rstrip("\n\r")
 
                 if line.startswith("##"):
                     self._directive_handler(line)
@@ -103,70 +124,72 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
                 yield rec
 
 
-def parse(
-    gff_file: PathLike, dbfn=":memory:", verbose=True, **kwargs
-) -> Generator[SeqRecord.SeqRecord, None, None]:
-    """
-    High level interface to parse GFF files into SeqRecords and SeqFeatures.
-    Add type hints to this function.
-    """
-    fasta_gff = _FastaGffFileIterator(gff_file)
-    db = gffutils.create_db(fasta_gff, dbfn=dbfn, verbose=verbose, **kwargs)
-    for rec in fasta_gff.parse_seq():
-        rec.features.extend((to_seqfeature(fet) for fet in db.region(seqid=rec.id)))
-        yield rec
+class Parse:
+    def __init__(self, gff_file: PathLike, create_now=True):
+        self.gff_file = gff_file
+        self.db: gffutils.FeatureDB = None
+        if create_now:
+            self.create()
 
+    def create(self, dbfn=":memory:", verbose=True, **kwargs):
+        self.fasta_gff = _FastaGffFileIterator(self.gff_file)
+        try:
+            self.db = gffutils.create_db(
+                self.fasta_gff, dbfn=dbfn, verbose=verbose, **kwargs
+            )
+            if self.fasta_gff.fasta_start_pointer == -1:
+                raise RuntimeWarning("No sequences found in file. Please check.")
+        except EmptyInputError:
+            self.fasta_gff.fasta_start_pointer = 0
 
-def write(
-    recs: Iterable[SeqRecord.SeqRecord],
-    out_handle: Union[PathLike, TextIO],
-    include_fasta=False,
-):
-    """
-    High level interface to write GFF files into SeqRecords and SeqFeatures.
-    Add type hints to this function.
-    """
-    if str(out_handle).endswith(".gz"):
-        out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
-    return GFF.write(recs, out_handle, include_fasta)
-
-
-def gff_extract_protein_fa(
-    gff_file: PathLike, out_format: GffOutFormat = "faa", min_aa_length=33
-):
-    """
-    min_aa_length acturally refer to at least 32 aa complete protein,
-    for a complete terminal codon.
-    """
-    min_gene_length = min_aa_length * 3
-
-    rec: SeqRecord.SeqRecord = None
-    for rec in parse(gff_file):
-        fet: SeqFeature.SeqFeature = None
-        for fet in rec.features:
-            if fet.type != "CDS":
-                continue
-            seq: SeqRecord.SeqRecord = fet.extract(rec)
-            if len(seq) < min_gene_length:
-                continue
-            if out_format == "faa":
-                seq = seq.translate()
-            seq.id = rec.id + "_" + str(int(fet.id.rsplit("_", 1)[1]))
-            seq.description = " # ".join(
-                (
-                    str(i)
-                    for i in (
-                        "",
-                        fet.location.start,
-                        fet.location.end,
-                        fet.location.strand,
-                        ";".join(
-                            f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
-                        ),
-                    )
+    def __call__(
+        self, limit_info: str = None
+    ) -> Generator[SeqRecord.SeqRecord, None, None]:
+        """
+        High level interface to parse GFF files into SeqRecords and SeqFeatures.
+        Add type hints to this function.
+        """
+        for rec in self.fasta_gff.parse_seq():
+            if self.db:
+                rec.features.extend(
+                    (to_seqfeature(fet) for fet in self.db.region(seqid=rec.id))
                 )
-            ).strip()
-            yield seq
+            yield rec
+
+    def extract(self, translate=True, min_aa_length=33):
+        """
+        min_aa_length acturally refer to at least 32 aa complete protein,
+        for a complete terminal codon.
+        """
+        min_gene_length = min_aa_length * 3
+
+        rec: SeqRecord.SeqRecord = None
+        for rec in self():
+            fet: SeqFeature.SeqFeature = None
+            for fet in rec.features:
+                if fet.type != "CDS":
+                    continue
+                seq: SeqRecord.SeqRecord = fet.extract(rec)
+                if len(seq) < min_gene_length:
+                    continue
+                if translate:
+                    seq = seq.translate()
+                seq.id = rec.id + "_" + str(int(fet.id.rsplit("_", 1)[1]))
+                seq.description = " # ".join(
+                    (
+                        str(i)
+                        for i in (
+                            "",
+                            fet.location.start,
+                            fet.location.end,
+                            fet.location.strand,
+                            ";".join(
+                                f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
+                            ),
+                        )
+                    )
+                ).strip()
+                yield seq
 
 
 def calculateN50(seqLens: list[int]):
@@ -187,6 +210,8 @@ def calculateN50(seqLens: list[int]):
 class BinStatistic:
     """
     modified from checkm
+
+    - parse cannot be stored in BinStatistic
     """
 
     class _SeqStat(NamedTuple):
@@ -195,12 +220,29 @@ class BinStatistic:
         gc: int = 0
         at: int = 0
         n: int = 0
+        n_aa: int = 0
+        len_aa: int = 0
 
-    def __init__(self, gff_file: PathLike):
-        # def prokka_gff_bin_statistic(gff_file: PathLike):
+    @overload
+    def __init__(self, gff_file: PathLike, min_contig_len=0):
+        ...
 
-        self.gff_file = Path(gff_file)
-        self._seq_stat: dict[str, "BinStatistic._SeqStat"] = {}
+    @overload
+    def __init__(self, last_seq_stats: "BinStatistic", min_contig_len=0):
+        ...
+
+    def __init__(self, gff_file, min_contig_len=0):
+
+        if isinstance(gff_file, BinStatistic):
+            self.gff_file = gff_file.gff_file
+            self.parse = lambda: ()
+            self._seq_stats = gff_file._seq_stats
+        else:
+            self.gff_file = Path(gff_file)
+            self.parse = Parse(self.gff_file)
+            self._seq_stats: dict[str, "BinStatistic._SeqStat"] = {}
+
+        self.min_contig_len = min_contig_len
 
         gc, gc_std = self.calculate_gc_std()
         gss = self.calculate_seq_stats()
@@ -234,12 +276,15 @@ class BinStatistic:
 
     def contigs(self) -> Generator[SeqRecord.SeqRecord, None, None]:
         # read contigs
-        return (rec for rec in parse(self.gff_file))
+        return (rec for rec in self.parse())
 
     @property
     def seq_stats(self):
-        if not self._seq_stat:
+        # calculate once, use every time
+        if not self._seq_stats:
             for seq in self.contigs():
+                if len(seq.seq) < self.min_contig_len:
+                    continue
                 a, c, g, t, u, n = (seq.seq.lower().count(base) for base in "acgtun")
 
                 at = a + u + t
@@ -250,11 +295,22 @@ class BinStatistic:
                 else:
                     gcContent = 0.0
 
-                self._seq_stat[seq.id] = type(self)._SeqStat(
-                    len(seq), gcContent, gc, at, n
+                cc: list[int] = [
+                    # fet: SeqFeature.SeqFeature
+                    int(fet.location.end - fet.location.start)
+                    for fet in seq.features
+                    if fet.type == "CDS"
+                ]
+
+                self._seq_stats[seq.id] = type(self)._SeqStat(
+                    len(seq), gcContent, gc, at, n, len(cc), sum(cc)
                 )
 
-        return self._seq_stat.items()
+        return (
+            (seq_id, seq_stat)
+            for seq_id, seq_stat in self._seq_stats.items()
+            if seq_stat.len > self.min_contig_len
+        )
 
     def calculate_gc_std(
         self,
@@ -310,35 +366,18 @@ class BinStatistic:
             numAmbiguousBases,
         )
 
-    class _ContigCodings(NamedTuple):
-        contig_len: int
-        coding_lens: list[int]
-
     def calculate_prot_coding_length(self):
         """Calculate coding density of putative genome bin."""
-        contigs_codings: dict[str, "BinStatistic._ContigCodings"] = {}
-        rec: SeqRecord.SeqRecord
-        for rec in self.contigs():
-            cc = contigs_codings.setdefault(
-                rec.id, type(self)._ContigCodings(len(rec.seq), [])
-            )
+        len_aa = 0
+        n_aa = 0
+        for _, seq_stat in self.seq_stats:
+            len_aa += seq_stat.len_aa
+            n_aa += seq_stat.n_aa
 
-            fet: SeqFeature.SeqFeature
-            for fet in rec.features:
-                if fet.type != "CDS":
-                    continue
-                cc.coding_lens.append(int(fet.location.end - fet.location.start))
-
-        return (
-            sum(
-                coding_len
-                for cc in contigs_codings.values()
-                for coding_len in cc.coding_lens
-            ),
-            sum(len(cc.coding_lens) for cc in contigs_codings.values()),
-        )
+        return len_aa, n_aa
 
     def dump(self, filename: PathLike = None):
+        self.parse = lambda: ()
         if filename is None:
             pickle_filename = Path(f"{self.gff_file}-stat.pkl")
         else:
