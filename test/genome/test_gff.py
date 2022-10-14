@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 20:36:51
+ * @LastEditTime: 2022-10-14 19:15:47
  * @FilePath: /genome/test/genome/test_gff.py
  * @Description:
 __file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
@@ -10,6 +10,9 @@ __file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
 
 import os
 from pathlib import Path
+import gffutils
+from gffutils.biopython_integration import to_seqfeature
+from gffutils.feature import feature_from_line
 from genome.gff import gff_extract_protein_fa, BinStatistic
 from Bio import SeqIO
 
@@ -22,7 +25,11 @@ def test_gff_extract_protein_fa():
     expect = test_files / "metadecoder.1.prokka.faa"
 
     test_out = test_temp / "metadecoder.1.prokka.faa"
-    SeqIO.write(gff_extract_protein_fa(gff, min_aa_length=33), test_out, "fasta-2line")
+    SeqIO.write(
+        sorted(gff_extract_protein_fa(gff, min_aa_length=33), key=lambda x: x.id),
+        test_out,
+        "fasta-2line",
+    )
 
     print(f"expect file: {expect}", flush=True)
     os.system(f"md5sum {expect}")

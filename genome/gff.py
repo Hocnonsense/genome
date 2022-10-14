@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-14 15:06:46
+ * @LastEditTime: 2022-10-14 19:17:38
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -11,30 +11,110 @@ import gzip
 import math
 from pathlib import Path
 from pickle import dump, load
-from typing import Any, Final, Generator, Literal, NamedTuple, TextIO, Union, Iterable
+from typing import (
+    Final,
+    Generator,
+    Iterable,
+    Literal,
+    NamedTuple,
+    TextIO,
+    Union,
+)
 
+import gffutils
 from BCBio import GFF
-from Bio import SeqFeature, SeqRecord
+from Bio import SeqFeature, SeqIO, SeqRecord
+from gffutils.biopython_integration import to_seqfeature
+from gffutils.iterators import (
+    feature_from_line,
+    six,
+    _FileIterator as _GffutilsFileIterator,
+)
 from numpy import mean
 
+
 PathLike = Union[str, Path]
-gff_out_format = Literal["faa", "fna"]
+GeneralInput = Union[PathLike, TextIO]
+GffOutFormat = Literal["faa", "fna"]
+
+
+def as_test_io(data: GeneralInput) -> TextIO:
+    """Allowed input:
+    - TextIO
+        - anything apply "read" method
+    - filename
+        - string
+        - Path
+    """
+    if hasattr(data, "read"):
+        return data  # type: ignore  # I'm sure this will return a TextIO
+    assert not isinstance(data, TextIO)
+    if str(data).endswith(".gz"):
+        return gzip.open(data, "r")  # type: ignore  # I'm sure this will return a TextIO
+    return open(data, "r")
+
+
+class _FastaGffFileIterator(_GffutilsFileIterator):
+    def open_function(self, data: GeneralInput):
+        return as_test_io(data)
+
+    def _custom_iter(self):
+        self.directives = []
+        valid_lines = 0
+
+        # with self.open_function(self.data) as fh:
+        fh = self.open_function(self.data)
+        if not fh.closed:
+            i = 0
+            while True:
+                line = fh.readline()
+                if not line:
+                    return
+                i += 1
+
+                if isinstance(line, six.binary_type):
+                    line = line.decode("utf-8")
+                line = line.rstrip("\n\r")
+                self.current_item = line
+                self.current_item_number = i
+
+                if line == "##FASTA" or line.startswith(">"):
+                    self.fasta_start_pointer: int = fh.tell()
+                    return
+
+                if line.startswith("##"):
+                    self._directive_handler(line)
+                    continue
+
+                if line.startswith(("#")) or len(line) == 0:
+                    continue
+
+                # (If we got here it should be a valid line)
+                valid_lines += 1
+                yield feature_from_line(line, dialect=self.dialect)
+        else:
+            raise IOError("data closed unexpectedly")
+
+    def parse_seq(self):
+        with self.open_function(self.data) as fh:
+            fh.seek(self.fasta_start_pointer)
+            rec: SeqRecord.SeqRecord
+            for rec in SeqIO.parse(fh, "fasta"):
+                yield rec
 
 
 def parse(
-    gff_files: Union[PathLike, TextIO],
-    base_dict: dict[str, SeqRecord.SeqRecord] = None,
-    limit_info: dict[str, Any] = None,
-    target_lines=None,
+    gff_file: PathLike, dbfn=":memory:", verbose=True, **kwargs
 ) -> Generator[SeqRecord.SeqRecord, None, None]:
     """
     High level interface to parse GFF files into SeqRecords and SeqFeatures.
     Add type hints to this function.
-    Can automatically read gzip files.
     """
-    if str(gff_files).endswith(".gz"):
-        gff_files = gzip.open(gff_files, "r")  # type: ignore  # I'm sure this will return a TextIO
-    return GFF.parse(gff_files, base_dict, limit_info, target_lines)
+    fasta_gff = _FastaGffFileIterator(gff_file)
+    db = gffutils.create_db(fasta_gff, dbfn=dbfn, verbose=verbose, **kwargs)
+    for rec in fasta_gff.parse_seq():
+        rec.features.extend((to_seqfeature(fet) for fet in db.region(seqid=rec.id)))
+        yield rec
 
 
 def write(
@@ -45,7 +125,6 @@ def write(
     """
     High level interface to write GFF files into SeqRecords and SeqFeatures.
     Add type hints to this function.
-    Can automatically write gzip files.
     """
     if str(out_handle).endswith(".gz"):
         out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
@@ -53,7 +132,7 @@ def write(
 
 
 def gff_extract_protein_fa(
-    gff_file: PathLike, out_format: gff_out_format = "faa", min_aa_length=33
+    gff_file: PathLike, out_format: GffOutFormat = "faa", min_aa_length=33
 ):
     """
     min_aa_length acturally refer to at least 32 aa complete protein,
