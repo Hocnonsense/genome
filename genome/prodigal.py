@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 19:27:48
+ * @LastEditTime: 2022-10-15 21:30:18
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -12,12 +12,9 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import NamedTuple, Iterable, Literal, Union
-import math
-from numpy import mean
+from typing import Iterable, Literal, Union
 
-from BCBio import GFF
-from Bio import SeqIO, SeqRecord, SeqFeature
+from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
 
 
