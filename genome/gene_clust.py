@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 22:38:32
+ * @LastEditTime: 2022-10-21 10:06:07
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -41,7 +41,7 @@ def mmseq_clust(
     faas: Iterable[SeqRecord.SeqRecord] = None,
     out_prefix: Union[PathLike, MmseqOut] = "gene",
     threads=4,
-) -> Path:
+) -> MmseqOut:
     # infer gff_out automatically if not given in some cases
     if not isinstance(out_prefix, tuple):
         _out_prefix = MmseqOut.from_prefix(out_prefix)
