@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 17:05:56
+ * @LastEditTime: 2022-10-21 16:38:19
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -111,16 +111,40 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
             for rec in SeqIO.parse(fh, "fasta"):
                 yield rec
 
+    # quickly init fasta_start_pointer
+    def __set_fasta_start_pointer(self, pointer: int):
+        self.__fasta_start_pointer = pointer
+
+    def __get_fasta_start_pointer(self):
+        if "__fasta_start_pointer" not in self.__dir__():
+            for _ in self._custom_iter():
+                pass
+        return self.__fasta_start_pointer
+
+    fasta_start_pointer = property(__get_fasta_start_pointer, __set_fasta_start_pointer)
+
 
 class Parse:
     def __init__(self, gff_file: PathLike, create_now=True):
-        self.gff_file = gff_file
+        self.gff_file = Path(gff_file)
+        self.fasta_gff = _FastaGffFileIterator(self.gff_file)
         self.db: gffutils.FeatureDB = None
         if create_now:
             self.create()
 
+    def reset_reference(self, refernce_file: PathLike, create_now=False):
+        p = Parse(refernce_file, create_now=create_now)
+        p.db = self.db
+        return p
+
+    def reset_db(self, db_file: PathLike, create_now=True):
+        if self.db is None:
+            pass
+        p = Parse(db_file, create_now=create_now)
+        p.fasta_gff = self.fasta_gff
+        return p
+
     def create(self, dbfn=":memory:", verbose=True, **kwargs):
-        self.fasta_gff = _FastaGffFileIterator(self.gff_file)
         try:
             self.db = gffutils.create_db(
                 self.fasta_gff, dbfn=dbfn, verbose=verbose, **kwargs
