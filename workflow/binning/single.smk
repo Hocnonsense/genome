@@ -3,7 +3,7 @@ rule filtered_contig:
     input:
         contig  = contig_raw,
     output:
-        contig  = contig,
+        contig  = temp(contig),
     message:
         "concoct cannot filter short contigs itself"
     run:
@@ -20,12 +20,12 @@ rule metabat2:
         contig  = contig,
         jgi     = jgi,
     output:
-        ctg2mag = "/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"])
+        ctg2mag = "/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"]),
     params:
-        dout = "metabat2_{maxP}_{minS}"
-        extension = "fa"
-        maxP = "{maxP}"
-        minS = "{minS}"
+        dout = "metabat2_{maxP}_{minS}",
+        extension = "fa",
+        maxP = "{maxP}",
+        minS = "{minS}",
     threads: 1
     conda: "../../envs/binning.yaml"
     #shadow: "shallow"
@@ -57,11 +57,13 @@ rule maxbin2:
         contig  = contig,
         jgi     = jgi,
     output:
-        ctg2mag = "/".join([bin_single, "maxbin2_{markerset}.tsv"])
+        ctg2mag = "/".join([bin_single, "maxbin2_{markerset}.tsv"]),
     params:
-        dout = "maxbin2_{markerset}"
-        extension = "fasta"
-        markerset = "{markerset}"
+        dout = "maxbin2_{markerset}",
+        extension = "fasta",
+        markerset = "{markerset}",
+    wildcard_constraints:
+        markerset = "107|40",
     threads: 1
     conda: "../../envs/binning.yaml"
     priority: 1
@@ -92,11 +94,9 @@ rule concoct:
         contig  = contig,
         bams_ls = bams_ls,
     output:
-        ctg2mag = "/".join([bin_single, "concoct.tsv"])
+        ctg2mag = "/".join([bin_single, "concoct.tsv"]),
     params:
-        dout = "concoct"
-    log:
-        file_path.log("04_bin_dastool/" + "concoct", "{site}"),
+        dout = "concoct",
     threads: 8
     conda: "../../envs/binning.yaml"
     #shadow: "shallow"
@@ -133,12 +133,10 @@ rule metadecoder:
         contig  = contig,
         bams_ls = bams_ls,
     output:
-        ctg2mag = "/".join([bin_single, "metadecoder.tsv"])
+        ctg2mag = "/".join([bin_single, "metadecoder.tsv"]),
     params:
-        dout = "metadecoder"
-        extension = "fasta"
-    log:
-        file_path.log("04_bin_dastool/" + "concoct", "{site}"),
+        dout = "metadecoder",
+        extension = "fasta",
     threads: 8  # for maxbin
     conda: "../../envs/metadecoder.yaml"
     #shadow: "shallow"
@@ -182,12 +180,10 @@ rule vamb:
         contig  = contig,
         jgi     = jgi,
     output:
-        ctg2mag = "/".join([bin_single, "vamb.tsv"])
+        ctg2mag = "/".join([bin_single, "vamb.tsv"]),
     params:
-        dout = "vamb"
-        extension = "fna"
-    log:
-        file_path.log("04_bin_dastool/" + "concoct", "{site}"),
+        dout = "vamb",
+        extension = "fna",
     threads: 1
     conda: "../../envs/metadecoder.yaml"
     #shadow: "shallow"
