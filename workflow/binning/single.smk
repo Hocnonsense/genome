@@ -189,7 +189,7 @@ rule fake_vamb_jgi:
             jgi: dict[str, str] = {i.split()[0]: i for i in fi}
             for line in fa:
                 if line.startswith(">"):
-                    fo.write(jgi[line][1:].split()[0])
+                    fo.write(jgi[line[1:].split()[0]])
             fo.flush()
 
 
