@@ -45,8 +45,8 @@ rule metabat2:
 
         for i in {params.dout}/*.{params.extension}
         do
-            binname=$(echo $(basename $i) | sed "s/\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g"
+            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
         done \
         > {output.ctg2mag}
         """
@@ -82,8 +82,8 @@ rule maxbin2:
 
         for i in {params.dout}/*.{params.extension}
         do
-            binname=$(echo $(basename $i) | sed "s/\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g"
+            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
         done \
         > {output.ctg2mag}
         """
@@ -168,8 +168,8 @@ rule metadecoder:
 
         for i in {params.dout}/*.{params.extension}
         do
-            binname=$(echo $(basename $i) | sed "s/\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g"
+            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
         done \
         > {output.ctg2mag}
         """
@@ -185,7 +185,7 @@ rule vamb:
         dout = "vamb",
         extension = "fna",
     threads: 1
-    conda: "../../envs/metadecoder.yaml"
+    conda: "../../envs/vamb.yaml"
     #shadow: "shallow"
     shell:
         """
@@ -203,8 +203,8 @@ rule vamb:
 
         for i in {params.dout}/*.{params.extension}
         do
-            binname=$(echo $(basename $i) | sed "s/\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\n/\t$binname\n/g" | perl -pe "s/>//g"
+            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
         done \
         > {output.ctg2mag}
         """
