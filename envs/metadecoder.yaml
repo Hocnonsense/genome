@@ -10,7 +10,7 @@ dependencies:
   - hmmer
 
   - numpy=1.18.5
-  - scipy=1.5.4
+  - scipy
   - scikit-learn=0.23.2
   - threadpoolctl
   - pip
