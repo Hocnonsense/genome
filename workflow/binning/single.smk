@@ -151,6 +151,8 @@ rule metadecoder:
             sam={params.dout}/`basename $i`.sam
             samtools view -h $i -@ 1 -o $sam
             sams="$sams $sam"
+        done
+
         metadecoder coverage \
             -s $sams \
             -o {params.dout}/metadecoder.coverage.tsv
@@ -190,7 +192,7 @@ rule vamb:
     shell:
         """
         rm -f {params.dout}
-        mkdir -p {params.dout}
+        # mkdir -p {params.dout}
 
         vamb \
             --outdir {params.dout} \
