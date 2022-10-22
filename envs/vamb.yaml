@@ -4,5 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
+  - pip
   - pip:
       - https://github.com/RasmussenLab/vamb/archive/v3.0.8.zip
