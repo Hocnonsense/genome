@@ -188,7 +188,7 @@ rule vamb:
         extension = "fna"
     log:
         file_path.log("04_bin_dastool/" + "concoct", "{site}"),
-    threads: 8  # for maxbin
+    threads: 1
     conda: "../../envs/metadecoder.yaml"
     #shadow: "shallow"
     shell:

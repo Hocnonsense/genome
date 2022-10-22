@@ -13,7 +13,7 @@ rule DASTool_create:
         methods = ",".join(methods),
     log:
         file_path.log("04_bin_dastool", "{site}"),
-    threads: THREADS
+    threads: 8
     #shadow: "shallow"
     shell:
         """
