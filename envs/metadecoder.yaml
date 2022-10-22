@@ -6,6 +6,8 @@ channels:
   - genomedk
   - ursky
 dependencies:
+  - samtools
+
   - fraggenescan
   - hmmer
 
