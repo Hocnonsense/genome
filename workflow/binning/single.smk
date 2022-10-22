@@ -166,7 +166,7 @@ rule metadecoder:
             -f {input.contig} \
             -c {params.dout}/metadecoder.coverage.tsv \
             -s {params.dout}/metadecoder.seed \
-            -o {params.dout}
+            -o {params.dout}/{params.dout}
 
         for i in {params.dout}/*.{params.extension}
         do
