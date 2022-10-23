@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 22:43:38
+ * @LastEditTime: 2022-10-23 17:23:51
  * @FilePath: /genome/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes

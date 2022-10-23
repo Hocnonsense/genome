@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 19:28:33
+ * @LastEditTime: 2022-10-23 17:23:46
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """

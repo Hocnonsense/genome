@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-13 16:23:04
+ * @LastEditTime: 2022-10-23 21:48:49
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -30,6 +30,17 @@ conda activate genome
 cd $(dirname $(python -c "import genome; print(genome.__file__)"))/..
 git pull
 mamba env update -f envs/genome.yaml
+```
+
+### create other conda environment
+```python
+from genome.create_conda_env import create_conda_env_gene_clust
+
+create_conda_env_gene_clust()
+
+from genome.create_conda_env import list_envs, create_conda_env
+
+create_conda_env(*list_envs())
 ```
 
 ## compositon

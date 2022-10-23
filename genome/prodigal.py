@@ -55,7 +55,7 @@ def prodigal_gff_onethread(
                 tmpf.flush()
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake"
+        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
         target_smk_file = smk_workflow / "genome.smk"
         smk_params = (
             f"-s {target_smk_file} "

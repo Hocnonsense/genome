@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 16:34:26
+ * @LastEditTime: 2022-10-23 21:41:12
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -67,7 +67,7 @@ def mmseq_clust(
                         tmpf.flush()
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake"
+        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
         target_smk_file = smk_workflow / "gene_clust.smk"
         smk_params = (
             f"-s {target_smk_file} "
