@@ -8,7 +8,7 @@ rule DASTool_create:
         summary = "/".join([bin_single, f"dastool/summary.tsv"]),
         bin_dir = "/".join([bin_single, f"dastool/bins"]),
     params:
-        ctg2mag = ",".join([str("/".join([bin_single, f"{method}"])) for method in bin_methods]),
+        ctg2mag = ",".join([str("/".join([bin_single, f"{method}.tsv"])) for method in bin_methods]),
         methods = ",".join(bin_methods),
     log:
         log     = "/".join([bin_single, f"dastool/log"]),
