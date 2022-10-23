@@ -1,0 +1,20 @@
+name: metadecoder
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+  - genomedk
+  - ursky
+dependencies:
+  - samtools
+
+  - fraggenescan
+  - hmmer
+
+  - numpy=1.18.5
+  - scipy
+  - scikit-learn=0.23.2
+  - threadpoolctl
+  - pip
+  - pip:
+      - https://github.com/liu-congcong/MetaDecoder/releases/download/v1.0.14/metadecoder-1.0.14-py3-none-any.whl
