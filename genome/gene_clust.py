@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-21 10:06:07
+ * @LastEditTime: 2022-10-23 16:34:26
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -67,12 +67,14 @@ def mmseq_clust(
                         tmpf.flush()
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
+        smk_conda_env = Path(__file__).parent.parent / ".snakemake"
         target_smk_file = smk_workflow / "gene_clust.smk"
         smk_params = (
             f"-s {target_smk_file} "
             f"{tpmf_out_str} "
             f"--use-conda "
-            f"-c{threads} -rp"
+            f"--conda-prefix {smk_conda_env} "
+            f"-c{threads} -rp "
         )
 
         try:
