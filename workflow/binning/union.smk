@@ -13,6 +13,7 @@ rule DASTool_create:
     log:
         log     = "/".join([bin_single, f"dastool/log"]),
     threads: 8
+    conda: "../../envs/binning.yaml"
     #shadow: "shallow"
     shell:
         """
