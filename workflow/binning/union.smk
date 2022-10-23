@@ -6,7 +6,7 @@ rule DASTool_create:
     output:
         scf2bin = "/".join([bin_single, f"dastool.tsv"]),
         summary = "/".join([bin_single, f"dastool/summary.tsv"]),
-        bin_dir = "/".join([bin_single, f"dastool/bins"]),
+        bin_dir = directory("/".join([bin_single, f"dastool/bins"])),
     params:
         ctg2mag = ",".join([str("/".join([bin_single, f"{method}.tsv"])) for method in bin_methods]),
         methods = ",".join(bin_methods),
