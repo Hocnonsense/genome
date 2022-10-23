@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 19:34:40
+ * @LastEditTime: 2022-10-23 16:35:27
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -107,11 +107,16 @@ def prokka_gff_multithread(
         genome_files.extend(_genome_files)
 
     smk_workflow = Path(__file__).parent.parent / "workflow"
+    smk_conda_env = Path(__file__).parent.parent / ".snakemake"
     target_smk_file = smk_workflow / "genome.smk"
     tpmf_outs = [f"{str(genome)[:-3]}-prokka.{kingdom}.gff" for genome in genomes]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (
-        f"-s {target_smk_file} " f"{tpmf_outs_str} " f"--use-conda " f"-c{threads} -rp"
+        f"-s {target_smk_file} "
+        f"{tpmf_outs_str} "
+        f"--use-conda "
+        f"--conda-prefix {smk_conda_env} "
+        f"-c{threads} -rp "
     )
     try:
         print("params:", "snakemake", smk_params)

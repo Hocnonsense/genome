@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 21:30:18
+ * @LastEditTime: 2022-10-23 16:35:18
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -55,8 +55,15 @@ def prodigal_gff_onethread(
                 tmpf.flush()
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
+        smk_conda_env = Path(__file__).parent.parent / ".snakemake"
         target_smk_file = smk_workflow / "genome.smk"
-        smk_params = f"-s {target_smk_file} " f"{tpmf_out} " f"--use-conda " f"-c1 -rp"
+        smk_params = (
+            f"-s {target_smk_file} "
+            f"{tpmf_out} "
+            f"--use-conda "
+            f"--conda-prefix {smk_conda_env} "
+            f"-c1 -rp "
+        )
 
         try:
             os.system(f"ls {tmpf.name}")
