@@ -214,7 +214,6 @@ rule vamb:
             --outdir {params.dout} \
             --fasta {input.contig} \
             --jgi {input.jgi} \
-            -o C \
             --minfasta 200000
 
         rename {params.dout}/bins/ {params.dout}/{params.dout}- {params.dout}/bins/*.{params.extension}
