@@ -1,9 +1,10 @@
-name: binning
+name: binunion
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
-  - metabat2
-  - maxbin2
-  - concoct
+  - das_tool
+  - pip
+  - pip:
+      - unitem

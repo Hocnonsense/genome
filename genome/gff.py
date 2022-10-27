@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-21 16:38:19
+ * @LastEditTime: 2022-10-25 23:10:37
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -28,7 +28,7 @@ GeneralInput = Union[PathLike, TextIO]
 GffOutFormat = Literal["faa", "fna"]
 
 
-def as_test_io(data: GeneralInput) -> TextIO:
+def as_text_io(data: GeneralInput) -> TextIO:
     """Allowed input:
     - TextIO
         - anything apply "read" method
@@ -60,7 +60,7 @@ def write(
 
 class _FastaGffFileIterator(_GffutilsFileIterator):
     def open_function(self, data: GeneralInput):
-        return as_test_io(data)
+        return as_text_io(data)
 
     def _custom_iter(self):
         self.fasta_start_pointer = -1

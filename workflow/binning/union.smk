@@ -1,32 +1,38 @@
 
 rule DASTool_create:
     input:
-        contig  = contig,
-        ctg2mag = ["/".join([bin_single, f"{method}.tsv"]) for method in bin_methods],
+        contig  = ancient(contig),
+        union_methods_ls = "/".join([bin_union_dir, "{union_method}{marker}", "methods.csv"]),
     output:
-        scf2bin = "/".join([bin_single, f"dastool.tsv"]),
-        summary = "/".join([bin_single, f"dastool/summary.tsv"]),
-        bin_dir = directory("/".join([bin_single, f"dastool/bins"])),
+        scf2bin = "/".join([bin_union_dir, "{union_method}{marker}.tsv"]),
+        bineval = "/".join([bin_union_dir, "{union_method}{marker}", "allBins.eval"]),
+        summary = "/".join([bin_union_dir, "{union_method}{marker}", "summary.tsv"]),
     params:
-        ctg2mag = ",".join([str("/".join([bin_single, f"{method}.tsv"])) for method in bin_methods]),
-        methods = ",".join(bin_methods),
+        bin_dir = "/".join([bin_union_dir, "{union_method}{marker}", "bins"]),
     log:
-        log     = "/".join([bin_single, f"dastool/log"]),
-    threads: 8
-    conda: "../../envs/binning.yaml"
-    shadow: "shallow"
+        log     = "/".join([bin_union_dir, "{union_method}{marker}", "log"]),
+    wildcard_constraints:
+        union_method = "dastool",
+        marker = "-.+|",
+    threads: 40
+    conda: "../../envs/binunion.yaml"
+    #shadow: "shallow"
     shell:
         """
+        declare bins=`cat {input.union_methods_ls}|tr "$IFS" ','`
+        declare labels=$(seq -s, 1 1 $(cat MANIFEST.in |wc -l))
+
         DAS_Tool \
-            -i {params.ctg2mag} -l {params.methods} \
+            -i $bins -l $labels \
             -c {input.contig} \
             -o DASTool \
-            --write_bins 1 --search_engine diamond --score_threshold 0 \
+            --write_bin_evals \
+            --search_engine diamond --score_threshold 0 \
             -t {threads} \
             --debug
 
         cp DASTool_DASTool.log {log.log}
-        cp DASTool_DASTool_scaffolds2bin.txt {output.scf2bin}
-        cp DASTool_DASTool_summary.txt {output.summary}
-        mv DASTool_DASTool_bins {output.bin_dir}
+        cp DASTool_DASTool_contig2bin.tsv {output.scf2bin}
+        cp DASTool_allBins.eval {output.bineval}
+        cp DASTool_DASTool_summary.tsv {output.summary}
         """

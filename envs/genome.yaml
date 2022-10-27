@@ -18,6 +18,8 @@ dependencies:
   - biopython
   - bcbio-gff
   - gffutils
+  # checkm requirement
+  - checkm-genome
 
   # pipeline
   - snakemake
@@ -25,4 +27,3 @@ dependencies:
   # pipe
   - pip
   - pip:
-      - checkm-genome
