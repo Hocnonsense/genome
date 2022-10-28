@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mypy --install-types --non-interactive
+(mypy --install-types --non-interactive; echo "")
