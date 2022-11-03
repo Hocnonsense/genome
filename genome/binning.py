@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-27 19:11:54
+ * @LastEditTime: 2022-11-03 14:06:55
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -240,12 +240,12 @@ def checkm(
             support = "fa"
         if output_dir is None:
             output_dir = f"{_td}/checkm"
-            CheckMFakeOptions(
-                file=file,
-                bin_input=str(bin_input_),
-                output_dir=output_dir,
-                extension=support,
-                threads=threads,
-                **checkm_options,  # type: ignore  # confirmed by users
-            ).run()
+        CheckMFakeOptions(
+            file=file,
+            bin_input=str(bin_input_),
+            output_dir=output_dir,
+            extension=support,
+            threads=threads,
+            **checkm_options,  # type: ignore  # confirmed by users
+        ).run()
         return pd.read_csv(file, sep="\t")
