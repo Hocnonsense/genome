@@ -2,13 +2,14 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 19:08:03
+ * @LastEditTime: 2022-11-13 11:55:12
  * @FilePath: /genome/test/genome/test_bin_statistic.py
  * @Description:
 __file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
 """
 
 from pathlib import Path
+from timeit import timeit
 
 import pandas as pd
 
@@ -55,3 +56,26 @@ def test_genome_bin_statistic():
         }
     ).T
     assert df.shape == (10, 10)
+
+
+def test_genome_stat_speed():
+    genome = test_files / "metadecoder.4.fa"
+    bsc_seq_quick = BinStatisticContainer.quick_read_contig(
+        genome, "fasta"
+    ).calculate_seq_stats()
+    bsc_seq = BinStatisticContainer.read_contig(genome, "fasta").calculate_seq_stats()
+    assert bsc_seq_quick == bsc_seq
+    quick_time = timeit(
+        lambda: BinStatisticContainer.quick_read_contig(
+            genome, "fasta"
+        ).calculate_seq_stats(),
+        number=100,
+    )
+    normal_time = timeit(
+        lambda: BinStatisticContainer.read_contig(
+            genome, "fasta"
+        ).calculate_seq_stats(),
+        number=100,
+    )
+    print(f"if only calculate seq length, will spend {quick_time:.4f} seconds")
+    print(f"if calculate more featuers, will spend {normal_time:.4f} seconds")

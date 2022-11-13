@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-15 19:05:06
+ * @LastEditTime: 2022-11-13 11:59:04
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -22,12 +22,11 @@ PathLike = Union[str, Path]
 
 
 def calculateN50(seqLens: list[int]):
-    thresholdN50 = sum(seqLens) / 2.0
-
-    seqLens.sort(reverse=True)
+    seqLens_ = sorted(seqLens, reverse=True)
+    thresholdN50 = sum(seqLens_) / 2.0
 
     testSum = 0
-    for seqLen in seqLens:
+    for seqLen in seqLens_:
         testSum += seqLen
         if testSum >= thresholdN50:
             N50 = seqLen
@@ -36,35 +35,28 @@ def calculateN50(seqLens: list[int]):
     return N50
 
 
-class BinStatisticContainer:
-    """
-    modified from checkm
-    """
-
-    class _SeqStat(NamedTuple):
-        len: int = 0
-        gc_pct: float = 0.0
-        gc: int = 0
-        at: int = 0
-        n: int = 0
-        n_aa: int = 0
-        len_aa: int = 0
+class SeqStat(NamedTuple):
+    len: int = 0
+    gc_pct: float = 0.0
+    gc: int = 0
+    at: int = 0
+    n: int = 0
+    n_aa: int = 0
+    len_aa: int = 0
 
     @classmethod
-    def _load_seq_stats(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
-        _seq_stats: dict[str, "BinStatisticContainer._SeqStat"] = {}
+    def load_seq_stats(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
+        _seq_stats: dict[str, SeqStat] = {}
         for seq in seq_iter:
             if len(seq.seq) < min_contig_len:
                 continue
-            a, c, g, t, u, n = (seq.seq.lower().count(base) for base in "acgtun")
+            upper_seq = seq.seq.upper()
+            a, c, g, t, u, n = (upper_seq.count(base) for base in "ACGTUN")
 
             at = a + u + t
             gc = g + c
 
-            if (gc + at) > 0:
-                gcContent = float(gc) / (gc + at)
-            else:
-                gcContent = 0.0
+            gcContent = 0.0 if (gcat := gc + at) > 0 else float(gc) / gcat
 
             cc: list[int] = [
                 # fet: SeqFeature.SeqFeature
@@ -73,26 +65,55 @@ class BinStatisticContainer:
                 if fet.type == "CDS"
             ]
 
-            _seq_stats[seq.id] = cls._SeqStat(
-                len(seq), gcContent, gc, at, n, len(cc), sum(cc)
-            )
+            _seq_stats[seq.id] = cls(len(seq), gcContent, gc, at, n, len(cc), sum(cc))
         return _seq_stats
 
     @classmethod
+    def quick_load_seq_stats(
+        cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0
+    ):
+        """
+        warning: Every statement except contig length are disabled
+        """
+        _seq_stats: dict[str, SeqStat] = {}
+        for seq in seq_iter:
+            if len(seq.seq) < min_contig_len:
+                continue
+            _seq_stats[seq.id] = cls(len(seq), 0, 0, 0, 0, 0, 0)
+
+        return _seq_stats
+
+
+class BinStatisticContainer:
+    """
+    modified from checkm
+    """
+
+    @classmethod
     def read_gff(cls, filename, min_contig_len=0):
-        return cls(cls._load_seq_stats(Parse(filename)()), filename, min_contig_len)
+        return cls(SeqStat.load_seq_stats(Parse(filename)()), filename, min_contig_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):
         return cls(
-            cls._load_seq_stats(SeqIO.parse(filename, format)), filename, min_contig_len
+            SeqStat.load_seq_stats(SeqIO.parse(filename, format)),
+            filename,
+            min_contig_len,
+        )
+
+    @classmethod
+    def quick_read_contig(cls, filename, format="fasta", min_contig_len=0):
+        return cls(
+            SeqStat.quick_load_seq_stats(SeqIO.parse(filename, format)),
+            filename,
+            min_contig_len,
         )
 
     @classmethod
     def read_seqiter(
         cls, seqiter: Iterable[SeqRecord.SeqRecord], filename, min_contig_len=0
     ):
-        return cls(cls._load_seq_stats(seqiter), filename, min_contig_len)
+        return cls(SeqStat.load_seq_stats(seqiter), filename, min_contig_len)
 
     def seq_stats(self, min_contig_len=0):
         _min_contig_len = max(min_contig_len, self.min_contig_len)
@@ -104,7 +125,7 @@ class BinStatisticContainer:
 
     def __init__(
         self,
-        seq_stats: dict[str, "BinStatisticContainer._SeqStat"],
+        seq_stats: dict[str, SeqStat],
         source_file,
         min_contig_len=0,
     ):
