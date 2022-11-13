@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 21:41:12
+ * @LastEditTime: 2022-11-07 20:47:06
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -87,7 +87,7 @@ def mmseq_clust(
                 raise RuntimeError("snakemake seems not run successfully.")
             else:
                 for ffrom, fto in zip(tpmf_out, _out_prefix):
-                    fto.parent.mkdir(parents=True, exist_ok=True)
+                    Path(fto).parent.mkdir(parents=True, exist_ok=True)
                     shutil.move(ffrom, fto)
                 return _out_prefix
 
