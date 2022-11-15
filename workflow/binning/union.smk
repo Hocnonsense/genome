@@ -123,8 +123,6 @@ rule UniteM_refine:
             {input.profile} \
             smk-unitem-out
 
-        cp smk-unitem-out/bins/*.gz \
-
         for i in smk-unitem-out/bins/*.fna.gz
         do
             binname=$(echo $(basename $i) | sed "s/\\\\.fna.gz//g")
