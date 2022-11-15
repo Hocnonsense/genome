@@ -23,7 +23,7 @@ rule filtered_contig:
 
 rule metabat2:
     input:
-        contig=ancient(contig),
+        contig=contig,
         jgi=jgi,
     output:
         ctg2mag="/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"]),
@@ -62,7 +62,7 @@ rule metabat2:
 
 rule maxbin2:
     input:
-        contig=ancient(contig),
+        contig=contig,
         jgi=jgi,
     output:
         ctg2mag="/".join([bin_single, "maxbin2_{markerset}.tsv"]),
@@ -101,7 +101,7 @@ rule maxbin2:
 
 rule concoct:
     input:
-        contig=ancient(contig),
+        contig=contig,
         bams_ls=bams_ls,
     output:
         ctg2mag="/".join([bin_single, "concoct.tsv"]),
@@ -142,7 +142,7 @@ rule concoct:
 
 rule metadecoder:
     input:
-        contig=ancient(contig),
+        contig=contig,
         bams_ls=bams_ls,
     output:
         ctg2mag="/".join([bin_single, "metadecoder.tsv"]),
@@ -193,7 +193,7 @@ rule metadecoder:
 
 rule fake_vamb_jgi:
     input:
-        contig=ancient(contig),
+        contig=contig,
         jgi=jgi,
     output:
         jgi=temp("/".join([bin_single, "vamb-jgi.depth"])),
@@ -211,7 +211,7 @@ rule fake_vamb_jgi:
 
 rule vamb:
     input:
-        contig=ancient(contig),
+        contig=contig,
         jgi="/".join([bin_single, "vamb-jgi.depth"]),
     output:
         ctg2mag="/".join([bin_single, "vamb.tsv"]),

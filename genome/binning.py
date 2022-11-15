@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-15 10:12:34
+ * @LastEditTime: 2022-11-15 11:13:24
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -59,6 +59,23 @@ class BinningConfig(NamedTuple):
         Path(config_file).parent.mkdir(parents=True, exist_ok=True)
         with open(config_file, "w") as c:
             yaml.dump(self._asdict(), stream=c, allow_unicode=True)
+
+    def touch_contig(self):
+        from Bio import SeqIO
+
+        contig = Path(self.bin_single) / f"contig.{self.MIN_BIN_CONTIG_LEN}.fa"
+        if contig.is_file():
+            return
+        SeqIO.write(
+            (
+                i
+                for i in SeqIO.parse(self.contig, "fasta")
+                if len(i.seq) > self.MIN_BIN_CONTIG_LEN
+            ),
+            contig,
+            format="fasta",
+        )
+        os.system(f"touch -amcr {self.contig} {contig}")
 
     def output(self, basename):
         bin_union_dir = Path(self.bin_union_dir)
@@ -151,34 +168,20 @@ def bin_union(
         tpmf_out = bc.output(out_basename)
         bc.to_config(tmpf.name)
 
+        bc.touch_contig()
+
         smk_workflow = Path(__file__).parent.parent / "workflow"
         smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
         target_smk_file = smk_workflow / "binning" / "__init__.smk"
-        smk_params1 = (
+
+        smk_params2 = (
             f"-s {target_smk_file} "
-            f"filtered_contig "
+            f"{tpmf_out.ctg2mag} "
             f"--use-conda "
             f"--conda-prefix {smk_conda_env} "
             f"-c{threads} -rp "
             f"--configfile {tmpf.name} "
         )
-
-        try:
-            print("params:", "snakemake", smk_params1)
-            smk(smk_params1)
-        except SystemExit as se:
-            if se.code:
-                print(se.code, se.with_traceback(None))
-                raise RuntimeError("snakemake seems not run successfully.")
-            else:
-                smk_params2 = (
-                    f"-s {target_smk_file} "
-                    f"{tpmf_out.ctg2mag} "
-                    f"--use-conda "
-                    f"--conda-prefix {smk_conda_env} "
-                    f"-c{threads} -rp "
-                    f"--configfile {tmpf.name} "
-                )
 
         try:
             os.system(f"ls {tmpf.name}")
