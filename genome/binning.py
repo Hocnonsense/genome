@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-15 11:13:24
+ * @LastEditTime: 2022-11-15 11:35:53
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -47,12 +47,12 @@ class BinningOutput(NamedTuple):
 
 class BinningConfig(NamedTuple):
     MIN_BIN_CONTIG_LEN: int = 1500
-    contig: str = "data/{site}/02_assem..{site}_cut.fa"
-    bams: list[str] = ["data/{site}/02_assem..{site}..{layer}_cut.bam"]
-    bams_ls: str = "data/{site}/02_assem..{site}_cut.bam.list"
-    jgi: str = "data/{site}/02_assem..{site}_cut-jgi.depth"
-    bin_single: str = "pipe/{site}/04_bin/single"
-    bin_union_dir: str = "pipe/{site}/04_bin/"
+    contig: str = "{any}.fa"
+    bams: list[str] = ["{any}.bam"]
+    bams_ls: str = "{any}-bams.list"
+    jgi: str = "{any}-jgi.tsv"
+    bin_single: str = "{any}-bins/single"
+    bin_union_dir: str = "{any}-bins/union"
     bin_methods: list[str] = default_bin_methods
 
     def to_config(self, config_file: PathLike):
@@ -84,6 +84,57 @@ class BinningConfig(NamedTuple):
             bin_union_dir / f"{basename}-dir",
         )
 
+    def run(
+        self,
+        method: Literal[
+            "dastool", "unitem_greedy", "unitem_consensus", "unitem_unanimous"
+        ],
+        marker: str = "",
+        threads=10,
+    ):
+        """
+        @param method: only given methods are supported
+
+        @param marker: name for identify, will add after "dastool"
+            - [if not given], name will be "dastool" only
+            - else, name will be like "dastool-{marker}"
+        """
+        out_basename: str = method
+        if marker:
+            out_basename += f"-{marker}"
+
+        with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
+            tpmf_out = self.output(out_basename)
+            self.to_config(tmpf.name)
+
+            self.touch_contig()
+
+            smk_workflow = Path(__file__).parent.parent / "workflow"
+            smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
+            target_smk_file = smk_workflow / "binning" / "__init__.smk"
+
+            smk_params2 = (
+                f"-s {target_smk_file} "
+                f"{tpmf_out.ctg2mag} "
+                f"--use-conda "
+                f"--conda-prefix {smk_conda_env} "
+                f"-c{threads} -rp "
+                f"--configfile {tmpf.name} "
+            )
+
+            try:
+                os.system(f"ls {tmpf.name}")
+                print("params:", "snakemake", smk_params2)
+                smk(smk_params2)
+            except SystemExit as se:
+                if se.code:
+                    print(se.code, se.with_traceback(None))
+                    raise RuntimeError("snakemake seems not run successfully.")
+                else:
+                    return tpmf_out
+
+        raise NotImplementedError("")
+
 
 def check_bams(
     bin_union_dir: PathLike, bams: Union[list[PathLike], PathLike] = None
@@ -113,16 +164,18 @@ def bin_union(
     threads: int = 10,
 ):
     """
+    @param method: only given methods are supported
+
     @param marker: name for identify, will add after "dastool"
         - [if not given], name will be "dastool" only
         - else, name will be like "dastool-{marker}"
 
     @param bin_union_dir: dirname of output, so file will be like "{bin_union_dir}/dastool{-marker}.tsv"
-        - [if not given], name will follow @param contig (if @param contignot given, will use ".")
+        - [if not given], name will follow @param contig (if @param contig is skipped, will use ".")
         - else, will use given path
 
     @param contig: used as reference by following methods
-        - can be skipped, but havn't test if not given
+        - in fact, it should not be skipped
 
     @param jgi, bams: used in single binning
         - can be skipped, if all single binning result is generated
@@ -137,9 +190,6 @@ def bin_union(
 
     @param threads: threads
     """
-    out_basename: str = method
-    if marker:
-        out_basename += f"-{marker}"
     # infer bin methods automatically if not given in some cases
     if not bin_methods:
         bin_methods = default_bin_methods
@@ -164,37 +214,7 @@ def bin_union(
         str(bin_union_dir),
         bin_methods,
     )
-    with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
-        tpmf_out = bc.output(out_basename)
-        bc.to_config(tmpf.name)
-
-        bc.touch_contig()
-
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = smk_workflow / "binning" / "__init__.smk"
-
-        smk_params2 = (
-            f"-s {target_smk_file} "
-            f"{tpmf_out.ctg2mag} "
-            f"--use-conda "
-            f"--conda-prefix {smk_conda_env} "
-            f"-c{threads} -rp "
-            f"--configfile {tmpf.name} "
-        )
-
-        try:
-            os.system(f"ls {tmpf.name}")
-            print("params:", "snakemake", smk_params2)
-            smk(smk_params2)
-        except SystemExit as se:
-            if se.code:
-                print(se.code, se.with_traceback(None))
-                raise RuntimeError("snakemake seems not run successfully.")
-            else:
-                return tpmf_out
-
-    raise NotImplementedError("")
+    return bc.run(method, marker, threads)
 
 
 def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
