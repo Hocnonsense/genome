@@ -2,14 +2,12 @@
 rule DASTool_create:
     input:
         contig=ancient(contig),
-        union_methods_ls="/".join(
-            [bin_union_dir, "{union_method}{marker}", "methods.csv"]
-        ),
+        union_methods_ls="/".join([bin_union_dir, "{union_method}{marker}-methods.csv"]),
     output:
         ctg2mag="/".join([bin_union_dir, "{union_method}{marker}.tsv"]),
         out_dir=directory("/".join([bin_union_dir, "{union_method}{marker}-dir"])),
     params:
-        bin_dir="/".join([bin_union_dir, "{union_method}{marker}", "bins"]),
+        bin_dir="/".join([bin_union_dir, "{union_method}{marker}-dir"]),
     log:
         "/".join([bin_union_dir, "{union_method}{marker}", "log"]),
     wildcard_constraints:
@@ -53,7 +51,7 @@ rule UniteM_profile:
     params:
         bin_dir="/".join([bin_union_dir, "{union_method}{marker}", "bins"]),
     log:
-        log="/".join([bin_union_dir, "{union_method}{marker}", "log"]),
+        log="/".join([bin_union_dir, "{union_method}{marker}.profile", "log"]),
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",
@@ -103,7 +101,7 @@ rule UniteM_refine:
         bin_dir="/".join([bin_union_dir, "{union_method}_{selection}{marker}", "bins"]),
         selection="{selection}",
     log:
-        log="/".join([bin_union_dir, "{union_method}_{selection}{marker}", "log"]),
+        log="/".join([bin_union_dir, "{union_method}_{selection}{marker}-dir", "log"]),
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",
@@ -121,12 +119,17 @@ rule UniteM_refine:
             -b {input.profile}/bins/* \
             -p unitem_{params.selection}- \
             {input.profile} \
-            smk-unitem-out
+            smk-unitem-out \
+        |tee {log}
 
         for i in smk-unitem-out/bins/*.fna.gz
         do
             binname=$(echo $(basename $i) | sed "s/\\\\.fna.gz//g")
-            zcat $i |grep ">" | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            zcat $i \
+            |grep ">" \
+            |awk '{{print $1}}' \
+            |perl -pe "s/\\n/\\t$binname\\n/g" \
+            |perl -pe "s/>//g"
         done \
         > {output.ctg2mag}
 
