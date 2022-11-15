@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-03 14:06:55
+ * @LastEditTime: 2022-11-15 10:12:34
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -12,7 +12,7 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Final, NamedTuple, Optional, Union, overload
+from typing import Final, NamedTuple, Optional, Union, Literal
 
 import pandas as pd
 import yaml
@@ -40,6 +40,11 @@ default_bin_methods = [
 ]
 
 
+class BinningOutput(NamedTuple):
+    ctg2mag: str
+    out_dir: Optional[Path] = None
+
+
 class BinningConfig(NamedTuple):
     MIN_BIN_CONTIG_LEN: int = 1500
     contig: str = "data/{site}/02_assem..{site}_cut.fa"
@@ -55,8 +60,31 @@ class BinningConfig(NamedTuple):
         with open(config_file, "w") as c:
             yaml.dump(self._asdict(), stream=c, allow_unicode=True)
 
+    def output(self, basename):
+        bin_union_dir = Path(self.bin_union_dir)
+        return BinningOutput(
+            bin_union_dir / f"{basename}.tsv",
+            bin_union_dir / f"{basename}-dir",
+        )
 
-def DAS_Tool(
+
+def check_bams(
+    bin_union_dir: PathLike, bams: Union[list[PathLike], PathLike] = None
+) -> tuple[PathLike, list[PathLike]]:
+    if not bams:
+        bams = []
+        bams_ls = Path(str(bin_union_dir) + "-bams.list")
+    elif isinstance(bams, list):
+        bams_ls = Path(str(bin_union_dir) + "-bams.list")
+    else:
+        bams_ls, bams = Path(bams), []
+    return bams_ls, bams
+
+
+def bin_union(
+    method: Literal[
+        "dastool", "unitem_greedy", "unitem_consensus", "unitem_unanimous"
+    ] = "dastool",
     marker: str = "",
     bin_union_dir: PathLike = None,
     contig: PathLike = "",
@@ -67,9 +95,34 @@ def DAS_Tool(
     min_bin_contig_len: int = 1500,
     threads: int = 10,
 ):
-    dastool_out = "dastool"
+    """
+    @param marker: name for identify, will add after "dastool"
+        - [if not given], name will be "dastool" only
+        - else, name will be like "dastool-{marker}"
+
+    @param bin_union_dir: dirname of output, so file will be like "{bin_union_dir}/dastool{-marker}.tsv"
+        - [if not given], name will follow @param contig (if @param contignot given, will use ".")
+        - else, will use given path
+
+    @param contig: used as reference by following methods
+        - can be skipped, but havn't test if not given
+
+    @param jgi, bams: used in single binning
+        - can be skipped, if all single binning result is generated
+
+    @param bin_single: to keep each single bin method result ctg2mag.tsv, should be maintained by user
+        - [if not given], will be store in "{bin_union_dir}/single"
+
+    @param bin_methods: bin methods to use
+        - [if not given], will use all 9 metabat2, 2 maxbin2, concoct, vamb, and metadecoder
+
+    @param min_bin_contig_len: min length of contig
+
+    @param threads: threads
+    """
+    out_basename: str = method
     if marker:
-        dastool_out += f"-{marker}"
+        out_basename += f"-{marker}"
     # infer bin methods automatically if not given in some cases
     if not bin_methods:
         bin_methods = default_bin_methods
@@ -81,14 +134,9 @@ def DAS_Tool(
         bin_union_dir = Path(str(contig) + "-bins")
     if not bin_single:
         bin_single = Path(bin_union_dir) / "single"
-    if not bams:
-        bams = []
-        bams_ls = Path(str(bin_union_dir) + "-bams.list")
-    elif isinstance(bams, list):
 
-        bams_ls = Path(str(bin_union_dir) + "-bams.list")
-    else:
-        bams_ls, bams = Path(bams), []
+    bams_ls, bams = check_bams(bin_union_dir, bams)
+
     bc = BinningConfig(
         min_bin_contig_len,
         str(contig),
@@ -100,9 +148,7 @@ def DAS_Tool(
         bin_methods,
     )
     with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
-        # setattr(tmpf, "__str__", lambda self: self.name)
-        # tmpf = "test/temp/test_binning.yaml"
-        tpmf_out = Path(bin_union_dir) / f"{dastool_out}.tsv"
+        tpmf_out = bc.output(out_basename)
         bc.to_config(tmpf.name)
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
@@ -127,7 +173,7 @@ def DAS_Tool(
             else:
                 smk_params2 = (
                     f"-s {target_smk_file} "
-                    f"{tpmf_out} "
+                    f"{tpmf_out.ctg2mag} "
                     f"--use-conda "
                     f"--conda-prefix {smk_conda_env} "
                     f"-c{threads} -rp "

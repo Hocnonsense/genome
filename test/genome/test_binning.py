@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 20:53:06
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-27 19:14:06
+ * @LastEditTime: 2022-11-15 10:14:01
  * @FilePath: /genome/test/genome/test_binning.py
  * @Description:
  * @Description:
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from genome.binning import BinningConfig, DAS_Tool, contig2bin, checkm
+from genome.binning import BinningConfig, bin_union, checkm, contig2bin
 
 test_temp = Path(__file__).parent.parent / "temp"
 test_files = Path(__file__).parent.parent / "file"
@@ -32,8 +32,21 @@ def test_binning_config_to_config():
     bc.to_config(test_temp / "test_binning.yaml")
 
 
+def test_unitem_profile():
+    binunion_tsv = bin_union(
+        "unitem_consensus",
+        "",
+        test_temp / "union",
+        test_files / "02_assem..TY.041_cut.fa",
+        test_files / "02_assem..TY.041_cut-jgi.depth",
+        bin_single=test_files / "binsingle",
+        threads=12,
+    )
+
+
 def test_dastool():
-    binunion_tsv = DAS_Tool(
+    binunion_tsv = bin_union(
+        "dastool",
         "all",
         test_temp / "union",
         test_files / "02_assem..TY.041_cut.fa",
@@ -41,7 +54,6 @@ def test_dastool():
         bin_single=test_files / "binsingle",
         threads=12,
     )
-    gff = test_files / "metadecoder.1-prokka.Bacteria.gff"
 
 
 def test_contig2bin():

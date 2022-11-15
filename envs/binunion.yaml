@@ -5,6 +5,7 @@ channels:
   - defaults
 dependencies:
   - das_tool
+  - hmmer # to support unitem
   - pip
   - pip:
       - unitem

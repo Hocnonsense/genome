@@ -1,34 +1,42 @@
 
 rule filtered_contig:
     input:
-        contig  = contig_raw,
+        contig=contig_raw,
     output:
-        contig  = temp(contig),
+        contig=temp(contig),
     message:
         "concoct cannot filter short contigs itself"
     run:
         from Bio import SeqIO
+
         SeqIO.write(
-            (i for i in SeqIO.parse(input.contig, "fasta") if len(i.seq) > MIN_BIN_CONTIG_LEN),
+            (
+                i
+                for i in SeqIO.parse(input.contig, "fasta")
+                if len(i.seq) > MIN_BIN_CONTIG_LEN
+            ),
             output.contig,
             format="fasta",
         )
+        shell(f"touch -amcr {input.contig} {output.contig}")
 
 
 rule metabat2:
     input:
-        contig  = ancient(contig),
-        jgi     = jgi,
+        contig=ancient(contig),
+        jgi=jgi,
     output:
-        ctg2mag = "/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"]),
+        ctg2mag="/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"]),
     params:
-        dout = "metabat2_{maxP}_{minS}",
-        extension = "fa",
-        maxP = "{maxP}",
-        minS = "{minS}",
+        dout="metabat2_{maxP}_{minS}",
+        extension="fa",
+        maxP="{maxP}",
+        minS="{minS}",
     threads: 1
-    conda: "../../envs/binning.yaml"
-    shadow: "shallow"
+    conda:
+        "../../envs/binning.yaml"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f {params.dout}
@@ -54,20 +62,22 @@ rule metabat2:
 
 rule maxbin2:
     input:
-        contig  = ancient(contig),
-        jgi     = jgi,
+        contig=ancient(contig),
+        jgi=jgi,
     output:
-        ctg2mag = "/".join([bin_single, "maxbin2_{markerset}.tsv"]),
+        ctg2mag="/".join([bin_single, "maxbin2_{markerset}.tsv"]),
     params:
-        dout = "maxbin2_{markerset}",
-        extension = "fasta",
-        markerset = "{markerset}",
+        dout="maxbin2_{markerset}",
+        extension="fasta",
+        markerset="{markerset}",
     wildcard_constraints:
-        markerset = "107|40",
+        markerset="107|40",
     threads: 1
-    conda: "../../envs/binning.yaml"
+    conda:
+        "../../envs/binning.yaml"
     priority: 1
-    shadow: "shallow"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f {params.dout}
@@ -91,15 +101,17 @@ rule maxbin2:
 
 rule concoct:
     input:
-        contig  = ancient(contig),
-        bams_ls = bams_ls,
+        contig=ancient(contig),
+        bams_ls=bams_ls,
     output:
-        ctg2mag = "/".join([bin_single, "concoct.tsv"]),
+        ctg2mag="/".join([bin_single, "concoct.tsv"]),
     params:
-        dout = "concoct",
+        dout="concoct",
     threads: 8
-    conda: "../../envs/binning.yaml"
-    shadow: "shallow"
+    conda:
+        "../../envs/binning.yaml"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f {params.dout}
@@ -130,16 +142,18 @@ rule concoct:
 
 rule metadecoder:
     input:
-        contig  = ancient(contig),
-        bams_ls = bams_ls,
+        contig=ancient(contig),
+        bams_ls=bams_ls,
     output:
-        ctg2mag = "/".join([bin_single, "metadecoder.tsv"]),
+        ctg2mag="/".join([bin_single, "metadecoder.tsv"]),
     params:
-        dout = "metadecoder",
-        extension = "fasta",
+        dout="metadecoder",
+        extension="fasta",
     threads: 8  # for maxbin
-    conda: "../../envs/metadecoder.yaml"
-    shadow: "shallow"
+    conda:
+        "../../envs/metadecoder.yaml"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f {params.dout}
@@ -179,12 +193,14 @@ rule metadecoder:
 
 rule fake_vamb_jgi:
     input:
-        contig = ancient(contig),
-        jgi = jgi,
+        contig=ancient(contig),
+        jgi=jgi,
     output:
-        jgi = temp("/".join([bin_single, "vamb-jgi.depth"]))
+        jgi=temp("/".join([bin_single, "vamb-jgi.depth"])),
     run:
-        with open(output.jgi, "w") as fo, open(input.jgi) as fi, open(input.contig) as fa:
+        with open(output.jgi, "w") as fo, open(input.jgi) as fi, open(
+            input.contig
+        ) as fa:
             fo.write(next(fi))
             jgi: dict[str, str] = {i.split()[0]: i for i in fi}
             for line in fa:
@@ -195,16 +211,18 @@ rule fake_vamb_jgi:
 
 rule vamb:
     input:
-        contig  = ancient(contig),
-        jgi = "/".join([bin_single, "vamb-jgi.depth"]),
+        contig=ancient(contig),
+        jgi="/".join([bin_single, "vamb-jgi.depth"]),
     output:
-        ctg2mag = "/".join([bin_single, "vamb.tsv"]),
+        ctg2mag="/".join([bin_single, "vamb.tsv"]),
     params:
-        dout = "vamb",
-        extension = "fna",
+        dout="vamb",
+        extension="fna",
     threads: 1
-    conda: "../../envs/vamb.yaml"
-    shadow: "shallow"
+    conda:
+        "../../envs/vamb.yaml"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f {params.dout}
