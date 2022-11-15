@@ -1,24 +1,27 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 17:23:51
+ * @LastEditTime: 2022-11-13 19:53:48
  * @FilePath: /genome/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
 """
 
+
 rule mmseq_clust_95:
     input:
-        protein = "{any}.faa"
+        protein="{any}.faa",
     output:
-        all_100     = "{any}-clu_100.tsv",
-        all_clu     = "{any}-clu.tsv",
-        all_clu_faa = "{any}-clu_rep.faa",
+        all_100="{any}-clu_100.tsv",
+        all_clu="{any}-clu.tsv",
+        all_clu_faa="{any}-clu_rep.faa",
     params:
-        protein = "{any}"
+        protein="{any}",
     threads: 40
-    shadow: "shallow"
-    conda: "../envs/gene_clust.yaml"
+    shadow:
+        "shallow"
+    conda:
+        "../envs/gene_clust.yaml"
     shell:
         """
         rm -f smk-mmseq smk-mmseq-2

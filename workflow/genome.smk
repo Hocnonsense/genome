@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 17:23:46
+ * @LastEditTime: 2022-11-13 19:53:53
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -17,19 +17,24 @@ prokka_output_suffixes = get_env_var("prokka_output_suffixes", "gff").split()
 
 rule prokka_raw:
     input:
-        genome = "{any}.fa",
+        genome="{any}.fa",
     output:
-        filetypes = ["{any}-prokka_raw.{kingdom}."f"{suffix}" for suffix in prokka_output_suffixes],
-        log = "{any}-prokka.{kingdom}.log",
-    conda: "../envs/prokka.yaml"
+        filetypes=[
+            "{any}-prokka_raw.{kingdom}." f"{suffix}"
+            for suffix in prokka_output_suffixes
+        ],
+        log="{any}-prokka.{kingdom}.log",
+    conda:
+        "../envs/prokka.yaml"
     params:
-        filetypes = prokka_output_suffixes,
-        output_prefix = "{any}-prokka_raw.{kingdom}.",
-        kingdom = "{kingdom}",
+        filetypes=prokka_output_suffixes,
+        output_prefix="{any}-prokka_raw.{kingdom}.",
+        kingdom="{kingdom}",
     wildcard_constraints:
-        kingdom = "Archaea|Bacteria|Mitochondria|Viruses",
+        kingdom="Archaea|Bacteria|Mitochondria|Viruses",
     threads: 8
-    shadow: "shallow"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f smk-prokka
@@ -53,10 +58,10 @@ rule prokka_raw:
 
 rule prokka_fix:
     input:
-        filetype = "{any}-prokka_raw.{kingdom}.{suffix}",
-        log = "{any}-prokka.{kingdom}.log",
+        filetype="{any}-prokka_raw.{kingdom}.{suffix}",
+        log="{any}-prokka.{kingdom}.log",
     output:
-        filetype = "{any}-prokka.{kingdom}.{suffix}",
+        filetype="{any}-prokka.{kingdom}.{suffix}",
     run:
         from pathlib import Path
 
@@ -82,16 +87,17 @@ rule prokka_fix:
 
 rule prodigal_raw:
     input:
-        genome = "{any}.fa",
+        genome="{any}.fa",
     output:
-        faa = "{any}-prodigal.{mode}.faa",
-        fna = "{any}-prodigal.{mode}.fna",
-        gff = "{any}-prodigal.{mode}.gff",
-    conda: "../envs/prokka.yaml"
+        faa="{any}-prodigal.{mode}.faa",
+        fna="{any}-prodigal.{mode}.fna",
+        gff="{any}-prodigal.{mode}.gff",
+    conda:
+        "../envs/prokka.yaml"
     params:
-        mode = "{mode}",
+        mode="{mode}",
     wildcard_constraints:
-        mode = "single|meta",
+        mode="single|meta",
     threads: 1
     shell:
         """
