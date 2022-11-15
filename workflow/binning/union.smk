@@ -9,7 +9,7 @@ rule DASTool_create:
     params:
         bin_dir="/".join([bin_union_dir, "{union_method}{marker}-dir"]),
     log:
-        "/".join([bin_union_dir, "{union_method}{marker}", "log"]),
+        "/".join([bin_union_dir, "{union_method}{marker}-dir.log"]),
     wildcard_constraints:
         union_method="dastool",
         marker="-.+|",
@@ -51,7 +51,7 @@ rule UniteM_profile:
     params:
         bin_dir="/".join([bin_union_dir, "{union_method}{marker}", "bins"]),
     log:
-        log="/".join([bin_union_dir, "{union_method}{marker}.profile", "log"]),
+        log="/".join([bin_union_dir, "{union_method}{marker}.profile.log"]),
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",
@@ -101,7 +101,7 @@ rule UniteM_refine:
         bin_dir="/".join([bin_union_dir, "{union_method}_{selection}{marker}", "bins"]),
         selection="{selection}",
     log:
-        log="/".join([bin_union_dir, "{union_method}_{selection}{marker}-dir", "log"]),
+        log="/".join([bin_union_dir, "{union_method}_{selection}{marker}-dir.log"]),
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",
