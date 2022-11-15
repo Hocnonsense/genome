@@ -2,7 +2,7 @@
 rule DASTool_create:
     input:
         contig=ancient(contig),
-        union_methods_ls="/".join([bin_union_dir, "{union_method}{marker}-methods.csv"]),
+        union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
     output:
         ctg2mag="/".join([bin_union_dir, "{union_method}{marker}.tsv"]),
         out_dir=directory("/".join([bin_union_dir, "{union_method}{marker}-dir"])),
@@ -45,7 +45,7 @@ rule DASTool_create:
 rule UniteM_profile:
     input:
         contig=ancient(contig),
-        union_methods_ls="/".join([bin_union_dir, "{union_method}{marker}-methods.csv"]),
+        union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
     output:
         profile=directory("/".join([bin_union_dir, "{union_method}{marker}.profile"])),
     params:
