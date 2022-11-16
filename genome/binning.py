@@ -2,13 +2,14 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 14:42:55
+ * @LastEditTime: 2022-11-16 21:04:53
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
 
 
 import os
+import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
@@ -52,35 +53,58 @@ class BinningOutput(NamedTuple):
 class BinningConfig(NamedTuple):
     MIN_BIN_CONTIG_LEN: int = 1500
     contig: str = "{any}.fa"
-    bams: list[str] = ["{any}.bam"]
+    bams: Optional[list[str]] = None
     lsbams: str = "{any}.bams.ls"
     jgi: str = "{any}-jgi.tsv"
     bin_single: str = "{any}-bins/single"
     bin_union_dir: str = "{any}-bins/union"
-    bin_methods: list[str] = default_bin_methods
+    bin_methods: Optional[list[str]] = None
 
     def to_config(self, config_file: PathLike):
         Path(config_file).parent.mkdir(parents=True, exist_ok=True)
+        _asdict = self._asdict()
+        _asdict["bams"] = _asdict["bams"] or []
+        _asdict["bin_methods"] = _asdict["bin_methods"] or default_bin_methods
         with open(config_file, "w") as c:
             yaml.dump(self._asdict(), stream=c, allow_unicode=True)
 
-    def touch_contig(self):
+    def touch_contig_jgi(self):
         from Bio import SeqIO
 
-        contig = Path(self.bin_single) / f"contig.{self.MIN_BIN_CONTIG_LEN}.fa"
-        if contig.is_file():
-            return
-        contig.parent.mkdir(parents=True, exist_ok=True)
-        SeqIO.write(
-            (
-                i
-                for i in SeqIO.parse(self.contig, "fasta")
-                if self.MIN_BIN_CONTIG_LEN <= len(i.seq)
-            ),
-            contig,
-            format="fasta",
-        )
-        os.system(f"touch -amcr {self.contig} {contig}")
+        bin_single = Path(self.bin_single)
+        bin_single.mkdir(parents=True, exist_ok=True)
+        contig = bin_single / f"contig.{self.MIN_BIN_CONTIG_LEN}.fa"
+        if not contig.is_file():
+            SeqIO.write(
+                (
+                    i
+                    for i in SeqIO.parse(self.contig, "fasta")
+                    if self.MIN_BIN_CONTIG_LEN <= len(i.seq)
+                ),
+                contig,
+                format="fasta",
+            )
+            os.system(f"touch -amcr {self.contig} {contig}")
+
+        jgi = bin_single / f"vamb-jgi.tsv"
+        if jgi.is_file():
+            with open(self.jgi) as fi:
+                header = next(fi)
+                jgi_lines: dict[str, str] = {i.split()[0]: i for i in fi}
+            with open(jgi, "w") as fo, open(contig) as fa:
+                fo.write(header)
+                for line in fa:
+                    if line.startswith(">"):
+                        fo.write(jgi_lines[line[1:].split()[0]])
+                fo.flush()
+            os.system(f"touch -amcr {self.jgi} {jgi}")
+
+    def get_bams(self):
+        if Path(self.lsbams).is_file():
+            with open(self.lsbams) as bams:
+                return [Path(bam) for bam in bams.read().strip().split()]
+        else:
+            return [Path(bam) for bam in self.bams]
 
     def output(self, basename):
         bin_union_dir = Path(self.bin_union_dir)
@@ -105,11 +129,30 @@ class BinningConfig(NamedTuple):
         if marker:
             out_basename += f"-{marker}"
 
-        with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
-            tpmf_out = self.output(out_basename)
-            self.to_config(tmpf.name)
+        with TemporaryDirectory() as _td:
+            # with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
+            tmp_lsbams = f"{_td}/fake-bams.ls"
+            tmp_bams = []
+            if Path(self.lsbams).is_file():
+                shutil.copy(self.lsbams, tmp_lsbams)
+            else:
+                if not self.bams:
+                    raise FileNotFoundError("bams must be given if lsbams is not file")
+                for i, bam in enumerate(self.bams):
+                    tmp_bams.append(tmp_bam := f"{_td}/{i}.bam")
+                    os.system(f"ln -s {Path(bam).expanduser().absolute()} {tmp_bam}")
 
-            self.touch_contig()
+            self.touch_contig_jgi()
+
+            tmpc = self._replace(
+                jgi=str(Path(self.bin_single) / f"vamb-jgi.tsv"),
+                bams=tmp_bams,
+                lsbams=tmp_lsbams,
+            )
+            tmp_cofig = f"{_td}/config"
+            tmpc.to_config(tmp_cofig)
+
+            tpmf_out = self.output(out_basename)
 
             smk_workflow = Path(__file__).parent.parent / "workflow"
             smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
@@ -121,11 +164,11 @@ class BinningConfig(NamedTuple):
                 f"--use-conda "
                 f"--conda-prefix {smk_conda_env} "
                 f"-c{threads} -rp "
-                f"--configfile {tmpf.name} "
+                f"--configfile {tmp_cofig} "
             )
 
             try:
-                os.system(f"ls {tmpf.name}")
+                os.system(f"ls {tmp_cofig}")
                 print("params:", "snakemake", smk_params2)
                 smk(smk_params2)
             except SystemExit as se:

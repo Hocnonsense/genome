@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 10:28:36
+ * @LastEditTime: 2022-11-16 21:10:11
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -199,28 +199,32 @@ rule metadecoder:
         """
 
 
-rule fake_vamb_jgi:
-    input:
-        contig=contig,
-        jgi=jgi,
-    output:
-        jgi=temp("/".join([bin_single, "vamb-jgi.depth"])),
-    run:
-        with open(output.jgi, "w") as fo, open(input.jgi) as fi, open(
-            input.contig
-        ) as fa:
-            fo.write(next(fi))
-            jgi: dict[str, str] = {i.split()[0]: i for i in fi}
-            for line in fa:
-                if line.startswith(">"):
-                    fo.write(jgi[line[1:].split()[0]])
+if jgi != (vamb_jgi := "/".join([bin_single, "vamb-jgi.tsv"])):
+
+    rule fake_vamb_jgi:
+        input:
+            contig=contig,
+            jgi=jgi,
+        output:
+            jgi=temp(vamb_jgi),
+        run:
+            with open(output.jgi, "w") as fo, open(input.jgi) as fi, open(
+                input.contig
+            ) as fa:
+                fo.write(next(fi))
+                jgi: dict[str, str] = {i.split()[0]: i for i in fi}
+                for line in fa:
+                    if line.startswith(">"):
+                        fo.write(jgi[line[1:].split()[0]])
             fo.flush()
+
+
 
 
 rule vamb:
     input:
         contig=contig,
-        jgi="/".join([bin_single, "vamb-jgi.depth"]),
+        jgi="/".join([bin_single, "vamb-jgi.tsv"]),
     output:
         ctg2mag="/".join([bin_single, "vamb.tsv"]),
     params:

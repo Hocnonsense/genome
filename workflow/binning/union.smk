@@ -59,7 +59,8 @@ rule UniteM_profile:
     threads: 64
     conda:
         "../../envs/binunion.yaml"
-    # shadow: "shallow"
+    shadow:
+        "shallow"
     shell:
         """
         rm -f smk-unitem

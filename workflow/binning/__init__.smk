@@ -14,15 +14,33 @@ include: "./single.smk"
 include: "./union.smk"
 
 
-rule bams_to_ls:
-    input:
-        bams=bams,
-    output:
-        lsbams=lsbams,
-    shell:
-        """
-        ls {input.bams} > {output.lsbams}
-        """
+from pathlib import Path
+
+if not Path(lsbams).is_file():
+
+    rule bams_to_ls:
+        input:
+            bams=bams,
+            bais=[f"{bam}.bai" for bam in bams],
+        output:
+            lsbams=lsbams,
+        shell:
+            """
+            ls {input.bams} > {output.lsbams}
+            """
+
+    rule bam_bai:
+        input:
+            bam="{any}.bam",
+        output:
+            bai="{any}.bam.bai",
+        conda:
+            "../../envs/metadecoder.yaml"
+        threads: 8
+        shell:
+            """
+            samtools index {input.bam} -@ {threads}
+            """
 
 
 rule generate_union_methods_ls:
