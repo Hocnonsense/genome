@@ -30,6 +30,8 @@ rule generate_union_methods_ls:
         ctg2mags=["/".join([bin_single, f"{method}.tsv"]) for method in bin_methods],
     output:
         union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
+    wildcard_constraints:
+        marker="-.+|",
     shell:
         """
         ls {input.ctg2mags} > {output.union_methods_ls}

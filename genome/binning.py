@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 10:14:40
+ * @LastEditTime: 2022-11-16 11:19:01
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -41,8 +41,12 @@ default_bin_methods = [
 
 
 class BinningOutput(NamedTuple):
-    ctg2mag: str
+    ctg2mag: Path
     out_dir: Optional[Path] = None
+
+    @classmethod
+    def from_prefix(cls, prefix: PathLike):
+        return cls(Path(f"{prefix}.tsv"), Path(f"{prefix}-dir"))
 
 
 class BinningConfig(NamedTuple):
@@ -79,10 +83,7 @@ class BinningConfig(NamedTuple):
 
     def output(self, basename):
         bin_union_dir = Path(self.bin_union_dir)
-        return BinningOutput(
-            bin_union_dir / f"{basename}.tsv",
-            bin_union_dir / f"{basename}-dir",
-        )
+        return BinningOutput.from_prefix(bin_union_dir / basename)
 
     def run(
         self,
