@@ -49,7 +49,7 @@ class BinningConfig(NamedTuple):
     MIN_BIN_CONTIG_LEN: int = 1500
     contig: str = "{any}.fa"
     bams: list[str] = ["{any}.bam"]
-    bams_ls: str = "{any}-bams.list"
+    lsbams: str = "{any}.bams.ls"
     jgi: str = "{any}-jgi.tsv"
     bin_single: str = "{any}-bins/single"
     bin_union_dir: str = "{any}-bins/union"
@@ -141,12 +141,12 @@ def check_bams(
 ) -> tuple[PathLike, list[PathLike]]:
     if not bams:
         bams = []
-        bams_ls = Path(str(bin_union_dir) + "-bams.list")
+        lsbams = Path(str(bin_union_dir) + "-bams.list")
     elif isinstance(bams, list):
-        bams_ls = Path(str(bin_union_dir) + "-bams.list")
+        lsbams = Path(str(bin_union_dir) + "-bams.list")
     else:
-        bams_ls, bams = Path(bams), []
-    return bams_ls, bams
+        lsbams, bams = Path(bams), []
+    return lsbams, bams
 
 
 def bin_union(
@@ -202,13 +202,13 @@ def bin_union(
     if not bin_single:
         bin_single = Path(bin_union_dir) / "single"
 
-    bams_ls, bams = check_bams(bin_union_dir, bams)
+    lsbams, bams = check_bams(bin_union_dir, bams)
 
     bc = BinningConfig(
         min_bin_contig_len,
         str(contig),
         [str(i) for i in bams],
-        str(bams_ls),
+        str(lsbams),
         str(jgi),
         str(bin_single),
         str(bin_union_dir),

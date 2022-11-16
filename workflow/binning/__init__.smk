@@ -1,7 +1,7 @@
 MIN_BIN_CONTIG_LEN = config.get("MIN_BIN_CONTIG_LEN", "1500")
 contig_raw = config.get("contig", "{any}.fa")
 bams = config.get("bams", [])
-bams_ls = config.get("bams_ls", "{any}-bams.list")
+lsbams = config.get("lsbams", "{any}.bams.ls")
 jgi = config.get("jgi", "{any}-jgi.tsv")
 bin_single = config.get("bin_single", "{any}-bins/single")
 bin_methods = config.get("bin_methods", [])
@@ -18,10 +18,10 @@ rule bams_to_ls:
     input:
         bams=bams,
     output:
-        bams_ls=bams_ls,
+        lsbams=lsbams,
     shell:
         """
-        ls {input.bams} > {output.bams_ls}
+        ls {input.bams} > {output.lsbams}
         """
 
 

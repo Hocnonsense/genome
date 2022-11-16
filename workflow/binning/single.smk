@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 10:14:28
+ * @LastEditTime: 2022-11-16 10:28:36
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -110,7 +110,7 @@ rule maxbin2:
 rule concoct:
     input:
         contig=contig,
-        bams_ls=bams_ls,
+        lsbams=lsbams,
     output:
         ctg2mag="/".join([bin_single, "concoct.tsv"]),
     params:
@@ -130,7 +130,7 @@ rule concoct:
             --merge_last -b {params.dout}.bed \
             > {params.dout}.fasta
         concoct_coverage_table.py \
-            {params.dout}.bed `cat {input.bams_ls}` \
+            {params.dout}.bed `cat {input.lsbams}` \
             > {params.dout}.tsv
         concoct --coverage_file {params.dout}.tsv \
             --composition_file {params.dout}.fasta \
@@ -151,7 +151,7 @@ rule concoct:
 rule metadecoder:
     input:
         contig=contig,
-        bams_ls=bams_ls,
+        lsbams=lsbams,
     output:
         ctg2mag="/".join([bin_single, "metadecoder.tsv"]),
     params:
@@ -168,7 +168,7 @@ rule metadecoder:
         mkdir -p {params.dout}
 
         sams=""
-        for i in `cat {input.bams_ls}`
+        for i in `cat {input.lsbams}`
         do
             sam={params.dout}/`basename $i`.sam
             samtools view -h $i -@ 1 -o $sam
