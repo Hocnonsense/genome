@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-15 11:35:53
+ * @LastEditTime: 2022-11-16 10:14:40
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -70,7 +70,7 @@ class BinningConfig(NamedTuple):
             (
                 i
                 for i in SeqIO.parse(self.contig, "fasta")
-                if len(i.seq) > self.MIN_BIN_CONTIG_LEN
+                if self.MIN_BIN_CONTIG_LEN <= len(i.seq)
             ),
             contig,
             format="fasta",

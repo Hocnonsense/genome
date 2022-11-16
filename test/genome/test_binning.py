@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 20:53:06
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-15 10:14:01
+ * @LastEditTime: 2022-11-15 11:19:37
  * @FilePath: /genome/test/genome/test_binning.py
  * @Description:
  * @Description:
@@ -30,11 +30,13 @@ def test_binning_config_to_config():
         bin_union_dir=str(test_temp / "union"),
     )
     bc.to_config(test_temp / "test_binning.yaml")
+    bc1 = BinningConfig()
+    bc1.to_config(test_temp / "test_binning1.yaml")
 
 
 def test_unitem_profile():
     binunion_tsv = bin_union(
-        "unitem_consensus",
+        "unitem_unanimous",
         "",
         test_temp / "union",
         test_files / "02_assem..TY.041_cut.fa",
@@ -42,6 +44,7 @@ def test_unitem_profile():
         bin_single=test_files / "binsingle",
         threads=12,
     )
+    pd.read_csv(binunion_tsv.ctg2mag, sep="\t", names=["Contig", "Bin"])
 
 
 def test_dastool():

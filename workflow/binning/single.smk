@@ -1,3 +1,11 @@
+"""
+ * @Date: 2022-10-27 19:16:12
+ * @LastEditors: Hwrn
+ * @LastEditTime: 2022-11-16 10:14:28
+ * @FilePath: /genome/workflow/binning/single.smk
+ * @Description:
+"""
+
 
 rule filtered_contig:
     input:
@@ -13,7 +21,7 @@ rule filtered_contig:
             (
                 i
                 for i in SeqIO.parse(input.contig, "fasta")
-                if len(i.seq) > MIN_BIN_CONTIG_LEN
+                if MIN_BIN_CONTIG_LEN <= len(i.seq)
             ),
             output.contig,
             format="fasta",
