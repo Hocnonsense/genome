@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 21:04:53
+ * @LastEditTime: 2022-11-16 22:08:47
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -66,7 +66,7 @@ class BinningConfig(NamedTuple):
         _asdict["bams"] = _asdict["bams"] or []
         _asdict["bin_methods"] = _asdict["bin_methods"] or default_bin_methods
         with open(config_file, "w") as c:
-            yaml.dump(self._asdict(), stream=c, allow_unicode=True)
+            yaml.dump(_asdict, stream=c, allow_unicode=True)
 
     def touch_contig_jgi(self):
         from Bio import SeqIO
@@ -87,7 +87,7 @@ class BinningConfig(NamedTuple):
             os.system(f"touch -amcr {self.contig} {contig}")
 
         jgi = bin_single / f"vamb-jgi.tsv"
-        if jgi.is_file():
+        if not jgi.is_file():
             with open(self.jgi) as fi:
                 header = next(fi)
                 jgi_lines: dict[str, str] = {i.split()[0]: i for i in fi}
