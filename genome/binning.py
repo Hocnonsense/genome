@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 11:19:01
+ * @LastEditTime: 2022-11-16 14:42:55
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -70,6 +70,7 @@ class BinningConfig(NamedTuple):
         contig = Path(self.bin_single) / f"contig.{self.MIN_BIN_CONTIG_LEN}.fa"
         if contig.is_file():
             return
+        contig.parent.mkdir(parents=True, exist_ok=True)
         SeqIO.write(
             (
                 i
