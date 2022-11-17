@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 21:10:11
+ * @LastEditTime: 2022-11-17 23:23:33
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -117,7 +117,7 @@ rule concoct:
         dout="concoct",
     threads: 8
     conda:
-        "../../envs/binning.yaml"
+        "../../envs/concoct.yaml"
     shadow:
         "shallow"
     shell:

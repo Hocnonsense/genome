@@ -4,6 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - metabat2
-  - maxbin2
-  - samtools
+  - concoct
+  - python=3.8
+  - blas=*=mkl
