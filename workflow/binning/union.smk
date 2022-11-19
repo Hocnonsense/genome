@@ -64,7 +64,7 @@ rule UniteM_profile:
     shell:
         """
         rm -f smk-unitem
-        mkdir smk-unitem
+        mkdir -p smk-unitem/bins
 
         declare labels_i=1
         for i in `cat {input.union_methods_ls}`
