@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-16 22:08:47
+ * @LastEditTime: 2022-11-19 09:43:43
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -135,12 +135,15 @@ class BinningConfig(NamedTuple):
             tmp_bams = []
             if Path(self.lsbams).is_file():
                 shutil.copy(self.lsbams, tmp_lsbams)
+                os.system(f"touch -amcr {self.lsbams} {tmp_lsbams}")
             else:
                 if not self.bams:
                     raise FileNotFoundError("bams must be given if lsbams is not file")
                 for i, bam in enumerate(self.bams):
+                    absbam = Path(bam).expanduser().absolute()
                     tmp_bams.append(tmp_bam := f"{_td}/{i}.bam")
-                    os.system(f"ln -s {Path(bam).expanduser().absolute()} {tmp_bam}")
+                    os.system(f"ln -s {absbam} {tmp_bam}")
+                    os.system(f"touch -amchr {absbam} {tmp_bam}")
 
             self.touch_contig_jgi()
 
