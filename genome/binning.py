@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-19 09:43:43
+ * @LastEditTime: 2022-11-20 15:31:20
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -164,6 +164,7 @@ class BinningConfig(NamedTuple):
             smk_params2 = (
                 f"-s {target_smk_file} "
                 f"{tpmf_out.ctg2mag} "
+                f"--nolock "
                 f"--use-conda "
                 f"--conda-prefix {smk_conda_env} "
                 f"-c{threads} -rp "
