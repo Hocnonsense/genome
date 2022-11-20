@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-13 19:53:53
+ * @LastEditTime: 2022-11-19 22:21:44
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -12,7 +12,7 @@ def get_env_var(env_var: str, default: str) -> str:
     return os.environ.get(env_var, default)
 
 
-prokka_output_suffixes = get_env_var("prokka_output_suffixes", "gff").split()
+prokka_output_suffixes: list[str] = get_env_var("prokka_output_suffixes", "gff").split()
 
 
 rule prokka_raw:

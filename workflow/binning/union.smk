@@ -42,10 +42,30 @@ rule DASTool_create:
         """
 
 
-rule UniteM_profile:
+rule UniteM_profile_bin_temp:
     input:
         contig=contig,
         union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
+    output:
+        profile=temp(
+            directory(
+                "/".join([bin_union_dir, "{union_method}{marker}.profile.bin_temp"])
+            )
+        ),
+    run:
+        from genome.binning import contig2bin
+
+        with open(input.union_method) as f1:
+            for i, line in enumerate(f1):
+                out_dir = Path(output.profile) / f"{i}"
+                contig2bin(
+                    outdir=out_dir, contig2bin_tsv=line.strip(), contigs=input.contig
+                )
+
+
+rule UniteM_profile:
+    input:
+        profile="/".join([bin_union_dir, "{union_method}{marker}.profile.bin_temp"]),
     output:
         profile=directory("/".join([bin_union_dir, "{union_method}{marker}.profile"])),
     params:
@@ -64,22 +84,9 @@ rule UniteM_profile:
     shell:
         """
         rm -f smk-unitem
-        mkdir -p smk-unitem/bins
+        mkdir -p smk-unitem
 
-        declare labels_i=1
-        for i in `cat {input.union_methods_ls}`
-        do
-            Contigs2Bin_to_Fasta.sh \
-                -i $i \
-                -a {input.contig} \
-                -o smk-unitem/bins/$labels_i
-
-            find smk-unitem/bins/$labels_i \
-                -size -5k \
-                -type f \
-                -exec rm {{}} \\;
-            let labels_i+=1
-        done
+        mv {input.profile} smk-unitem/bins
 
         unitem profile \
             -b smk-unitem/bins/* \
