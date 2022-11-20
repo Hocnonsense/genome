@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-20 15:31:20
+ * @LastEditTime: 2022-11-20 16:26:14
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -68,7 +68,7 @@ class BinningConfig(NamedTuple):
         with open(config_file, "w") as c:
             yaml.dump(_asdict, stream=c, allow_unicode=True)
 
-    def touch_contig_jgi(self):
+    def touch_contig_jgi_bams(self):
         from Bio import SeqIO
 
         bin_single = Path(self.bin_single)
@@ -99,12 +99,10 @@ class BinningConfig(NamedTuple):
                 fo.flush()
             os.system(f"touch -amcr {self.jgi} {jgi}")
 
-    def get_bams(self):
+        lsbams = bin_single / f"bams.ls"
         if Path(self.lsbams).is_file():
-            with open(self.lsbams) as bams:
-                return [Path(bam) for bam in bams.read().strip().split()]
-        else:
-            return [Path(bam) for bam in self.bams]
+            shutil.copy(self.lsbams, lsbams)
+            os.system(f"touch -amcr {self.lsbams} {lsbams}")
 
     def output(self, basename):
         bin_union_dir = Path(self.bin_union_dir)
@@ -130,30 +128,14 @@ class BinningConfig(NamedTuple):
             out_basename += f"-{marker}"
 
         with TemporaryDirectory() as _td:
-            # with NamedTemporaryFile("w", suffix=".yaml", delete=True) as tmpf:
-            tmp_lsbams = f"{_td}/fake-bams.ls"
-            tmp_bams = []
-            if Path(self.lsbams).is_file():
-                shutil.copy(self.lsbams, tmp_lsbams)
-                os.system(f"touch -amcr {self.lsbams} {tmp_lsbams}")
-            else:
-                if not self.bams:
-                    raise FileNotFoundError("bams must be given if lsbams is not file")
-                for i, bam in enumerate(self.bams):
-                    absbam = Path(bam).expanduser().absolute()
-                    tmp_bams.append(tmp_bam := f"{_td}/{i}.bam")
-                    os.system(f"ln -s {absbam} {tmp_bam}")
-                    os.system(f"touch -amchr {absbam} {tmp_bam}")
-
-            self.touch_contig_jgi()
+            self.touch_contig_jgi_bams()
 
             tmpc = self._replace(
                 jgi=str(Path(self.bin_single) / f"vamb-jgi.tsv"),
-                bams=tmp_bams,
-                lsbams=tmp_lsbams,
+                lsbams=str(Path(self.bin_single) / f"bams.ls"),
             )
-            tmp_cofig = f"{_td}/config"
-            tmpc.to_config(tmp_cofig)
+            tmp_config = f"{_td}/config"
+            tmpc.to_config(tmp_config)
 
             tpmf_out = self.output(out_basename)
 
@@ -165,14 +147,15 @@ class BinningConfig(NamedTuple):
                 f"-s {target_smk_file} "
                 f"{tpmf_out.ctg2mag} "
                 f"--nolock "
+                # f"--drop-metadata "  # add this if necessary
                 f"--use-conda "
                 f"--conda-prefix {smk_conda_env} "
                 f"-c{threads} -rp "
-                f"--configfile {tmp_cofig} "
+                f"--configfile {tmp_config} "
             )
 
             try:
-                os.system(f"ls {tmp_cofig}")
+                os.system(f"ls {tmp_config}")
                 print("params:", "snakemake", smk_params2)
                 smk(smk_params2)
             except SystemExit as se:
