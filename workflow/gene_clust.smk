@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-13 19:53:48
+ * @LastEditTime: 2022-11-21 21:22:30
  * @FilePath: /genome/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -17,7 +17,7 @@ rule mmseq_clust_95:
         all_clu_faa="{any}-clu_rep.faa",
     params:
         protein="{any}",
-    threads: 40
+    threads: 64
     shadow:
         "shallow"
     conda:

@@ -90,6 +90,12 @@ rule UniteM_profile:
 
         mv {input.profile} smk-unitem/bins
 
+        find smk-unitem/bins/ \
+            -size -5k \
+            -type f \
+            -exec rm {{}} \\;
+        let labels_i+=1
+
         unitem profile \
             -b smk-unitem/bins/* \
             -c {threads} \
