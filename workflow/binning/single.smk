@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-17 23:23:33
+ * @LastEditTime: 2022-11-21 09:51:49
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -11,7 +11,7 @@ rule filtered_contig:
     input:
         contig=contig_raw,
     output:
-        contig=temp(contig),
+        contig=contig,
     message:
         "concoct cannot filter short contigs itself"
     run:

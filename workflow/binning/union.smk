@@ -52,6 +52,8 @@ rule UniteM_profile_bin_temp:
                 "/".join([bin_union_dir, "{union_method}{marker}.profile.bin_temp"])
             )
         ),
+    wildcard_constraints:
+        marker="-.+|",
     run:
         from genome.binning import contig2bin
 
