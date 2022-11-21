@@ -57,7 +57,7 @@ rule UniteM_profile_bin_temp:
     run:
         from genome.binning import contig2bin
 
-        with open(input.union_method) as f1:
+        with open(input.union_methods_ls) as f1:
             for i, line in enumerate(f1):
                 out_dir = Path(output.profile) / f"{i}"
                 contig2bin(
