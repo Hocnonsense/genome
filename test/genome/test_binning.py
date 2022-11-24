@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 20:53:06
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-15 11:19:37
+ * @LastEditTime: 2022-11-24 17:05:24
  * @FilePath: /genome/test/genome/test_binning.py
  * @Description:
  * @Description:
@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from genome.binning import BinningConfig, bin_union, checkm, contig2bin
+from genome.binning import BinningConfig, bin_union
 
 test_temp = Path(__file__).parent.parent / "temp"
 test_files = Path(__file__).parent.parent / "file"
@@ -57,18 +57,3 @@ def test_dastool():
         bin_single=test_files / "binsingle",
         threads=12,
     )
-
-
-def test_contig2bin():
-    test_fa = test_files / "02_assem..TY.041_cut.fa"
-    test_c2b = test_temp / "union" / "dastool-all.tsv"
-    temp_bin = test_temp / "dastool-all"
-
-    contig2bin(temp_bin, test_c2b, test_fa)
-
-
-def test_checkm():
-    test_fa = test_files / "02_assem..TY.041_cut.fa"
-    test_c2b = test_temp / "union" / "dastool-all.tsv"
-    test_out = test_temp / "union" / "dastool-all-checkm.tsv"
-    (df := checkm(test_c2b, test_fa)).to_csv(test_out, sep="\t", index=False)

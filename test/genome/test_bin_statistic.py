@@ -2,10 +2,10 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-13 11:55:12
+ * @LastEditTime: 2022-11-24 17:07:21
  * @FilePath: /genome/test/genome/test_bin_statistic.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
+__file__ = "/home/hwrn/software/genome/test/genome/test_bin_statistic.py"
 """
 
 from pathlib import Path
@@ -13,7 +13,7 @@ from timeit import timeit
 
 import pandas as pd
 
-from genome.bin_statistic import BinStatisticContainer
+from genome.bin_statistic import BinStatisticContainer, contig2bin
 
 test_temp = Path(__file__).parent.parent / "temp"
 test_files = Path(__file__).parent.parent / "file"
@@ -79,3 +79,11 @@ def test_genome_stat_speed():
     )
     print(f"if only calculate seq length, will spend {quick_time:.4f} seconds")
     print(f"if calculate more featuers, will spend {normal_time:.4f} seconds")
+
+
+def test_contig2bin():
+    test_fa = test_files / "02_assem..TY.041_cut.fa"
+    test_c2b = test_temp / "union" / "dastool-all.tsv"
+    temp_bin = test_temp / "dastool-all"
+
+    contig2bin(temp_bin, test_c2b, test_fa)

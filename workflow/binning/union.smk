@@ -55,7 +55,7 @@ rule UniteM_profile_bin_temp:
     wildcard_constraints:
         marker="-.+|",
     run:
-        from genome.binning import contig2bin
+        from genome.bin_statistic_ext import contig2bin
 
         with open(input.union_methods_ls) as f1:
             for i, line in enumerate(f1):

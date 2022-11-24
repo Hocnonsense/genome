@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 21:48:49
+ * @LastEditTime: 2022-11-24 17:11:45
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -47,3 +47,13 @@ create_conda_env(*list_envs())
 - snakemake
 - python
 - bash
+
+
+## changelog
+- 0.0.2:
+    - move functions to new packages
+        - changing:
+            - `checkm` from `genome.binning` to `genome.bin_statistic_ext`
+            - `contig2bin` from `genome.binning` to `genome.bin_statistic`
+        - now these functions can still be loaded from old packages, but cannot in next minor release.
+- 0.0.1: init

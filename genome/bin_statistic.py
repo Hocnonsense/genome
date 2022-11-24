@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-13 11:59:04
+ * @LastEditTime: 2022-11-24 16:27:17
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -13,12 +13,33 @@ from pathlib import Path
 from pickle import dump, load
 from typing import Iterable, NamedTuple, Union
 
-from Bio import SeqRecord, SeqIO
+import pandas as pd
+from Bio import SeqIO, SeqRecord
 from numpy import mean
+
 from .gff import Parse
 
-
 PathLike = Union[str, Path]
+
+
+def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+    contig2bin_ = pd.read_csv(
+        contig2bin_tsv, sep="\t", names=["contig", "bin"], index_col=0
+    )
+
+    td = Path(outdir)
+    td.mkdir(parents=True, exist_ok=True)
+
+    try:
+        binfiles = {b: open(td / f"{b}.fa", "w") for b in contig2bin_["bin"].unique()}
+        for i in Parse(contigs)():
+            if i.name in contig2bin_.index:
+                binfiles[contig2bin_.loc[i.name, "bin"]].write(i.format("fasta-2line"))
+    finally:
+        for bf in binfiles.values():
+            bf.close()
+
+    return td
 
 
 def calculateN50(seqLens: list[int]):

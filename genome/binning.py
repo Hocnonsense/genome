@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-20 16:26:14
+ * @LastEditTime: 2022-11-24 16:27:09
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -10,16 +10,15 @@
 
 import os
 import shutil
-from dataclasses import dataclass
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Final, NamedTuple, Optional, Union, Literal
+from tempfile import TemporaryDirectory
+from typing import Final, Literal, NamedTuple, Optional, Union
 
-import pandas as pd
 import yaml
 from snakemake import main as smk
 
-from genome.gff import Parse
+from .bin_statistic import contig2bin
+from .bin_statistic_ext import checkm
 
 PathLike = Union[str, Path]
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
@@ -247,106 +246,3 @@ def bin_union(
         bin_methods,
     )
     return bc.run(method, marker, threads)
-
-
-def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
-    contig2bin_ = pd.read_csv(
-        contig2bin_tsv, sep="\t", names=["contig", "bin"], index_col=0
-    )
-
-    td = Path(outdir)
-    td.mkdir(parents=True, exist_ok=True)
-
-    try:
-        binfiles = {b: open(td / f"{b}.fa", "w") for b in contig2bin_["bin"].unique()}
-        for i in Parse(contigs)():
-            if i.name in contig2bin_.index:
-                binfiles[contig2bin_.loc[i.name, "bin"]].write(i.format("fasta-2line"))
-    finally:
-        for bf in binfiles.values():
-            bf.close()
-
-    return td
-
-
-@dataclass
-class CheckMFakeOptions:
-    from checkm.defaultValues import DefaultValues
-
-    subparser_name = "lineage_wf"
-    output_dir: str = "./"
-    bin_input: str = ""
-    extension: str = "fa"
-    file: str = "stdout"
-    threads: int = 8
-
-    bReducedTree: bool = False
-    bKeepAlignment: bool = False
-    bNucORFs: bool = False
-    bCalledGenes: bool = False
-    unique: int = 10
-    multi: int = 10
-    bForceDomain: int = False
-    bNoLineageSpecificRefinement: int = False
-    bIndividualMarkers: int = False
-    bSkipAdjCorrection: int = False
-    bSkipPseudoGeneCorrection: int = False
-    aai_strain: float = 0.9
-    alignment_file: Optional[str] = None
-    bIgnoreThresholds: bool = False
-    e_value: float = DefaultValues.E_VAL
-    length: float = DefaultValues.LENGTH
-    bQuiet: bool = False
-    bTabTable = True
-    pplacer_threads = 1
-
-    def run(self):
-        import checkm
-
-        versionFile = open(os.path.join(checkm.__path__[0], "VERSION"))
-
-        from checkm.main import OptionsParser
-        from checkm.logger import logger_setup
-
-        logger_setup(
-            self.output_dir,
-            "checkm.log",
-            "CheckM",
-            versionFile.readline().strip(),
-            self.bQuiet,
-        )
-
-        checkmParser = OptionsParser()
-        checkmParser.parseOptions(self)
-        return self.output_dir
-
-
-def checkm(
-    bin_input: PathLike,
-    support: Union[PathLike, str],
-    output_dir=None,
-    threads=10,
-    **checkm_options,
-):
-    bin_input = Path(bin_input)
-    with TemporaryDirectory() as _td:
-        file = f"{_td}/checkm.tsv"
-        if bin_input.is_dir():
-            assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-            support = str(support)
-            bin_input_ = bin_input
-        else:
-            assert bin_input.is_file() and Path(support).is_file()
-            bin_input_ = contig2bin(f"{_td}/bin_input", bin_input, support)
-            support = "fa"
-        if output_dir is None:
-            output_dir = f"{_td}/checkm"
-        CheckMFakeOptions(
-            file=file,
-            bin_input=str(bin_input_),
-            output_dir=output_dir,
-            extension=support,
-            threads=threads,
-            **checkm_options,  # type: ignore  # confirmed by users
-        ).run()
-        return pd.read_csv(file, sep="\t")
