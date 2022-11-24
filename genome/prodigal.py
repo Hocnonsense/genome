@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 16:35:18
+ * @LastEditTime: 2022-11-24 22:58:52
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -79,3 +79,68 @@ def prodigal_gff_onethread(
                 return gff_out_
 
     raise NotImplementedError("")
+
+
+def prodigal_multithread(
+    genomes: Iterable[PathLike],
+    mode: prodigal_mode = "single",
+    out_dir: PathLike = "",
+    suffix: Literal["gff", "faa", "fna"] = "gff",
+    threads: int = 8,
+) -> Iterable[Path]:
+    """WARNING: untested"""
+    # if many genomes are provided, the file must exist
+    _genome_files = [Path(file).expanduser().absolute() for file in genomes]
+    for genome in _genome_files:
+        if not str(genome).endswith(".fa"):
+            raise ValueError("genome file must endswith '.fa'")
+
+    genome_files = []
+    if out_dir:
+        gff_out_dir_ = Path(out_dir).expanduser().absolute()
+        gff_out_dir_.mkdir(parents=True, exist_ok=True)
+
+        _genome_files_dict = {file.name: file for file in _genome_files}
+        if len(_genome_files_dict) != len(_genome_files):
+            raise ValueError("cannot collect genome_files with same name")
+
+        for genome_name, genome_path in _genome_files_dict.items():
+            new_file = gff_out_dir_ / genome_name
+            if new_file.exists():
+                if new_file != genome_path:
+                    raise FileExistsError(genome_path)
+            else:
+                shutil.copy(genome_path, new_file)
+            genome_files.append(new_file)
+    else:
+        genome_files.extend(_genome_files)
+
+    smk_workflow = Path(__file__).parent.parent / "workflow"
+    smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
+    target_smk_file = smk_workflow / "genome.smk"
+    tpmf_outs = [f"{str(genome)[:-3]}-prodigal.{mode}.{suffix}" for genome in genomes]
+    tpmf_outs_str = " ".join(tpmf_outs)
+    smk_params = (
+        f"-s {target_smk_file} "
+        f"{tpmf_outs_str} "
+        f"--use-conda "
+        f"--conda-prefix {smk_conda_env} "
+        f"-c{threads} -rp "
+    )
+    try:
+        print("params:", "snakemake", smk_params)
+        smk(smk_params)
+    except SystemExit as se:
+        if se.code:
+            print(se.code, se.with_traceback(None))
+            raise RuntimeError("snakemake seems not run successfully.")
+
+    # clean up temp added genomes
+    if out_dir:
+        for new_file in genome_files:
+            if new_file not in _genome_files:
+                shutil.rmtree(new_file)
+    for tpmf_out in tpmf_outs:
+        Path(f"{tpmf_out[:-3]}log").unlink()
+
+    return [Path(tpmf_out) for tpmf_out in tpmf_outs]
