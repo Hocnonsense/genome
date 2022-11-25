@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 20:17:28
+ * @LastEditTime: 2022-11-25 23:03:19
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -31,7 +31,7 @@ def check_genome_length_prodigal(
     else:
         if not Path(genome).is_file():
             raise FileNotFoundError(f"file {genome} does not exist, please check.")
-        genome_iter = SeqIO.parse(genome)
+        genome_iter = SeqIO.parse(genome, "fasta")
     return sum(len(i) for i in genome_iter) >= 20000
 
 
