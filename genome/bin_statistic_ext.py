@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 23:06:51
+ * @LastEditTime: 2022-11-25 23:12:49
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -260,7 +260,7 @@ def bin_filter(
                 file=str(bin_faa_dir),
                 bin_input=str(bin_input_dir),
                 output_dir=str(checkm_output_dir_),
-                extension=suffix,
+                extension="faa",
                 threads=threads,
             ).run()
             checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
@@ -270,7 +270,7 @@ def bin_filter(
         else:
             gunc_tsv = gunc(
                 bin_input=str(bin_faa_dir),
-                support=suffix,
+                support="faa",
                 GUNC_DB=GUNC_DB,
                 output_dir=gunc_output_dir,
                 threads=threads,
