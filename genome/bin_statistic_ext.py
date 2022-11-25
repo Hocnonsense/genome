@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 23:36:10
+ * @LastEditTime: 2022-11-25 17:21:22
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -140,17 +140,27 @@ def gunc(
     bin_input: PathLike,
     support: Union[PathLike, str],
     GUNC_DB: PathLike,
-    output_dir=None,
+    output_dir: PathLike = None,
     threads=10,
 ):
     """
-    @param support: if endswith "faa", will just use bin_input as directory of faa files.
+    @param support:
+        if endswith "faa", will just use bin_input as directory of faa files.
+    @param output_dir:
+        if not None: will just detect output files in the output_dir and return
+        should not be a existing directory
 
     include 3 steps:
     1.  extrat genome with "contig2bin"
     2.  annot gene with "prodigal_gff_multithread"
     3.  gunc
+
     """
+    if output_dir:
+        if (
+            gunc_tsv := next(Path(output_dir).glob("GUNC.*maxCSS_level.tsv"))
+        ).is_file():
+            return pd.read_csv(gunc_tsv, sep="\t")
     with TemporaryDirectory() as _td:
         (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
         if str(support).endswith("faa"):
@@ -166,7 +176,8 @@ def gunc(
                 keep_if_avail=True,
             )
             prodigal_multithread(
-                bin_input_dir.glob(suffix),
+                bin_input_dir.glob(f"*{suffix}"),
+                mode="meta",
                 out_dir=bin_faa_dir,
                 suffix="faa",
                 threads=threads,
@@ -196,6 +207,8 @@ def gunc(
                 raise RuntimeError("snakemake seems not run successfully.")
 
         if output_dir:
-            shutil.move(f"{_td}/out-gunc-dir", output_dir)
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+            for i in Path(f"{_td}/out-gunc-dir").glob("*"):
+                shutil.move(i, output_dir)
 
         return pd.read_csv(tpmf_outs, sep="\t")

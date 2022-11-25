@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 16:27:17
+ * @LastEditTime: 2022-11-25 15:35:47
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -37,6 +37,7 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
                 binfiles[contig2bin_.loc[i.name, "bin"]].write(i.format("fasta-2line"))
     finally:
         for bf in binfiles.values():
+            bf.flush()
             bf.close()
 
     return td

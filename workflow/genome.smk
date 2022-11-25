@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 23:33:39
+ * @LastEditTime: 2022-11-25 19:30:00
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -120,12 +120,12 @@ rule gunc_bins_faa:
         bins_faa="{any}-bins_faa",
     output:
         gunc_out_tsv="{any}-gunc.tsv",
-        gunc_out_dir="{any}-gunc-dir",
+        gunc_out_dir=directory("{any}-gunc-dir"),
     params:
         GUNC_DB=config.get("GUNC_DB", ""),
     conda:
         "../envs/gunc.yaml"
-    threads: 32
+    threads: 64
     shadow:
         "shallow"
     shell:
@@ -134,7 +134,7 @@ rule gunc_bins_faa:
         mkdir smk-gunc
 
         gunc run \
-            --db_file $GUNC_DB \
+            --db_file {params.GUNC_DB} \
             --input_dir {input.bins_faa} \
             --file_suffix .faa \
             --gene_calls \
@@ -143,6 +143,6 @@ rule gunc_bins_faa:
             --threads {threads} \
             --detailed_output
 
-        cp smk-gunc/GUNC.maxCSS_level.tsv {output.gunc_out_tsv}
+        cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.gunc_out_tsv}
         mv smk-gunc {output.gunc_out_dir}
         """
