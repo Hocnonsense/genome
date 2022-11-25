@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 17:21:22
+ * @LastEditTime: 2022-11-25 21:46:18
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -85,7 +85,7 @@ def format_bin_input(
         Only if bin_input is a dir and required genomes endswith "fa",
         bin_output will be kept as bin_input.
 
-        This is designed to support snakemake to handle and keep intermediate files
+    This is designed to support snakemake to handle and keep intermediate files
     """
     bin_input = Path(bin_input)
     (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
@@ -157,10 +157,8 @@ def gunc(
 
     """
     if output_dir:
-        if (
-            gunc_tsv := next(Path(output_dir).glob("GUNC.*maxCSS_level.tsv"))
-        ).is_file():
-            return pd.read_csv(gunc_tsv, sep="\t")
+        for gunc_tsv_file in Path(output_dir).glob("GUNC.*maxCSS_level.tsv"):
+            return pd.read_csv(gunc_tsv_file, sep="\t")
     with TemporaryDirectory() as _td:
         (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
         if str(support).endswith("faa"):
@@ -212,3 +210,79 @@ def gunc(
                 shutil.move(i, output_dir)
 
         return pd.read_csv(tpmf_outs, sep="\t")
+
+
+def bin_filter(
+    bin_out_dir: PathLike,
+    bin_input: PathLike,
+    support: Union[PathLike, str],
+    GUNC_DB: PathLike,
+    checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
+    gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
+    threads=10,
+):
+    """
+    filter input genomes carefully, applying two checks
+    1.  checkm: 50, 10
+    2.  gunc: passed (in single mode)
+
+    intermediate checkm and gunc table can be provided as DataFrame;
+    or will be used as output dir
+    """
+    with TemporaryDirectory() as _td:
+        # region format input to prodigal single faa
+        (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
+        if str(support).endswith("faa"):
+            raise ValueError("genome nucleotide sequences required only")
+        bin_input_dir, suffix = format_bin_input(
+            bin_output=f"{_td}/bin_fa_input",
+            bin_input=bin_input,
+            support=support,
+            keep_if_avail=True,
+        )
+        for bin_faa in prodigal_multithread(
+            bin_input_dir.glob(f"*{suffix}"),
+            mode="single",
+            out_dir=bin_faa_dir,
+            suffix="faa",
+            threads=threads,
+        ):
+            bin_faa.rename(str(bin_faa)[:20] + ".faa")
+        # endregion format input to prodigal single faa
+
+        if isinstance(checkm_output_dir, pd.DataFrame):
+            checkm_output_file = checkm_output_dir
+        else:
+            checkm_output_dir_ = Path(checkm_output_dir or f"{_td}/checkm")
+            checkm_output_dir_.mkdir(parents=True, exist_ok=True)
+            checkm_output_file = checkm_output_dir_ / f"checkm.tsv"
+            CheckMFakeOptions(
+                file=str(bin_faa_dir),
+                bin_input=str(bin_input_dir),
+                output_dir=str(checkm_output_dir_),
+                extension=suffix,
+                threads=threads,
+            ).run()
+        checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
+
+        if isinstance(gunc_output_dir, pd.DataFrame):
+            gunc_tsv = gunc_output_dir
+        else:
+            gunc_tsv = gunc(
+                bin_input=str(bin_faa_dir),
+                support=suffix,
+                GUNC_DB=GUNC_DB,
+                output_dir=gunc_output_dir,
+                threads=threads,
+            )
+
+        checkm_gunc = checkm_tsv.merge(
+            gunc_tsv[["genome", "taxonomic_level", "pass.GUNC"]].rename(
+                {"Bin Id": "genome"}, axis=1
+            )
+        )
+        (bin_out_dir_ := Path(bin_out_dir)).mkdir(parents=True, exist_ok=True)
+        checkm_gunc.to_csv(bin_out_dir_ / "checkm_gunc.tsv", sep="\t", index=False)
+        for bin_fa in checkm_gunc["Bin Id"]:
+            shutil.move(bin_input_dir / f"{bin_fa}.fa", bin_out_dir_ / f"{bin_fa}.fa")
+        return checkm_gunc

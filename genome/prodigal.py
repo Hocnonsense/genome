@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 16:34:15
+ * @LastEditTime: 2022-11-25 20:17:28
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -12,7 +12,7 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Iterable, Literal, Union
+from typing import Iterable, Literal, Union, Optional
 
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
@@ -22,11 +22,24 @@ PathLike = Union[str, Path]
 prodigal_mode = Literal["single", "meta"]
 
 
+def check_genome_length_prodigal(
+    genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
+):
+    """check if givem genome size is long enough to use prodigal single mode"""
+    if not isinstance(genome, str) and not isinstance(genome, Path):
+        genome_iter = genome
+    else:
+        if not Path(genome).is_file():
+            raise FileNotFoundError(f"file {genome} does not exist, please check.")
+        genome_iter = SeqIO.parse(genome)
+    return sum(len(i) for i in genome_iter) >= 20000
+
+
 def prodigal_gff_onethread(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
     mode: prodigal_mode = "single",
     gff_out: PathLike = "",
-) -> Path:
+) -> Optional[Path]:
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
@@ -53,6 +66,8 @@ def prodigal_gff_onethread(
                         break
                     tmpf.write(block)
                 tmpf.flush()
+        if mode == "single" and not check_genome_length_prodigal(genome):
+            return None
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
         smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
@@ -88,9 +103,24 @@ def prodigal_multithread(
     suffix: Literal["gff", "faa", "fna"] = "gff",
     threads: int = 8,
 ) -> Iterable[Path]:
-    """WARNING: untested"""
+    """
+    If in single mode, length should not shorter than 20000 bp.
+    """
     # if many genomes are provided, the file must exist
-    _genome_files = [Path(file).expanduser().absolute() for file in genomes]
+    if mode == "single":
+        _genome_files = [
+            Path(file).expanduser().absolute()
+            for file in genomes
+            if check_genome_length_prodigal(file)
+        ]
+    else:
+        _genome_files = [
+            Path(file).expanduser().absolute()
+            for file in genomes
+            if check_genome_length_prodigal(file)
+        ]
+    if not _genome_files:
+        return []
     for genome in _genome_files:
         if not str(genome).endswith(".fa"):
             raise ValueError("genome file must endswith '.fa'")
