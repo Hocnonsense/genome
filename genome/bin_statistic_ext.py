@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 21:46:18
+ * @LastEditTime: 2022-11-25 23:06:51
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -251,7 +251,7 @@ def bin_filter(
         # endregion format input to prodigal single faa
 
         if isinstance(checkm_output_dir, pd.DataFrame):
-            checkm_output_file = checkm_output_dir
+            checkm_tsv = checkm_output_dir
         else:
             checkm_output_dir_ = Path(checkm_output_dir or f"{_td}/checkm")
             checkm_output_dir_.mkdir(parents=True, exist_ok=True)
@@ -263,7 +263,7 @@ def bin_filter(
                 extension=suffix,
                 threads=threads,
             ).run()
-        checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
+            checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
 
         if isinstance(gunc_output_dir, pd.DataFrame):
             gunc_tsv = gunc_output_dir
