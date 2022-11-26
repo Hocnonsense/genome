@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-26 13:55:36
+ * @LastEditTime: 2022-11-26 14:23:02
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -291,7 +291,7 @@ def bin_filter(
         for bin_fa in checkm_gunc_filter["Bin Id"]:
             shutil.move(bin_input_dir / f"{bin_fa}.fa", bin_out_dir_ / f"{bin_fa}.fa")
 
-        shutil.move(bin_input_dir, bin_input_dir / "discard")
+        shutil.move(bin_input_dir, bin_out_dir_ / "discard")
         checkm_gunc.to_csv(
             bin_out_dir_ / "discard" / "checkm_gunc.tsv", sep="\t", index=False
         )
