@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-26 13:20:57
+ * @LastEditTime: 2022-11-26 13:55:36
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -226,6 +226,8 @@ def bin_filter(
     1.  checkm: 50, 10
     2.  gunc: passed (in single mode)
 
+    other genomes will be put into bin_out_dir / "discard"
+
     intermediate checkm and gunc table can be provided as DataFrame;
     or will be used as output dir
     """
@@ -238,7 +240,7 @@ def bin_filter(
             bin_output=f"{_td}/bin_fa_input",
             bin_input=bin_input,
             support=support,
-            keep_if_avail=True,
+            keep_if_avail=False,
         )
         for bin_faa in prodigal_multithread(
             bin_input_dir.glob(f"*{suffix}"),
@@ -281,8 +283,17 @@ def bin_filter(
                 {"genome": "Bin Id"}, axis=1
             )
         )
+        checkm_gunc_filter = checkm_gunc[
+            (checkm_gunc["Completeness"] >= 50) & (checkm_gunc["Contamination"] <= 10)
+        ]
+
         (bin_out_dir_ := Path(bin_out_dir)).mkdir(parents=True, exist_ok=True)
-        checkm_gunc.to_csv(bin_out_dir_ / "checkm_gunc.tsv", sep="\t", index=False)
-        for bin_fa in checkm_gunc["Bin Id"]:
+        for bin_fa in checkm_gunc_filter["Bin Id"]:
             shutil.move(bin_input_dir / f"{bin_fa}.fa", bin_out_dir_ / f"{bin_fa}.fa")
-        return checkm_gunc
+
+        shutil.move(bin_input_dir, bin_input_dir / "discard")
+        checkm_gunc.to_csv(
+            bin_out_dir_ / "discard" / "checkm_gunc.tsv", sep="\t", index=False
+        )
+
+        return checkm_gunc_filter
