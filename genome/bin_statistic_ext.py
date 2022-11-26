@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 23:12:49
+ * @LastEditTime: 2022-11-26 13:20:57
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -247,7 +247,7 @@ def bin_filter(
             suffix="faa",
             threads=threads,
         ):
-            bin_faa.rename(str(bin_faa)[:20] + ".faa")
+            bin_faa.rename(str(bin_faa)[:-20] + ".faa")
         # endregion format input to prodigal single faa
 
         if isinstance(checkm_output_dir, pd.DataFrame):
@@ -278,7 +278,7 @@ def bin_filter(
 
         checkm_gunc = checkm_tsv.merge(
             gunc_tsv[["genome", "taxonomic_level", "pass.GUNC"]].rename(
-                {"Bin Id": "genome"}, axis=1
+                {"genome": "Bin Id"}, axis=1
             )
         )
         (bin_out_dir_ := Path(bin_out_dir)).mkdir(parents=True, exist_ok=True)
