@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-11-24 16:23:50
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-26 14:23:02
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2022-12-07 12:40:21
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -284,7 +284,9 @@ def bin_filter(
             )
         )
         checkm_gunc_filter = checkm_gunc[
-            (checkm_gunc["Completeness"] >= 50) & (checkm_gunc["Contamination"] <= 10)
+            (checkm_gunc["Completeness"] >= 50)
+            & (checkm_gunc["Contamination"] <= 10)
+            & (checkm_gunc["pass.GUNC"])
         ]
 
         (bin_out_dir_ := Path(bin_out_dir)).mkdir(parents=True, exist_ok=True)
