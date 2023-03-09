@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-21 09:51:49
+ * @LastEditTime: 2023-03-09 22:05:30
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -217,7 +217,6 @@ if jgi != (vamb_jgi := "/".join([bin_single, "vamb-jgi.tsv"])):
                     if line.startswith(">"):
                         fo.write(jgi[line[1:].split()[0]])
             fo.flush()
-
 
 
 

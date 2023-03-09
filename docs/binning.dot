@@ -48,6 +48,11 @@ digraph {
         das_tools [shape = "record";];
         uniteM [label = "{uniteM greedy|uniteM consensus|uniteM unanimous}";shape = "record";];
     }
+    subgraph cluster_filter {
+        label = "bins quality control";
+        checkm_gunc [shape = "record";label = "{checkm|gunc}";];
+        refined_all_bins;
+    }
     contigs -> das_tools [color = "blue";];
     
     metabat2_bin_groups -> das_tools;
@@ -65,13 +70,9 @@ digraph {
     metadecoder_bin_groups -> das_tools;
     vamb_bin_groups -> das_tools;
     
-    refined_all_bins [shape = "diamond";];
-    das_tools -> refined_all_bins [headport = "n"; color = "blue";];
+    das_tools -> refined_all_bins [color = "blue";];
     
-    das_tools -> checkm;
-    das_tools -> gunc;
+    refined_all_bins -> checkm_gunc -> refined_all_bins;
     
-    checkm -> refined_all_bins [headport = "w";];
-    gunc -> refined_all_bins [headport = "w";];
     refined_all_bins -> filtered_all_bins [tailport = "s"; color = "blue";];
 }
