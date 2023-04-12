@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-15 17:05:11
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 15:35:47
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-04-12 15:11:55
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -142,7 +142,7 @@ class BinStatisticContainer:
         return (
             (seq_id, seq_stat)
             for seq_id, seq_stat in self._seq_stats.items()
-            if seq_stat.len > _min_contig_len
+            if seq_stat.len >= _min_contig_len
         )
 
     def __init__(
