@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-11 13:49:35
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 21:41:16
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-05-19 17:14:29
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -79,7 +79,11 @@ def prokka_gff_multithread(
     gff_out_dir: PathLike = "",
     threads: int = 8,
 ) -> Iterable[Path]:
-    """WARNING: untested"""
+    """
+    generate gff, (support output to a new folder)
+    - if the same file exists in the new folder, you should move it first
+    - if gff already generated, then will follow snakemake's default rules
+    """
     # if many genomes are provided, the file must exist
     _genome_files = [Path(file).expanduser().absolute() for file in genomes]
     for genome in _genome_files:
@@ -99,9 +103,10 @@ def prokka_gff_multithread(
             new_file = gff_out_dir_ / genome_name
             if new_file.exists():
                 if new_file != genome_path:
-                    raise FileExistsError(genome_path)
+                    raise FileExistsError(new_file)
             else:
                 shutil.copy(genome_path, new_file)
+                os.system(f"touch -amcr {genome_path} {new_file}")
             genome_files.append(new_file)
     else:
         genome_files.extend(_genome_files)
@@ -109,7 +114,7 @@ def prokka_gff_multithread(
     smk_workflow = Path(__file__).parent.parent / "workflow"
     smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
     target_smk_file = smk_workflow / "genome.smk"
-    tpmf_outs = [f"{str(genome)[:-3]}-prokka.{kingdom}.gff" for genome in genomes]
+    tpmf_outs = [f"{str(genome)[:-3]}-prokka.{kingdom}.gff" for genome in genome_files]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (
         f"-s {target_smk_file} "
@@ -130,7 +135,7 @@ def prokka_gff_multithread(
     if gff_out_dir:
         for new_file in genome_files:
             if new_file not in _genome_files:
-                shutil.rmtree(new_file)
+                Path(new_file).unlink()
     for tpmf_out in tpmf_outs:
         Path(f"{tpmf_out[:-3]}log").unlink()
 
