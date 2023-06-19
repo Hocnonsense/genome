@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 19:30:00
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-06-19 14:36:34
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -115,14 +115,25 @@ rule prodigal_raw:
         """
 
 
+rule gunc_download_db:
+    output:
+        GUNC_DB=config.get("GUNC_DB", ""),
+    conda:
+        "../envs/gunc.yaml"
+    shell:
+        """
+        if [ -z "{output.GUNC_DB}" ]; then exit 1; fi
+        gunc download_db {output.GUNC_DB}
+        """
+
+
 rule gunc_bins_faa:
     input:
         bins_faa="{any}-bins_faa",
+        GUNC_DB=ancient(rules.gunc_download_db.output.GUNC_DB),
     output:
         gunc_out_tsv="{any}-gunc.tsv",
         gunc_out_dir=directory("{any}-gunc-dir"),
-    params:
-        GUNC_DB=config.get("GUNC_DB", ""),
     conda:
         "../envs/gunc.yaml"
     threads: 64
@@ -134,7 +145,7 @@ rule gunc_bins_faa:
         mkdir smk-gunc
 
         gunc run \
-            --db_file {params.GUNC_DB} \
+            --db_file {input.GUNC_DB} \
             --input_dir {input.bins_faa} \
             --file_suffix .faa \
             --gene_calls \
