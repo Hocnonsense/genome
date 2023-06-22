@@ -1,31 +1,27 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:32:50
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-25 23:10:37
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-06-22 22:44:44
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
 
 import gzip
 from pathlib import Path
-from typing import Generator, Iterable, Literal, TextIO, Union
+from typing import Generator, Iterable, TextIO, Union
 
 import gffutils
-from BCBio import GFF as _GFF
 from Bio import SeqFeature, SeqIO, SeqRecord
 from gffutils.biopython_integration import to_seqfeature
-from gffutils.iterators import (
-    feature_from_line,
-    six,
-    _FileIterator as _GffutilsFileIterator,
-)
 from gffutils.exceptions import EmptyInputError
+from gffutils.iterators import _FileIterator as _GffutilsFileIterator
+from gffutils.iterators import feature_from_line, six
 
+from . import GFFOutput
 
 PathLike = Union[str, Path]
 GeneralInput = Union[PathLike, TextIO]
-GffOutFormat = Literal["faa", "fna"]
 
 
 def as_text_io(data: GeneralInput) -> TextIO:
@@ -55,7 +51,7 @@ def write(
     """
     if str(out_handle).endswith(".gz"):
         out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
-    return _GFF.write(recs, out_handle, include_fasta)
+    return GFFOutput.write(recs, out_handle, include_fasta)
 
 
 class _FastaGffFileIterator(_GffutilsFileIterator):
