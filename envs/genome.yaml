@@ -16,7 +16,6 @@ dependencies:
 
   # bioinformation
   - biopython
-  - bcbio-gff
   - gffutils
   # checkm requirement
   - checkm-genome
