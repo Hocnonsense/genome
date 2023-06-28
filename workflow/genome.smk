@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-06-19 14:36:34
- * @FilePath: /genome/workflow/genome.smk
+ * @LastEditTime: 2023-06-28 15:08:58
+ * @FilePath: /2022_09-M_mem/workflow/utils/libs/genome/workflow/genome.smk
  * @Description:
 """
 import os
@@ -130,7 +130,7 @@ rule gunc_download_db:
 rule gunc_bins_faa:
     input:
         bins_faa="{any}-bins_faa",
-        GUNC_DB=ancient(rules.gunc_download_db.output.GUNC_DB),
+        GUNC_DB=ancient(config.get("GUNC_DB", "")),
     output:
         gunc_out_tsv="{any}-gunc.tsv",
         gunc_out_dir=directory("{any}-gunc-dir"),
