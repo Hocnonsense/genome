@@ -93,8 +93,7 @@ rule UniteM_profile:
         find smk-unitem/bins/ \
             -size -5k \
             -type f \
-            -exec rm {{}} \\;
-        let labels_i+=1
+            -exec rm {{}} \;
 
         unitem profile \
             -b smk-unitem/bins/* \
