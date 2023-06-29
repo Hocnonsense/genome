@@ -58,3 +58,7 @@ def create_conda_env_binning():
 
 def create_conda_env_all():
     return create_conda_env(*list_envs())
+
+if __name__ == "__main__":
+    print('Creating all envs...')
+    create_conda_env_all()

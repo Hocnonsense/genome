@@ -1,9 +1,13 @@
-name: binning
+name: concoct
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
-  - concoct
-  - python=3.8
-  - blas=*=mkl
+  - concoct=1.1.0
+  - libopenblas=*=openmp*
+  - mkl
+  - python>=3
+  - samtools>=1.9
+  - scikit-learn=1.1.*
+variables:
+  USE_OPENMP: 1

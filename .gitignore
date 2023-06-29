@@ -9,3 +9,5 @@
 !setup.py
 !MANIFEST.in
 *.egg-info
+
+__pychache__

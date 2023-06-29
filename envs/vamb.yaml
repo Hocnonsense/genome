@@ -1,9 +1,7 @@
 name: vamb
 channels:
-  - conda-forge
   - bioconda
+  - conda-forge
   - defaults
 dependencies:
-  - pip
-  - pip:
-      - https://github.com/RasmussenLab/vamb/archive/v3.0.8.zip
+  - vamb>=3.0
