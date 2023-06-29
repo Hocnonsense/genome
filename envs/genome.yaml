@@ -4,8 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - python  >=3.9, <3.10.0a0
-
   # coding
   - mypy
   - black
@@ -19,8 +17,6 @@ dependencies:
   # bioinformation
   - biopython
   - gffutils
-  # checkm requirement
-  # - checkm-genome
 
   # pipeline
   - snakemake
@@ -28,3 +24,4 @@ dependencies:
   # pipe
   - pip
   - pip:
+      - checkm-genome
