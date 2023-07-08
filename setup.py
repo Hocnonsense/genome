@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-13 09:49:04
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 19:46:05
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-07-03 14:05:11
  * @FilePath: /genome/setup.py
  * @Description:
 """
+
+import os
+from pathlib import Path
+
+os.chdir(Path(__file__).parent)
+
 
 from setuptools import setup, find_packages
 
