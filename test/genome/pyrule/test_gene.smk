@@ -1,5 +1,5 @@
-from pyrule import register
+from genome.pyrule import register
 
 register(workflow=workflow, config=config)
 
-import pyrule.gene
+import genome.pyrule.gene

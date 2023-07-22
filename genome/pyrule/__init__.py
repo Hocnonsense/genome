@@ -2,8 +2,8 @@
 """
  * @Date: 2023-07-22 15:34:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-22 16:13:21
- * @FilePath: /genome/pyrule/__init__.py
+ * @LastEditTime: 2023-07-22 18:05:10
+ * @FilePath: /genome/genome/pyrule/__init__.py
  * @Description:
 """
 
@@ -22,7 +22,7 @@ class __Workflow:
 
 
 cache: dict = {"workflow": __Workflow()}
-envs_dir = Path(__file__).parent.parent / "envs"
+envs_dir = Path(__file__).parent.parent.parent / "envs"
 
 
 def register(**kwargs):
