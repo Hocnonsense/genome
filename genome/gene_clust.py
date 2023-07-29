@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-15 21:29:41
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-07 20:47:06
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-07-22 21:26:01
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -16,6 +16,7 @@ from typing import Iterable, Literal, Union, NamedTuple
 
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
+import pandas as pd
 
 
 PathLike = Union[str, Path]
@@ -30,10 +31,34 @@ class MmseqOut(NamedTuple):
     @classmethod
     def from_prefix(cls, prefix: PathLike):
         return cls(
-            Path(str(prefix) + "-clu_100.tsv"),
-            Path(str(prefix) + "-clu.tsv"),
-            Path(str(prefix) + "-clu_rep.faa"),
+            Path(f"{prefix}-clu_100.tsv"),
+            Path(f"{prefix}-clu.tsv"),
+            Path(f"{prefix}-clu_rep.faa"),
         )
+
+    @classmethod
+    def from_prefix_modify(
+        cls,
+        prefix: PathLike,
+        all_100: PathLike = None,
+        all_clu: PathLike = None,
+        all_clu_faa: PathLike = None,
+    ):
+        all_100_ = all_100 if all_100 else f"{prefix}-clu_100.tsv"
+        all_clu_ = all_clu if all_clu else f"{prefix}-clu.tsv"
+        all_clu_faa_ = all_clu_faa if all_clu_faa else f"{prefix}-clu_rep.faa"
+
+        return cls(Path(all_100_), Path(all_clu_), Path(all_clu_faa_))
+
+    def load_rep2all(self):
+        all_100 = pd.read_csv(
+            self.all_100, sep="\t", header=None, names=["Rep100", "All"]
+        )
+        all_clu = pd.read_csv(
+            self.all_clu, sep="\t", header=None, names=["Rep", "Rep100"]
+        )
+        rep2all = all_100.merge(all_clu)[["Rep", "All"]]
+        return rep2all
 
 
 def mmseq_clust(

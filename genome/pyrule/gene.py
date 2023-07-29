@@ -2,19 +2,18 @@
 """
  * @Date: 2023-07-22 15:34:34
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-22 20:34:42
+ * @LastEditTime: 2023-07-22 21:15:01
  * @FilePath: /genome/genome/pyrule/gene.py
  * @Description:
 """
 
 from snakemake import shell
-from snakemake.workflow import Workflow
 from snakemake.io import touch
+from snakemake.workflow import Workflow
 
 from . import cache, envs_dir
 
 workflow: Workflow = cache["workflow"]
-config: dict = cache["config"]
 
 mantis_config = cache["config"]["mantis_config"]
 mantis_config_check = mantis_config + ".check"

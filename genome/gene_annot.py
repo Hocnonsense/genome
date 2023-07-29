@@ -2,15 +2,15 @@
 """
  * @Date: 2022-04-15 13:56:44
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-02-08 11:29:59
- * @FilePath: /2022_09-M_mem/workflow/remote/gene_annot.py
+ * @LastEditTime: 2023-07-22 21:21:27
+ * @FilePath: /genome/genome/gene_annot.py
  * @Description:
 """
 
 import os
 import re
 from pathlib import Path
-from typing import Generator, Union, overload
+from typing import Generator, NamedTuple, Union
 
 import pandas as pd
 
@@ -40,7 +40,40 @@ def read_table(text, sep="\t", annot="#", title: list = None, openit=False):
         text.close()  # type: ignore
 
 
-class gene2KO:
+PathLike = Union[str, Path]
+
+
+class Gene2KOOut(NamedTuple):
+    faa: Path = Path("gene-clu_rep.faa")
+    ghost: Path = Path("gene-clu_rep-ghost.faa")
+    kofam: Path = Path("gene-clu_rep-kofam.faa")
+    eggnog: Path = Path("gene-clu_rep-eggnog.faa")
+    mantis: Path = Path("gene-clu_rep-mantis.faa")
+
+    @classmethod
+    def from_prefix(cls, prefix: PathLike):
+        return cls(
+            faa=Path(f"{prefix}.faa"),
+            ghost=Path(f"{prefix}-ghost.faa"),
+            kofam=Path(f"{prefix}-kofam.faa"),
+            eggnog=Path(f"{prefix}-eggnog.faa"),
+            mantis=Path(f"{prefix}-mantis.faa"),
+        )
+
+    @classmethod
+    def from_faa(cls, faa: PathLike):
+        assert str(faa).endswith(".faa")
+        prefix = str(faa)[:-4]
+        return cls(
+            faa=Path(f"{prefix}.faa"),
+            ghost=Path(f"{prefix}-ghost.faa"),
+            kofam=Path(f"{prefix}-kofam.faa"),
+            eggnog=Path(f"{prefix}-eggnog.faa"),
+            mantis=Path(f"{prefix}-mantis.faa"),
+        )
+
+
+class Gene2KO:
     class gene_ko_iter:
         def __init__(self, filename: Path):
             self.filename = filename
@@ -113,7 +146,6 @@ class gene2KO:
         return pd.Series(self.get_gene_KOs(), name="KO")
 
     def __init__(self, pattern: Union[Path, list[Path]]):
-
         if not isinstance(pattern, list):
             pattern = [pattern]
         ann_files_ = self._infer_ann_files(pattern)
@@ -140,29 +172,6 @@ class gene2KO:
         return ann_files
 
 
-@overload
-def load_rep2all(prefix: Path) -> pd.DataFrame:
-    ...
-
-
-@overload
-def load_rep2all(all_100_: Path, all_clu_: Path, /) -> pd.DataFrame:
-    ...
-
-
-def load_rep2all(prefix: Path, prefix_all_clu_: Path = None):
-    if prefix_all_clu_ is None:
-        all_100_ = f"{prefix}-clu_100.tsv"
-        all_clu_ = f"{prefix}-clu.tsv"
-    else:
-        all_100_ = str(prefix)
-        all_clu_ = str(prefix_all_clu_)
-    all_100 = pd.read_csv(all_100_, sep="\t", header=None, names=["Rep100", "All"])
-    all_clu = pd.read_csv(all_clu_, sep="\t", header=None, names=["Rep", "Rep100"])
-    rep2all = all_100.merge(all_clu)[["Rep", "All"]]
-    return rep2all
-
-
 def get_all_gene_annots(gene_annots: pd.Series, rep2all: pd.Series = None):
     ko_exploded = (
         gene_annots.apply(lambda x: x.split(":") if x.startswith("K") else [])
@@ -171,13 +180,13 @@ def get_all_gene_annots(gene_annots: pd.Series, rep2all: pd.Series = None):
         .rename("KO")
         .pipe(pd.DataFrame)
     )
+
     if rep2all is not None:
         all_gene_annots = ko_exploded.merge(
             rep2all, left_index=True, right_index=True
         ).set_index(rep2all.name)
     else:
         all_gene_annots = ko_exploded
-
     return all_gene_annots
 
 
@@ -187,66 +196,15 @@ def main(
     all_clu_path: Path,
     all_gene_annots_path: Path = None,
 ):
-    gene_annots = gene2KO(annot_prefix).get_gene_annots()
+    from .gene_clust import MmseqOut
+
+    rep2all = MmseqOut(all_100_path, all_clu_path, Path()).load()
 
     # gene_annots = pd.read_csv(gene_annots_path, index_col=0)["ko"]
-    rep2all = load_rep2all(all_100_path, all_clu_path)
+    gene_annots = Gene2KO(annot_prefix).get_gene_annots()
 
     all_gene_annots = get_all_gene_annots(gene_annots, rep2all)
     if all_gene_annots_path:
         all_gene_annots.to_csv(all_gene_annots_path)
 
     return all_gene_annots
-
-
-if __name__ == "__main__":
-    import click
-
-    from data.file_path import FilePath
-
-    file_path = FilePath()
-
-    @click.command()
-    @click.option("--loglevel", default="INFO", type=str, help="set level of logger")
-    @click.option(
-        "--all-100",
-        default=file_path.all_bins("collect_annot") / "all-clu_100.tsv",
-        type=Path,
-        help="",
-    )
-    @click.option(
-        "--all-clu",
-        default=file_path.all_bins("collect_annot") / "all-clu.tsv",
-        type=Path,
-        help="",
-    )
-    @click.option(
-        "--annot-prefix",
-        default=file_path.all_bins("collect_annot") / "all-clu_rep-kofam.tsv",
-        type=Path,
-        help="",
-    )
-    @click.option(
-        "--gene-annots",
-        default=file_path.results("all_gene_annots.csv"),
-        type=Path,
-        help="",
-    )
-    def run(
-        loglevel: str,
-        all_100: Path,
-        all_clu: Path,
-        annot_prefix: Path,
-        gene_annots: Path,
-    ):
-        logger.setLevel(level=loglevel.upper())  # info
-
-        gene_annots.parent.mkdir(parents=True, exist_ok=True)
-
-        logger.warning(">>> job start")
-        state = main(annot_prefix, all_100, all_clu, gene_annots)
-        logger.warning(">>> job finish")
-        if state == 0:
-            logger.info("success!")
-
-    run()
