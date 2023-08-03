@@ -1,0 +1,5 @@
+name: mantis
+channels:
+  - bioconda
+dependencies:
+  - mantis_pfa
