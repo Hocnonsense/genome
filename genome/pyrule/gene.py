@@ -2,7 +2,7 @@
 """
  * @Date: 2023-07-22 15:34:34
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-22 21:15:01
+ * @LastEditTime: 2023-08-03 21:50:05
  * @FilePath: /genome/genome/pyrule/gene.py
  * @Description:
 """
@@ -91,7 +91,7 @@ mv smk-mantis \
 @workflow.params(mantis_config=mantis_config)
 @workflow.threads(64)
 @workflow.conda(envs_dir / "mantis.yaml")
-@workflow.wildcard_constraints(method="mantis")
+@workflow.register_wildcard_constraints(method="mantis")
 @workflow.shadow("shallow")
 @workflow.shellcmd(mantis_run_shellcmd)
 @workflow.run
