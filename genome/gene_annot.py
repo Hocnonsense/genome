@@ -2,7 +2,7 @@
 """
  * @Date: 2022-04-15 13:56:44
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-22 21:21:27
+ * @LastEditTime: 2023-08-03 19:30:27
  * @FilePath: /genome/genome/gene_annot.py
  * @Description:
 """
@@ -10,7 +10,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Generator, NamedTuple, Union
+from typing import Generator, NamedTuple, Optional, Union
 
 import pandas as pd
 
@@ -24,7 +24,7 @@ except ImportError:
     logger = logging.getLogger(__name__)
 
 
-def read_table(text, sep="\t", annot="#", title: list = None, openit=False):
+def read_table(text, sep="\t", annot="#", title: Optional[list] = None, openit=False):
     if openit:
         text = open(text)  # type: ignore
     for line in text:
@@ -194,11 +194,11 @@ def main(
     annot_prefix,
     all_100_path: Path,
     all_clu_path: Path,
-    all_gene_annots_path: Path = None,
+    all_gene_annots_path: Optional[Path] = None,
 ):
     from .gene_clust import MmseqOut
 
-    rep2all = MmseqOut(all_100_path, all_clu_path, Path()).load()
+    rep2all = MmseqOut(all_100_path, all_clu_path, Path()).load_rep2all()
 
     # gene_annots = pd.read_csv(gene_annots_path, index_col=0)["ko"]
     gene_annots = Gene2KO(annot_prefix).get_gene_annots()

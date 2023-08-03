@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-22 21:26:01
+ * @LastEditTime: 2023-08-03 19:28:52
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -12,7 +12,7 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Iterable, Literal, Union, NamedTuple
+from typing import Iterable, Literal, Optional, Union, NamedTuple
 
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
@@ -40,9 +40,9 @@ class MmseqOut(NamedTuple):
     def from_prefix_modify(
         cls,
         prefix: PathLike,
-        all_100: PathLike = None,
-        all_clu: PathLike = None,
-        all_clu_faa: PathLike = None,
+        all_100: Optional[PathLike] = None,
+        all_clu: Optional[PathLike] = None,
+        all_clu_faa: Optional[PathLike] = None,
     ):
         all_100_ = all_100 if all_100 else f"{prefix}-clu_100.tsv"
         all_clu_ = all_clu if all_clu else f"{prefix}-clu.tsv"
@@ -62,8 +62,8 @@ class MmseqOut(NamedTuple):
 
 
 def mmseq_clust(
-    files: Iterable[PathLike] = None,
-    faas: Iterable[SeqRecord.SeqRecord] = None,
+    files: Optional[Iterable[PathLike]] = None,
+    faas: Optional[Iterable[SeqRecord.SeqRecord]] = None,
     out_prefix: Union[PathLike, MmseqOut] = "gene",
     threads=4,
 ) -> MmseqOut:
