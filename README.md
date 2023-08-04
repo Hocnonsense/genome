@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-06-29 14:57:31
+ * @LastEditTime: 2023-08-04 11:07:34
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -59,6 +59,11 @@ create_conda_env(*list_envs())
 
 
 ## changelog
+- 0.1.1:
+    - add mantis rules for snakemake in `genome.pyrule`, only for snakemake>=7.31
+    - remove `checkm` and `contig2bin` from `genome.binning`
+- 0.1.0:
+    - [Version match with meta-snakemake-minimal v0.1.0](http://202.120.45.162:12080/Metabolic_Modeling/genome/releases/tag/version-0.1.0)
 - 0.0.3:
     - remove dependence of bcbio-gff (no other change)
 - 0.0.2:

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-25 16:45:32
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 16:27:09
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-08-04 11:04:05
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -12,15 +12,13 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Final, Literal, NamedTuple, Optional, Union
+from typing import Final, Literal, NamedTuple
 
 import yaml
 from snakemake import main as smk
 
-from .bin_statistic import contig2bin
-from .bin_statistic_ext import checkm
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
 default_bin_methods = [
     "metabat2_60_60",
@@ -42,7 +40,7 @@ default_bin_methods = [
 
 class BinningOutput(NamedTuple):
     ctg2mag: Path
-    out_dir: Optional[Path] = None
+    out_dir: Path | None = None
 
     @classmethod
     def from_prefix(cls, prefix: PathLike):
@@ -52,12 +50,12 @@ class BinningOutput(NamedTuple):
 class BinningConfig(NamedTuple):
     MIN_BIN_CONTIG_LEN: int = 1500
     contig: str = "{any}.fa"
-    bams: Optional[list[str]] = None
+    bams: list[str] | None = None
     lsbams: str = "{any}.bams.ls"
     jgi: str = "{any}-jgi.tsv"
     bin_single: str = "{any}-bins/single"
     bin_union_dir: str = "{any}-bins/union"
-    bin_methods: Optional[list[str]] = None
+    bin_methods: list[str] | None = None
 
     def to_config(self, config_file: PathLike):
         Path(config_file).parent.mkdir(parents=True, exist_ok=True)
@@ -89,7 +87,7 @@ class BinningConfig(NamedTuple):
         if not jgi.is_file():
             with open(self.jgi) as fi:
                 header = next(fi)
-                jgi_lines: dict[str, str] = {i.split()[0]: i for i in fi}
+                jgi_lines = {i.split()[0]: i for i in fi}
             with open(jgi, "w") as fo, open(contig) as fa:
                 fo.write(header)
                 for line in fa:
@@ -168,7 +166,7 @@ class BinningConfig(NamedTuple):
 
 
 def check_bams(
-    bin_union_dir: PathLike, bams: Union[list[PathLike], PathLike] = None
+    bin_union_dir: PathLike, bams: list[PathLike] | PathLike | None = None
 ) -> tuple[PathLike, list[PathLike]]:
     if not bams:
         bams = []
@@ -185,12 +183,12 @@ def bin_union(
         "dastool", "unitem_greedy", "unitem_consensus", "unitem_unanimous"
     ] = "dastool",
     marker: str = "",
-    bin_union_dir: PathLike = None,
+    bin_union_dir: PathLike | None = None,
     contig: PathLike = "",
     jgi: PathLike = "",
-    bams: Union[list[PathLike], PathLike] = None,
-    bin_single: PathLike = None,
-    bin_methods: list[str] = None,
+    bams: list[PathLike] | PathLike | None = None,
+    bin_single: PathLike | None = None,
+    bin_methods: list[str] | None = None,
     min_bin_contig_len: int = 1500,
     threads: int = 10,
 ):

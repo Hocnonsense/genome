@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-13 09:49:04
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-07-03 14:05:11
+ * @LastEditTime: 2023-08-04 11:07:42
  * @FilePath: /genome/setup.py
  * @Description:
 """
@@ -17,7 +17,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="genome",
-    version="0.0.2",
+    version="0.1.1",
     author="hwrn.aou",
     author_email="hwrn.aou@sjtu.edu.cn",
     description="genome storage and analysis unit",
