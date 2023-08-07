@@ -2,21 +2,25 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 13:41:21
+ * @LastEditTime: 2023-08-07 13:57:26
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
 
+from pathlib import Path
 import snakemake.workflow as _wf
 from snakemake import shell
 from snakemake.io import directory
 
 from . import envs_dir
 
-gunc_download_db = """
-mdkir -p `dirname {output.GUNC_DB}`
 
-gunc download_db {output.GUNC_DB}
+file_name = "gunc_db_progenomes2.1.dmnd.gz"
+
+gunc_download_db = """
+mkdir -p {params.GUNC_DB}
+
+gunc download_db {params.GUNC_DB}
 """
 
 gunc_run_shellcmd = """
@@ -39,8 +43,11 @@ mv smk-gunc {output.gunc_out_dir}
 
 
 def register(workflow: _wf.Workflow, GUNC_DB: str):
+    gunc_db_file = Path(GUNC_DB) / file_name
+
     @workflow.rule(name="gunc_download_db")
-    @workflow.output(GUNC_DB=GUNC_DB)
+    @workflow.output(GUNC_DB=gunc_db_file)
+    @workflow.params(GUNC_DB=GUNC_DB)
     @workflow.threads(64)
     @workflow.conda(envs_dir / "gunc.yaml")
     @workflow.shadow("shallow")
@@ -80,7 +87,7 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
         )
 
     @workflow.rule(name="gunc_run")
-    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=GUNC_DB)
+    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=gunc_db_file)
     @workflow.output(
         gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
     )
