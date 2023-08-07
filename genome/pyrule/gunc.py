@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 13:57:26
+ * @LastEditTime: 2023-08-07 14:33:38
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -15,12 +15,18 @@ from snakemake.io import directory
 from . import envs_dir
 
 
-file_name = "gunc_db_progenomes2.1.dmnd.gz"
+file_name = "gunc_db_progenomes2.1.dmnd"
 
 gunc_download_db = """
 mkdir -p {params.GUNC_DB}
 
-gunc download_db {params.GUNC_DB}
+gunc download_db {params.GUNC_DB} \
+|| (
+    wget \
+        https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz \
+        -O {output.GUNC_DB}.gz;
+    gunzip {output.GUNC_DB}.gz
+)
 """
 
 gunc_run_shellcmd = """
