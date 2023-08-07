@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-06-28 15:08:58
- * @FilePath: /2022_09-M_mem/workflow/utils/libs/genome/workflow/genome.smk
+ * @LastEditTime: 2023-08-07 13:34:54
+ * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
 import os
@@ -115,45 +115,7 @@ rule prodigal_raw:
         """
 
 
-rule gunc_download_db:
-    output:
-        GUNC_DB=config.get("GUNC_DB", ""),
-    conda:
-        "../envs/gunc.yaml"
-    shell:
-        """
-        if [ -z "{output.GUNC_DB}" ]; then exit 1; fi
-        gunc download_db {output.GUNC_DB}
-        """
+if config.get("GUNC_DB", ""):
+    from genome.pyrule import gunc
 
-
-rule gunc_bins_faa:
-    input:
-        bins_faa="{any}-bins_faa",
-        GUNC_DB=ancient(config.get("GUNC_DB", "")),
-    output:
-        gunc_out_tsv="{any}-gunc.tsv",
-        gunc_out_dir=directory("{any}-gunc-dir"),
-    conda:
-        "../envs/gunc.yaml"
-    threads: 64
-    shadow:
-        "shallow"
-    shell:
-        """
-        rm -f smk-gunc
-        mkdir smk-gunc
-
-        gunc run \
-            --db_file {input.GUNC_DB} \
-            --input_dir {input.bins_faa} \
-            --file_suffix .faa \
-            --gene_calls \
-            --temp_dir smk-gunc \
-            --out_dir smk-gunc \
-            --threads {threads} \
-            --detailed_output
-
-        cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.gunc_out_tsv}
-        mv smk-gunc {output.gunc_out_dir}
-        """
+    gunc.register(workflow, config["GUNC_DB"])
