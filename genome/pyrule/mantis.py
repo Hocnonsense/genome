@@ -1,65 +1,53 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2023-08-06 18:29:50
+ * @Date: 2023-07-22 15:34:34
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 14:33:38
- * @FilePath: /genome/genome/pyrule/gunc.py
+ * @LastEditTime: 2023-08-07 15:16:48
+ * @FilePath: /genome/genome/pyrule/mantis.py
  * @Description:
 """
 
-from pathlib import Path
-
 import snakemake.workflow as _wf
 from snakemake import shell
-from snakemake.io import directory
+from snakemake.io import touch
 
 from . import envs_dir
 
-file_name = "gunc_db_progenomes2.1.dmnd"
-
-gunc_download_db = """
-mkdir -p {params.GUNC_DB}
-
-gunc download_db {params.GUNC_DB} \
-|| (
-    wget \
-        https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz \
-        -O {output.GUNC_DB}.gz;
-    gunzip {output.GUNC_DB}.gz
-)
+mantis_setup_shellcmd = """
+mantis setup \
+    --mantis_config {input.mantis_config} \
+    -c {threads}
 """
 
-gunc_run_shellcmd = """
-rm -f smk-gunc
-mkdir smk-gunc
+mantis_run_shellcmd = """
+rm -f smk-mantis
 
-gunc run \
-    --db_file {input.GUNC_DB} \
-    --input_dir {input.bins_faa} \
-    --file_suffix .faa \
-    --gene_calls \
-    --temp_dir smk-gunc \
-    --out_dir smk-gunc \
-    --threads {threads} \
-    --detailed_output
+mantis \
+    run \
+    --mantis_config {params.mantis_config} \
+    -c {threads} \
+    -i {input.faa} \
+    -o smk-mantis
 
-cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.gunc_out_tsv}
-mv smk-gunc {output.gunc_out_dir}
+mv smk-mantis/consensus_annotation.tsv \
+    {output.annot}
+mv smk-mantis \
+    {input.faa}-mantis/
 """
 
 
-def register(workflow: _wf.Workflow, GUNC_DB: str):
-    gunc_db_file = Path(GUNC_DB) / file_name
+def register(workflow: _wf.Workflow, mantis_config: str):
+    mantis_config_check = mantis_config + ".check"
 
-    @workflow.rule(name="gunc_download_db")
-    @workflow.output(GUNC_DB=gunc_db_file)
-    @workflow.params(GUNC_DB=GUNC_DB)
+    @workflow.rule(name="annotate_gene_mantis_check")
+    @workflow.input(mantis_config=mantis_config)
+    @workflow.output(mantis_config_check=touch(mantis_config_check))
     @workflow.threads(64)
-    @workflow.conda(envs_dir / "gunc.yaml")
+    @workflow.conda(envs_dir / "mantis.yaml")
     @workflow.shadow("shallow")
-    @workflow.shellcmd(gunc_download_db)
+    @workflow.shellcmd(mantis_setup_shellcmd)
     @workflow.run
-    def __rule_gunc_download_db(
+    def __rule_annotate_gene_mantis_check(
         input,
         output,
         params,
@@ -87,22 +75,22 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
         __is_snakemake_rule_func=True,
     ):
         shell(
-            gunc_download_db,
+            mantis_setup_shellcmd,
             bench_record=bench_record,
             bench_iteration=bench_iteration,
         )
 
-    @workflow.rule(name="gunc_run")
-    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=gunc_db_file)
-    @workflow.output(
-        gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
-    )
+    @workflow.rule(name="annotate_gene_mantis")
+    @workflow.input(faa="{any}.faa", mantis_config_check=mantis_config_check)
+    @workflow.output(annot="{any}-{method}.tsv")
+    @workflow.params(mantis_config=mantis_config)
     @workflow.threads(64)
-    @workflow.conda(envs_dir / "gunc.yaml")
+    @workflow.conda(envs_dir / "mantis.yaml")
+    @workflow.register_wildcard_constraints(method="mantis")
     @workflow.shadow("shallow")
-    @workflow.shellcmd(gunc_run_shellcmd)
+    @workflow.shellcmd(mantis_run_shellcmd)
     @workflow.run
-    def __rule_gunc_run(
+    def __rule_annotate_gene_mantis(
         input,
         output,
         params,
@@ -130,7 +118,7 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
         __is_snakemake_rule_func=True,
     ):
         shell(
-            gunc_run_shellcmd,
+            mantis_run_shellcmd,
             bench_record=bench_record,
             bench_iteration=bench_iteration,
         )
