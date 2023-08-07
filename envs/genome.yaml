@@ -21,6 +21,9 @@ dependencies:
   # pipeline
   - snakemake
 
+  # for checkm
+  - hmmer
+
   # pipe
   - pip
   - pip:
