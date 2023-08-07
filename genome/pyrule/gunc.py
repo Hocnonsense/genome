@@ -2,16 +2,16 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 13:35:18
+ * @LastEditTime: 2023-08-07 13:41:21
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
 
+import snakemake.workflow as _wf
 from snakemake import shell
-from snakemake.workflow import Workflow
+from snakemake.io import directory
 
 from . import envs_dir
-
 
 gunc_download_db = """
 mdkir -p `dirname {output.GUNC_DB}`
@@ -38,7 +38,7 @@ mv smk-gunc {output.gunc_out_dir}
 """
 
 
-def register(workflow, GUNC_DB):
+def register(workflow: _wf.Workflow, GUNC_DB: str):
     @workflow.rule(name="gunc_download_db")
     @workflow.output(GUNC_DB=GUNC_DB)
     @workflow.threads(64)
