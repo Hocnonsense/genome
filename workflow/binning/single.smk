@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
- * @LastEditors: Hwrn
- * @LastEditTime: 2023-03-09 22:05:30
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-08-07 12:17:49
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -236,21 +236,29 @@ rule vamb:
         "shallow"
     shell:
         """
-        rm -f {params.dout}
+        rm -f {params.dout} {output.ctg2mag}.fail
         # mkdir -p {params.dout}
 
         vamb \
             --outdir {params.dout} \
             --fasta {input.contig} \
             --jgi {input.jgi} \
-            --minfasta 200000
+            --minfasta 200000 \
+        || touch {output.ctg2mag}.fail
 
-        rename {params.dout}/bins/ {params.dout}/{params.dout}- {params.dout}/bins/*.{params.extension}
+        if [ ! -f {output.ctg2mag}.fail ]
+        then
+            rename \
+                {params.dout}/bins/ {params.dout}/{params.dout}- \
+                {params.dout}/bins/*.{params.extension}
 
-        for i in {params.dout}/*.{params.extension}
-        do
-            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-        done \
-        > {output.ctg2mag}
+            for i in {params.dout}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done \
+            > {output.ctg2mag}
+        else
+            touch {output.ctg2mag}
+        fi
         """

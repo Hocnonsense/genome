@@ -21,6 +21,11 @@ dependencies:
   # pipeline
   - snakemake
 
+  # for checkm
+  - hmmer
+  - prodigal
+  - pplacer
+
   # pipe
   - pip
   - pip:
