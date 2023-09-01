@@ -1,4 +1,4 @@
-name: drep
+name: prokka
 channels:
   - conda-forge
   - bioconda

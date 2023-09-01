@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 15:26:55
+ * @LastEditTime: 2023-08-07 15:40:44
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -10,6 +10,9 @@ changelog for genome
 
 ---
 ## changelog
+- 0.1.3:
+    - next changes
+        - remove `genome.pyrule.gene` in next minor release.
 - 0.1.2:
     - feat
         - change mantis to `genome.pyrule.mantis`, new include method are welcome
@@ -28,7 +31,6 @@ changelog for genome
         - changing:
             - `checkm` from `genome.binning` to `genome.bin_statistic_ext`
             - `contig2bin` from `genome.binning` to `genome.bin_statistic`
-        - now these functions can still be loaded from old packages, but cannot in next minor release.
 - 0.0.1: init
 
 
