@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 15:18:59
+ * @LastEditTime: 2023-08-07 15:36:58
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -56,3 +56,6 @@ create_conda_env(*list_envs())
 - snakemake
 - python
 - bash
+
+## changelog
+- [changelog](changelog.md)
