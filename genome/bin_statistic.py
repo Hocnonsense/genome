@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-04-12 15:11:55
+ * @LastEditTime: 2023-09-04 11:14:47
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -112,8 +112,25 @@ class BinStatisticContainer:
     """
 
     @classmethod
-    def read_gff(cls, filename, min_contig_len=0):
-        return cls(SeqStat.load_seq_stats(Parse(filename)()), filename, min_contig_len)
+    def read_gff(
+        cls,
+        filename: PathLike,
+        refernce_file: PathLike | None = None,
+        min_contig_len=0,
+    ):
+        parser = Parse(filename)
+        if refernce_file:
+            parser = parser.reset_reference(refernce_file)
+
+        return cls(SeqStat.load_seq_stats(parser()), filename, min_contig_len)
+
+    @classmethod
+    def read_gff_parser(
+        cls,
+        parser: Parse,
+        min_contig_len=0,
+    ):
+        return cls(SeqStat.load_seq_stats(parser()), parser.gff_file, min_contig_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):
@@ -167,7 +184,7 @@ class BinStatisticContainer:
         coding_density: float
         genes_num: int
 
-    def statistic(self, min_contig_len: int = None):
+    def statistic(self, min_contig_len: int | None = None):
         if min_contig_len is None:
             min_contig_len = 0
         _min_contig_len = max(min_contig_len, self.min_contig_len)
@@ -253,7 +270,7 @@ class BinStatisticContainer:
 
         return len_aa, n_aa
 
-    def dump(self, filename: PathLike = None):
+    def dump(self, filename: PathLike | None = None):
         self.parse = lambda: ()
         if filename is None:
             pickle_filename = Path(f"{self.source_file}-stat.pkl")

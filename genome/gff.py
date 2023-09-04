@@ -2,14 +2,15 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-06-22 22:44:44
+ * @LastEditTime: 2023-09-04 10:46:43
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
 
 import gzip
+import warnings
 from pathlib import Path
-from typing import Generator, Iterable, TextIO, Union
+from typing import Callable, Generator, Iterable, Optional, TextIO, Union
 
 import gffutils
 from Bio import SeqFeature, SeqIO, SeqRecord
@@ -79,10 +80,10 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
                 self.current_item_number = i
 
                 if line.startswith("##FASTA"):
-                    self.fasta_start_pointer: int = fh.tell()
+                    self.fasta_start_pointer = fh.tell()
                     return
                 if line.startswith(">"):
-                    self.fasta_start_pointer: int = fh.tell() - len(line)
+                    self.fasta_start_pointer = fh.tell() - len(line)
                     return
 
                 line = line.rstrip("\n\r")
@@ -120,6 +121,14 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
     fasta_start_pointer = property(__get_fasta_start_pointer, __set_fasta_start_pointer)
 
 
+def infer_prodigal_gene_id(rec_id: str, fet_id: str):
+    return rec_id + "_" + str(int(fet_id.rsplit("_", 1)[1]))
+
+
+def infer_refseq_gene_id(rec_id: str, fet_id: str):
+    return fet_id.rsplit("-", 1)[1]
+
+
 class Parse:
     def __init__(self, gff_file: PathLike, create_now=True):
         self.gff_file = Path(gff_file)
@@ -146,12 +155,14 @@ class Parse:
                 self.fasta_gff, dbfn=dbfn, verbose=verbose, **kwargs
             )
             if self.fasta_gff.fasta_start_pointer == -1:
-                raise RuntimeWarning("No sequences found in file. Please check.")
+                warnings.warn(
+                    "No sequences found in file. Please check.", RuntimeWarning
+                )
         except EmptyInputError:
             self.fasta_gff.fasta_start_pointer = 0
 
     def __call__(
-        self, limit_info: str = None
+        self, limit_info: Optional[str] = None
     ) -> Generator[SeqRecord.SeqRecord, None, None]:
         """
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
@@ -164,7 +175,12 @@ class Parse:
                 )
             yield rec
 
-    def extract(self, translate=True, min_aa_length=33):
+    def extract(
+        self,
+        translate=True,
+        min_aa_length=33,
+        call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
+    ):
         """
         min_aa_length acturally refer to at least 32 aa complete protein,
         for a complete terminal codon.
@@ -182,7 +198,7 @@ class Parse:
                     continue
                 if translate:
                     seq = seq.translate()
-                seq.id = rec.id + "_" + str(int(fet.id.rsplit("_", 1)[1]))
+                seq.id = call_gene_id(rec.id, fet.id)
                 seq.description = " # ".join(
                     (
                         str(i)
