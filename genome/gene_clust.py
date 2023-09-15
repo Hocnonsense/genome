@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-03 19:28:52
+ * @LastEditTime: 2023-09-05 11:53:12
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -27,6 +27,11 @@ class MmseqOut(NamedTuple):
     all_100: Path = Path("gene-clu_100.tsv")
     all_clu: Path = Path("gene-clu.tsv")
     all_clu_faa: Path = Path("gene-clu_rep.faa")
+
+    @classmethod
+    def from_in_faa(cls, faa: PathLike):
+        assert faa.endswith(".faa")
+        return cls.from_prefix(str(faa)[:-4])
 
     @classmethod
     def from_prefix(cls, prefix: PathLike):
