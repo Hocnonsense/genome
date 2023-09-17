@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-04 11:14:47
+ * @LastEditTime: 2023-09-17 18:11:49
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -78,7 +78,7 @@ class SeqStat(NamedTuple):
             at = a + u + t
             gc = g + c
 
-            gcContent = 0.0 if (gcat := gc + at) > 0 else float(gc) / gcat
+            gcContent = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
 
             cc: list[int] = [
                 # fet: SeqFeature.SeqFeature

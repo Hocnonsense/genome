@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:53:55
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 17:07:21
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-09-17 18:16:16
  * @FilePath: /genome/test/genome/test_bin_statistic.py
  * @Description:
 __file__ = "/home/hwrn/software/genome/test/genome/test_bin_statistic.py"
@@ -23,8 +23,9 @@ def test_prokka_gff_bin_statistic():
     gff = test_files / "metadecoder.1-prokka.Bacteria.gff"
     bsc = BinStatisticContainer.read_gff(gff)
     bs = bsc.statistic()
+    bsc.calculate_gc_std()
     assert int(bs.gc * 100) == 56
-    assert int(bs.gc_std * 10000) == 206
+    assert round(bs.gc_std * 10000) == 206
     assert bs.bp_size == 1040626
     assert bs.max_contig_len == 9951
     assert bs.contigs_num == 293
@@ -83,7 +84,7 @@ def test_genome_stat_speed():
 
 def test_contig2bin():
     test_fa = test_files / "02_assem..TY.041_cut.fa"
-    test_c2b = test_temp / "union" / "dastool-all.tsv"
-    temp_bin = test_temp / "dastool-all"
+    test_c2b = test_files / "binsingle" / "dastool.tsv"
+    temp_bin = test_temp / "dastool"
 
     contig2bin(temp_bin, test_c2b, test_fa)
