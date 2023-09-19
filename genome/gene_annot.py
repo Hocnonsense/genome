@@ -2,7 +2,7 @@
 """
  * @Date: 2022-04-15 13:56:44
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-03 19:30:27
+ * @LastEditTime: 2023-09-19 12:29:03
  * @FilePath: /genome/genome/gene_annot.py
  * @Description:
 """
@@ -74,14 +74,27 @@ class Gene2KOOut(NamedTuple):
 
 
 class Gene2KO:
-    class gene_ko_iter:
+    class Annoters(type):
+        """"""
+
+        iters: list[type["Gene2KO.GeneKoIter"]] = None  # type: ignore
+
+        def __new__(cls, name, bases, attrs):
+            new_cls = type.__new__(cls, name, bases, attrs)
+            if cls.iters is None:
+                cls.iters = []
+            else:
+                cls.iters.append(new_cls)
+            return new_cls
+
+    class GeneKoIter(metaclass=Annoters):
         def __init__(self, filename: Path):
             self.filename = filename
 
         def __call__(self) -> Generator[tuple[str, str], None, None]:
             raise NotImplementedError
 
-    class ghost(gene_ko_iter):
+    class ghost(GeneKoIter):
         def __call__(self) -> Generator[tuple[str, str], None, None]:
             with open(self.filename) as text:
                 for values in read_table(text):
@@ -89,7 +102,7 @@ class Gene2KO:
                         gene, ko = values[0:2]
                         yield gene, ko
 
-    class kofam(gene_ko_iter):
+    class kofam(GeneKoIter):
         def __call__(self) -> Generator[tuple[str, str], None, None]:
             with open(self.filename) as text:
                 for values in read_table(text):
@@ -97,7 +110,7 @@ class Gene2KO:
                         gene, ko = values[1:3]
                         yield gene, ko
 
-    class eggnog(gene_ko_iter):
+    class eggnog(GeneKoIter):
         def __call__(self) -> Generator[tuple[str, str], None, None]:
             i_KEGG_ko = 11
             with open(self.filename) as text:
@@ -108,7 +121,7 @@ class Gene2KO:
                         for ko in kos.split(","):
                             yield gene, ko[3:]
 
-    class mantis(gene_ko_iter):
+    class mantis(GeneKoIter):
         # KO_PATTERN = re.compile("\\b(K\\d{5})(?=(;|$))")
         KO_PATTERN = re.compile("\\b(K\\d{5})\\b")
 
@@ -123,13 +136,11 @@ class Gene2KO:
                             yield gene, ko
 
     ## collect gene KO
-    annoters = [ghost, kofam, eggnog, mantis]
-
     def get_gene_KOs(self) -> dict[str, str]:
         """Only keep the first match:
         >>> gene_KOs.setdefault(gene, ko)"""
         gene_KOs: dict[str, str] = {}
-        for annoter, file in zip(self.annoters, self.ann_files):
+        for annoter, file in zip(self.Annoters.iters, self.ann_files):
             if not os.path.isfile(file):
                 continue
 
@@ -149,7 +160,9 @@ class Gene2KO:
         if not isinstance(pattern, list):
             pattern = [pattern]
         ann_files_ = self._infer_ann_files(pattern)
-        ann_files = [ann_files_.get(i, Path()) for i, _ in enumerate(self.annoters)]
+        ann_files = [
+            ann_files_.get(i, Path()) for i, _ in enumerate(self.Annoters.iters)
+        ]
 
         if not any(ann_files):
             raise FileNotFoundError(f"pattren(s) '{pattern}' donot match any file!")
@@ -157,13 +170,13 @@ class Gene2KO:
         self.ann_files = ann_files
 
     def _infer_ann_files(self, patterns: list[Path]):
-        ann_files = {i: Path() for i, _ in enumerate(self.annoters)}
+        ann_files = {i: Path() for i, _ in enumerate(self.Annoters.iters)}
 
         for pattern in reversed(patterns):
             pattern_re = re.compile(pattern.name)
             for file in pattern.parent.iterdir():
                 if pattern_re.search(file.name):
-                    for i, source in enumerate(self.annoters):
+                    for i, source in enumerate(self.Annoters.iters):
                         if source.__name__ in file.name.lower():
                             logger.warning(
                                 f"Detect {source.__name__} annotation: {file}"
