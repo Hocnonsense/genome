@@ -2,7 +2,7 @@
 """
  * @Date: 2022-04-15 13:56:44
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-19 12:29:03
+ * @LastEditTime: 2023-10-20 14:54:20
  * @FilePath: /genome/genome/gene_annot.py
  * @Description:
 """
@@ -185,13 +185,12 @@ class Gene2KO:
         return ann_files
 
 
-def get_all_gene_annots(gene_annots: pd.Series, rep2all: pd.Series = None):
-    ko_exploded = (
+def get_all_gene_annots(gene_annots: pd.Series, rep2all: Optional[pd.Series] = None):
+    ko_exploded = pd.DataFrame(
         gene_annots.apply(lambda x: x.split(":") if x.startswith("K") else [])
         .explode()
         .dropna()
         .rename("KO")
-        .pipe(pd.DataFrame)
     )
 
     if rep2all is not None:
