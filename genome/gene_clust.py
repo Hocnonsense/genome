@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-05 11:53:12
+ * @LastEditTime: 2023-10-20 14:45:30
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -30,7 +30,7 @@ class MmseqOut(NamedTuple):
 
     @classmethod
     def from_in_faa(cls, faa: PathLike):
-        assert faa.endswith(".faa")
+        assert str(faa).endswith(".faa")
         return cls.from_prefix(str(faa)[:-4])
 
     @classmethod
