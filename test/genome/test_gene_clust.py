@@ -5,7 +5,7 @@
  * @LastEditTime: 2022-10-15 22:37:09
  * @FilePath: /genome/test/genome/test_gene_clust.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
+__file__ = "test/genome/test_prokka.py"
 """
 
 from pathlib import Path

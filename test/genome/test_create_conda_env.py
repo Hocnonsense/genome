@@ -5,7 +5,7 @@
  * @LastEditTime: 2023-05-19 16:47:53
  * @FilePath: /genome/test/genome/test_create_conda_env.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_create_conda_env.py"
+__file__ = "test/genome/test_create_conda_env.py"
 """
 
 from genome.create_conda_env import list_envs, create_conda_env_gene_clust

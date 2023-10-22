@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:53:55
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 17:07:41
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-10-22 21:34:25
  * @FilePath: /genome/test/genome/test_bin_statistic_ext.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_bin_statistic.py"
+__file__ = "test/genome/test_bin_statistic.py"
 """
 
 from pathlib import Path

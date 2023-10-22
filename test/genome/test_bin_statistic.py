@@ -5,7 +5,7 @@
  * @LastEditTime: 2023-09-17 18:16:16
  * @FilePath: /genome/test/genome/test_bin_statistic.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_bin_statistic.py"
+__file__ = "test/genome/test_bin_statistic.py"
 """
 
 from pathlib import Path
