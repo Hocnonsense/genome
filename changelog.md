@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-04 22:37:43
+ * @LastEditTime: 2023-10-22 21:22:58
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -10,9 +10,9 @@ changelog for genome
 
 ---
 ## changelog
+- 0.1.4:
+    - remove `genome.pyrule.gene`.
 - 0.1.3:
-    - next changes
-        - remove `genome.pyrule.gene` in next minor release.
     - feat
         - add `infer_prodigal_gene_id` and `infer_refseq_gene_id` for gff parser
         - new `BinStatisticContainer.read_gff_parser` for generate `BinStatistic`
