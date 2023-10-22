@@ -1,56 +1,49 @@
 MIN_BIN_CONTIG_LEN = config.get("MIN_BIN_CONTIG_LEN", "1500")
-contig_raw = config.get("contig", "{any}.fa")
-bams = config.get("bams", [])
-lsbams = config.get("lsbams", "{any}.bams.ls")
-jgi = config.get("jgi", "{any}-jgi.tsv")
-bin_single = config.get("bin_single", "{any}-bins/single")
 bin_methods = config.get("bin_methods", [])
-bin_union_dir = config.get("bin_union_dir", "{any}-bins/union")
-
-contig = "/".join([bin_single, f"contig.{MIN_BIN_CONTIG_LEN}.fa"])
 
 
 include: "./single.smk"
 include: "./union.smk"
 
 
-from pathlib import Path
-
-if not Path(lsbams).is_file():
-
-    rule bams_to_ls:
-        input:
-            bams=bams,
-            bais=[f"{bam}.bai" for bam in bams],
-        output:
-            lsbams=lsbams,
-        shell:
-            """
-            ls {input.bams} > {output.lsbams}
-            """
-
-    rule bam_bai:
-        input:
-            bam="{any}.bam",
-        output:
-            bai="{any}.bam.bai",
-        conda:
-            "../../envs/metadecoder.yaml"
-        threads: 8
-        shell:
-            """
-            samtools index {input.bam} -@ {threads}
-            """
-
-
-rule generate_union_methods_ls:
+rule clean_input_references:
     input:
-        ctg2mags=["/".join([bin_single, f"{method}.tsv"]) for method in bin_methods],
+        config="{any}-bins.yaml",
     output:
-        union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
-    wildcard_constraints:
-        marker="-.+|",
-    shell:
-        """
-        ls {input.ctg2mags} > {output.union_methods_ls}
-        """
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        lsbams="{any}-bins/input/bams.ls",
+        jgi="{any}-bins/input/jgi.tsv",
+    run:
+        import yaml
+        from Bio import SeqIO
+
+        with open(input.config) as yi:
+            input_ = yaml.safe_load(yi)
+
+        SeqIO.write(
+            (
+                i
+                for i in SeqIO.parse(input_["contig"], "fasta")
+                if MIN_BIN_CONTIG_LEN <= len(i.seq)
+            ),
+            output.contig,
+            format="fasta",
+        )
+
+        shell(
+            f"""
+            ln -s {input_["lsbams"]} {output.lsbams}
+            """
+        )
+
+        with (
+            open(output.jgi, "w") as fo,
+            open(input_["jgi"]) as fi,
+            open(output.contig) as fa,
+        ):
+            fo.write(next(fi))
+            jgi: dict[str, str] = {i.split()[0]: i for i in fi}
+            for line in fa:
+                if line.startswith(">"):
+                    fo.write(jgi[line[1:].split()[0]])
+            fo.flush()
