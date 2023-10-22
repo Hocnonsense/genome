@@ -5,7 +5,7 @@
  * @LastEditTime: 2022-10-21 16:34:54
  * @FilePath: /genome/test/genome/test_gff.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
+__file__ = "test/genome/test_prokka.py"
 """
 
 import os
@@ -41,7 +41,10 @@ def test_gff_reset_reference():
 
     test_out = test_temp / "metadecoder.1.prokka.faa"
     SeqIO.write(
-        sorted(Parse(gff).reset_reference(genome).extract(min_aa_length=33), key=lambda x: x.id),
+        sorted(
+            Parse(gff).reset_reference(genome).extract(min_aa_length=33),
+            key=lambda x: x.id,
+        ),
         test_out,
         "fasta-2line",
     )

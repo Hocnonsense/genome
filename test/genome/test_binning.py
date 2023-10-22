@@ -1,59 +1,92 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-25 20:53:06
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-24 17:05:24
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-10-22 21:33:12
  * @FilePath: /genome/test/genome/test_binning.py
  * @Description:
- * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_binning.py"
+__file__ = "test/genome/test_binning.py"
 """
+# """
 
 from pathlib import Path
 
 import pandas as pd
+import yaml
 
-from genome.binning import BinningConfig, bin_union
+from genome.binning import (
+    BinningConfig,
+    BinningInput,
+    bin_union,
+    check_bams,
+    default_bin_methods,
+)
 
-test_temp = Path(__file__).parent.parent / "temp"
-test_files = Path(__file__).parent.parent / "file"
+try:
+    from ._decorator import temp_output, test_temp, test_files
+except (ModuleNotFoundError, ImportError):
+    try:
+        from test.genome._decorator import (  # type: ignore
+            temp_output,
+            test_temp,
+            test_files,
+        )
+    except (ModuleNotFoundError, ImportError):
+        from _decorator import temp_output, test_temp, test_files
 
 
-def test_binning_config_to_config():
-    bc = BinningConfig(
-        MIN_BIN_CONTIG_LEN=2500,
-        contig=str(test_files / "02_assem..TY.041_cut.fa"),
-        bams=[],
-        bams_ls="",
-        jgi=str(test_files / "02_assem..TY.041_cut-jgi.depth"),
-        bin_single=str(test_files / "binsingle"),
-        bin_union_dir=str(test_temp / "union"),
+@temp_output
+def test_binning_input_to_config(test_temp: Path):
+    f = BinningInput(
+        contig=str(test_files / "binny_contigs_4bins.fa"),
+        lsbams=check_bams(test_temp / "binny_test_binning", []),
+        jgi=str(test_files / "binny_reads_4bins-jgi.tsv"),
+    ).dump_prefix(test_temp / "binny_test_binning")
+
+    assert f == Path(test_temp / "binny_test_binning-bins.yaml")
+    with open(f) as yi:
+        assert yaml.safe_load(yi) == {
+            "contig": str(test_files / "binny_contigs_4bins.fa"),
+            "jgi": str(test_files / "binny_reads_4bins-jgi.tsv"),
+            "lsbams": str(test_temp / "binny_test_binning-bams.list"),
+        }
+
+
+@temp_output
+def test_binning_config_to_config(test_temp: Path):
+    f = BinningInput(
+        contig=str(test_files / "binny_contigs_4bins.fa"),
+        lsbams=check_bams(test_temp / "binny_test_binning", [])[0],
+        jgi=str(test_files / "binny_reads_4bins-jgi.tsv"),
+    ).dump_prefix(test_temp / "binny_test_binning")
+    f1 = BinningConfig(MIN_BIN_CONTIG_LEN=2500, bin_config=f).to_config(
+        test_temp / "test_binning_config.yaml"
     )
-    bc.to_config(test_temp / "test_binning.yaml")
-    bc1 = BinningConfig()
-    bc1.to_config(test_temp / "test_binning1.yaml")
+    with open(f1) as yi:
+        assert yaml.safe_load(yi) == {
+            "MIN_BIN_CONTIG_LEN": 2500,
+            "bin_methods": default_bin_methods,
+        }
 
 
-def test_unitem_profile():
+@temp_output
+def test_unitem_profile(test_temp: Path):
     binunion_tsv = bin_union(
-        "unitem_unanimous",
-        "",
-        test_temp / "union",
-        test_files / "02_assem..TY.041_cut.fa",
-        test_files / "02_assem..TY.041_cut-jgi.depth",
-        bin_single=test_files / "binsingle",
+        method="unitem_unanimous",
+        marker="",
+        bin_prefix=test_temp / "binny_test_binning",
+        contig=test_files / "binny_contigs_4bins.fa",
+        jgi=test_files / "binny_reads_4bins-jgi.tsv",
+        bams=[
+            test_files / "binny_reads_4bins.bam",
+        ],
+        bin_methods=["metabat2_60_60", "metabat2_75_75", "concoct"],
         threads=12,
     )
-    pd.read_csv(binunion_tsv.ctg2mag, sep="\t", names=["Contig", "Bin"])
-
-
-def test_dastool():
-    binunion_tsv = bin_union(
-        "dastool",
-        "all",
-        test_temp / "union",
-        test_files / "02_assem..TY.041_cut.fa",
-        test_files / "02_assem..TY.041_cut-jgi.depth",
-        bin_single=test_files / "binsingle",
-        threads=12,
+    len(
+        pd.read_csv(binunion_tsv.ctg2mag, sep="\t", names=["Contig", "Bin"])
+        .groupby("Bin")["Contig"]
+        .apply(set)
+        .to_dict()
     )
+    test_files / "binny_unitem_unanimous.tsv"

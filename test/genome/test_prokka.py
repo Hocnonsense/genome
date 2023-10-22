@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-11 20:11:35
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-12 19:54:53
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-10-22 21:34:55
  * @FilePath: /genome/test/genome/test_prokka.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_prokka.py"
+__file__ = "test/genome/test_prokka.py"
 """
 
 import os

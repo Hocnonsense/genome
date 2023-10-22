@@ -5,7 +5,7 @@
  * @LastEditTime: 2022-10-15 22:30:08
  * @FilePath: /genome/test/genome/test_prodigal.py
  * @Description:
-__file__ = "/home/hwrn/software/genome/test/genome/test_prodigal.py"
+__file__ = "test/genome/test_prodigal.py"
 """
 
 import os
