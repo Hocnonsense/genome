@@ -1,15 +1,15 @@
 
 rule DASTool_create:
     input:
-        contig=contig,
-        union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        union_methods=[
+            ("{any}-bins/single/" f"{bin_method}.tsv") for bin_method in bin_methods
+        ],
     output:
-        ctg2mag="/".join([bin_union_dir, "{union_method}{marker}.tsv"]),
-        out_dir=directory("/".join([bin_union_dir, "{union_method}{marker}-dir"])),
-    params:
-        bin_dir="/".join([bin_union_dir, "{union_method}{marker}-dir"]),
+        ctg2mag="{any}-bins/union/{union_method}{marker}.tsv",
+        out_dir=directory("{any}-bins/union/{union_method}{marker}-dir"),
     log:
-        "/".join([bin_union_dir, "{union_method}{marker}-dir.log"]),
+        log="{any}-bins/union/{union_method}{marker}.log",
     wildcard_constraints:
         union_method="dastool",
         marker="-.+|",
@@ -44,39 +44,46 @@ rule DASTool_create:
 
 rule UniteM_profile_bin_temp:
     input:
-        contig=contig,
-        union_methods_ls="/".join([bin_union_dir, "bin_union{marker}-methods.csv"]),
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        ctg2bin="{any}-bins/single/{method}.tsv",
     output:
         profile=temp(
             directory(
-                "/".join([bin_union_dir, "{union_method}{marker}.profile.bin_temp"])
+                "{any}-bins/union/{union_method}{marker}.profile.bin_temp/{method}"
             )
         ),
+    params:
+        method="{method}",
     wildcard_constraints:
         marker="-.+|",
     run:
         from genome.bin_statistic_ext import contig2bin
 
-        with open(input.union_methods_ls) as f1:
-            for i, line in enumerate(f1):
-                out_dir = Path(output.profile) / f"{i}"
-                contig2bin(
-                    outdir=out_dir, contig2bin_tsv=line.strip(), contigs=input.contig
-                )
+        out_dir = Path(output.profile)
+        contig2bin(
+            outdir=out_dir,
+            contig2bin_tsv=input.ctg2bin,
+            contigs=input.contig,
+        )
 
 
 rule UniteM_profile:
     input:
-        profile="/".join([bin_union_dir, "{union_method}{marker}.profile.bin_temp"]),
+        profile=[
+            (
+                "{any}-bins/union/{union_method}{marker}.profile.bin_temp/"
+                f"{bin_method}"
+            )
+            for bin_method in bin_methods
+        ],
     output:
-        profile=directory("/".join([bin_union_dir, "{union_method}{marker}.profile"])),
+        profile=directory("{any}-bins/union/{union_method}{marker}.profile"),
     params:
-        bin_dir="/".join([bin_union_dir, "{union_method}{marker}", "bins"]),
+        profile="{any}-bins/union/{union_method}{marker}.profile.bin_temp",
     log:
-        log="/".join([bin_union_dir, "{union_method}{marker}.profile.log"]),
+        log="{any}-bins/union/{union_method}{marker}.profile.log",
     wildcard_constraints:
         union_method="unitem",
-        selection="greedy|consensus|unanimous",
         marker="-.+|",
     threads: 64
     conda:
@@ -88,7 +95,7 @@ rule UniteM_profile:
         rm -f smk-unitem
         mkdir -p smk-unitem
 
-        mv {input.profile} smk-unitem/bins
+        mv {params.profile} smk-unitem/bins
 
         find smk-unitem/bins/ \
             -size -5k \
@@ -106,17 +113,14 @@ rule UniteM_profile:
 
 rule UniteM_refine:
     input:
-        profile="/".join([bin_union_dir, "{union_method}{marker}.profile"]),
+        profile="{any}-bins/union/{union_method}{marker}.profile",
     output:
-        ctg2mag="/".join([bin_union_dir, "{union_method}_{selection}{marker}.tsv"]),
-        out_dir=directory(
-            "/".join([bin_union_dir, "{union_method}_{selection}{marker}-dir"])
-        ),
+        ctg2mag="{any}-bins/union/{union_method}_{selection}{marker}.tsv",
+        out_dir=directory("{any}-bins/union/{union_method}_{selection}{marker}-dir"),
     params:
-        bin_dir="/".join([bin_union_dir, "{union_method}_{selection}{marker}", "bins"]),
         selection="{selection}",
     log:
-        log="/".join([bin_union_dir, "{union_method}_{selection}{marker}-dir.log"]),
+        log="{any}-bins/union/{union_method}_{selection}{marker}.log",
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",

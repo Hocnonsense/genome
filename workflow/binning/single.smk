@@ -1,40 +1,18 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 12:17:49
+ * @LastEditTime: 2023-10-22 20:32:42
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
 
 
-rule filtered_contig:
-    input:
-        contig=contig_raw,
-    output:
-        contig=contig,
-    message:
-        "concoct cannot filter short contigs itself"
-    run:
-        from Bio import SeqIO
-
-        SeqIO.write(
-            (
-                i
-                for i in SeqIO.parse(input.contig, "fasta")
-                if MIN_BIN_CONTIG_LEN <= len(i.seq)
-            ),
-            output.contig,
-            format="fasta",
-        )
-        shell(f"touch -amcr {input.contig} {output.contig}")
-
-
 rule metabat2:
     input:
-        contig=contig,
-        jgi=jgi,
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        jgi="{any}-bins/input/jgi.tsv",
     output:
-        ctg2mag="/".join([bin_single, "metabat2_{maxP}_{minS}.tsv"]),
+        ctg2mag="{any}-bins/single/metabat2_{maxP}_{minS}.tsv",
     params:
         dout="metabat2_{maxP}_{minS}",
         extension="fa",
@@ -70,10 +48,10 @@ rule metabat2:
 
 rule maxbin2:
     input:
-        contig=contig,
-        jgi=jgi,
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        jgi="{any}-bins/input/jgi.tsv",
     output:
-        ctg2mag="/".join([bin_single, "maxbin2_{markerset}.tsv"]),
+        ctg2mag="{any}-bins/single/maxbin2_{markerset}.tsv",
     params:
         dout="maxbin2_{markerset}",
         extension="fasta",
@@ -109,10 +87,10 @@ rule maxbin2:
 
 rule concoct:
     input:
-        contig=contig,
-        lsbams=lsbams,
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        lsbams="{any}-bins/input/bams.ls",
     output:
-        ctg2mag="/".join([bin_single, "concoct.tsv"]),
+        ctg2mag="{any}-bins/single/concoct.tsv",
     params:
         dout="concoct",
     threads: 8
@@ -150,10 +128,10 @@ rule concoct:
 
 rule metadecoder:
     input:
-        contig=contig,
-        lsbams=lsbams,
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        lsbams="{any}-bins/input/bams.ls",
     output:
-        ctg2mag="/".join([bin_single, "metadecoder.tsv"]),
+        ctg2mag="{any}-bins/single/metadecoder.tsv",
     params:
         dout="metadecoder",
         extension="fasta",
@@ -199,33 +177,12 @@ rule metadecoder:
         """
 
 
-if jgi != (vamb_jgi := "/".join([bin_single, "vamb-jgi.tsv"])):
-
-    rule fake_vamb_jgi:
-        input:
-            contig=contig,
-            jgi=jgi,
-        output:
-            jgi=temp(vamb_jgi),
-        run:
-            with open(output.jgi, "w") as fo, open(input.jgi) as fi, open(
-                input.contig
-            ) as fa:
-                fo.write(next(fi))
-                jgi: dict[str, str] = {i.split()[0]: i for i in fi}
-                for line in fa:
-                    if line.startswith(">"):
-                        fo.write(jgi[line[1:].split()[0]])
-            fo.flush()
-
-
-
 rule vamb:
     input:
-        contig=contig,
-        jgi="/".join([bin_single, "vamb-jgi.tsv"]),
+        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        jgi="{any}-bins/input/jgi.tsv",
     output:
-        ctg2mag="/".join([bin_single, "vamb.tsv"]),
+        ctg2mag="{any}-bins/single/vamb.tsv",
     params:
         dout="vamb",
         extension="fna",

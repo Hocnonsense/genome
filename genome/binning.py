@@ -2,21 +2,20 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-04 11:04:05
+ * @LastEditTime: 2023-10-22 21:04:37
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
 
 
 import os
-import shutil
+from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Final, Literal, NamedTuple
 
 import yaml
 from snakemake import main as smk
-
 
 PathLike = str | Path
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
@@ -47,63 +46,48 @@ class BinningOutput(NamedTuple):
         return cls(Path(f"{prefix}.tsv"), Path(f"{prefix}-dir"))
 
 
-class BinningConfig(NamedTuple):
-    MIN_BIN_CONTIG_LEN: int = 1500
+class BinningInput(NamedTuple):
     contig: str = "{any}.fa"
-    bams: list[str] | None = None
     lsbams: str = "{any}.bams.ls"
     jgi: str = "{any}-jgi.tsv"
-    bin_single: str = "{any}-bins/single"
-    bin_union_dir: str = "{any}-bins/union"
+
+    @classmethod
+    def file_from_prefix(cls, prefix: PathLike):
+        return Path(str(prefix) + "-bins.yaml")
+
+    def dump_prefix(self, prefix: PathLike):
+        config = self.file_from_prefix(prefix)
+        config.parent.mkdir(parents=True, exist_ok=True)
+        with open(config, "w") as fo:
+            yaml.safe_dump(self._asdict(), fo)
+        return config
+
+
+@dataclass
+class BinningConfig:
+    MIN_BIN_CONTIG_LEN: int = 1500
     bin_methods: list[str] | None = None
+    bin_config: PathLike = "{any}"
+
+    def __post_init__(self):
+        bin_config = str(self.bin_config)
+        assert bin_config.endswith("-bins.yaml")
+        self._bin_perfix_dir = bin_config[:-5]
 
     def to_config(self, config_file: PathLike):
         Path(config_file).parent.mkdir(parents=True, exist_ok=True)
-        _asdict = self._asdict()
-        _asdict["bams"] = _asdict["bams"] or []
-        _asdict["bin_methods"] = _asdict["bin_methods"] or default_bin_methods
+        _asdict = dict(
+            MIN_BIN_CONTIG_LEN=self.MIN_BIN_CONTIG_LEN,
+            bin_methods=self.bin_methods or default_bin_methods,
+        )
         with open(config_file, "w") as c:
             yaml.dump(_asdict, stream=c, allow_unicode=True)
+        return Path(config_file)
 
-    def touch_contig_jgi_bams(self):
-        from Bio import SeqIO
-
-        bin_single = Path(self.bin_single)
-        bin_single.mkdir(parents=True, exist_ok=True)
-        contig = bin_single / f"contig.{self.MIN_BIN_CONTIG_LEN}.fa"
-        if not contig.is_file():
-            SeqIO.write(
-                (
-                    i
-                    for i in SeqIO.parse(self.contig, "fasta")
-                    if self.MIN_BIN_CONTIG_LEN <= len(i.seq)
-                ),
-                contig,
-                format="fasta",
-            )
-            os.system(f"touch -amcr {self.contig} {contig}")
-
-        jgi = bin_single / f"vamb-jgi.tsv"
-        if not jgi.is_file():
-            with open(self.jgi) as fi:
-                header = next(fi)
-                jgi_lines = {i.split()[0]: i for i in fi}
-            with open(jgi, "w") as fo, open(contig) as fa:
-                fo.write(header)
-                for line in fa:
-                    if line.startswith(">"):
-                        fo.write(jgi_lines[line[1:].split()[0]])
-                fo.flush()
-            os.system(f"touch -amcr {self.jgi} {jgi}")
-
-        lsbams = bin_single / f"bams.ls"
-        if Path(self.lsbams).is_file():
-            shutil.copy(self.lsbams, lsbams)
-            os.system(f"touch -amcr {self.lsbams} {lsbams}")
-
-    def output(self, basename):
-        bin_union_dir = Path(self.bin_union_dir)
-        return BinningOutput.from_prefix(bin_union_dir / basename)
+    def output(self, basename: str = "{method}[-{marker}]"):
+        return BinningOutput.from_prefix(
+            Path(self._bin_perfix_dir) / "union" / basename
+        )
 
     def run(
         self,
@@ -125,20 +109,14 @@ class BinningConfig(NamedTuple):
             out_basename += f"-{marker}"
 
         with TemporaryDirectory() as _td:
-            self.touch_contig_jgi_bams()
-
-            tmpc = self._replace(
-                jgi=str(Path(self.bin_single) / f"vamb-jgi.tsv"),
-                lsbams=str(Path(self.bin_single) / f"bams.ls"),
-            )
-            tmp_config = f"{_td}/config"
-            tmpc.to_config(tmp_config)
+            assert Path(self.bin_config).is_file()
 
             tpmf_out = self.output(out_basename)
+            tmp_config = self.to_config(f"{_td}/config")
 
             smk_workflow = Path(__file__).parent.parent / "workflow"
             smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-            target_smk_file = smk_workflow / "binning" / "__init__.smk"
+            target_smk_file = smk_workflow / "binning" / "genomecall.smk"
 
             smk_params2 = (
                 f"-s {target_smk_file} "
@@ -165,17 +143,20 @@ class BinningConfig(NamedTuple):
         raise NotImplementedError("")
 
 
-def check_bams(
-    bin_union_dir: PathLike, bams: list[PathLike] | PathLike | None = None
-) -> tuple[PathLike, list[PathLike]]:
+def check_bams(bin_prefix: PathLike, bams: list[PathLike] | PathLike | None = None):
     if not bams:
         bams = []
-        lsbams = Path(str(bin_union_dir) + "-bams.list")
+        lsbams = Path(str(bin_prefix) + "-bams.list")
     elif isinstance(bams, list):
-        lsbams = Path(str(bin_union_dir) + "-bams.list")
+        lsbams = Path(str(bin_prefix) + "-bams.list")
     else:
         lsbams, bams = Path(bams), []
-    return lsbams, bams
+    if not lsbams.is_file():
+        lsbams.parent.mkdir(parents=True, exist_ok=True)
+        with open(lsbams, "w") as fo:
+            for i in bams:
+                print(i, file=fo)
+    return str(lsbams)
 
 
 def bin_union(
@@ -183,11 +164,10 @@ def bin_union(
         "dastool", "unitem_greedy", "unitem_consensus", "unitem_unanimous"
     ] = "dastool",
     marker: str = "",
-    bin_union_dir: PathLike | None = None,
+    bin_prefix: PathLike = "",
     contig: PathLike = "",
     jgi: PathLike = "",
     bams: list[PathLike] | PathLike | None = None,
-    bin_single: PathLike | None = None,
     bin_methods: list[str] | None = None,
     min_bin_contig_len: int = 1500,
     threads: int = 10,
@@ -199,8 +179,8 @@ def bin_union(
         - [if not given], name will be "dastool" only
         - else, name will be like "dastool-{marker}"
 
-    @param bin_union_dir: dirname of output, so file will be like "{bin_union_dir}/dastool{-marker}.tsv"
-        - [if not given], name will follow @param contig (if @param contig is skipped, will use ".")
+    @param bin_prefix: prefix of output, so file will be like "{bin_prefix}-bins/dastool{-marker}.tsv"
+        - [if not given], name will follow @param contig (if @param contig is skipped, will use "./bins")
         - else, will use given path
 
     @param contig: used as reference by following methods
@@ -208,9 +188,6 @@ def bin_union(
 
     @param jgi, bams: used in single binning
         - can be skipped, if all single binning result is generated
-
-    @param bin_single: to keep each single bin method result ctg2mag.tsv, should be maintained by user
-        - [if not given], will be store in "{bin_union_dir}/single"
 
     @param bin_methods: bin methods to use
         - [if not given], will use all 9 metabat2, 2 maxbin2, concoct, vamb, and metadecoder
@@ -224,23 +201,20 @@ def bin_union(
         bin_methods = default_bin_methods
     min_bin_contig_len = max(int(min_bin_contig_len), AVAIL_MIN_BIN_CONTIG_LEN)
 
-    if not Path(contig).is_file() and not bin_union_dir:
-        bin_union_dir = Path(".")
-    if not bin_union_dir:
-        bin_union_dir = Path(str(contig) + "-bins")
-    if not bin_single:
-        bin_single = Path(bin_union_dir) / "single"
+    if not Path(contig).is_file() and not bin_prefix:
+        bin_prefix = "bins"
+    if not bin_prefix:
+        bin_prefix = str(contig)
 
-    lsbams, bams = check_bams(bin_union_dir, bams)
+    lsbams = check_bams(bin_prefix, bams)
 
     bc = BinningConfig(
-        min_bin_contig_len,
-        str(contig),
-        [str(i) for i in bams],
-        str(lsbams),
-        str(jgi),
-        str(bin_single),
-        str(bin_union_dir),
-        bin_methods,
+        MIN_BIN_CONTIG_LEN=min_bin_contig_len,
+        bin_methods=bin_methods,
+        bin_config=BinningInput(
+            contig=str(contig),
+            lsbams=str(lsbams),
+            jgi=str(jgi),
+        ).dump_prefix(prefix=bin_prefix),
     )
     return bc.run(method, marker, threads)

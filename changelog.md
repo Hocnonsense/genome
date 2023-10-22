@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 21:22:58
+ * @LastEditTime: 2023-10-22 21:24:14
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -12,6 +12,8 @@ changelog for genome
 ## changelog
 - 0.1.4:
     - remove `genome.pyrule.gene`.
+    - feat
+        - update `genome.binning`. Now it no longer accept old api, and related workflow can be refered directly in snakemake module style!
 - 0.1.3:
     - feat
         - add `infer_prodigal_gene_id` and `infer_refseq_gene_id` for gff parser
