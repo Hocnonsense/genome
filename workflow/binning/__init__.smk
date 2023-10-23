@@ -15,10 +15,13 @@ rule clean_input_references:
         jgi="{any}-bins/input/jgi.tsv",
     run:
         import yaml
+        from pathlib import Path
         from Bio import SeqIO
 
+        config_path = Path(input.config).parent
         with open(input.config) as yi:
-            input_ = yaml.safe_load(yi)
+            input_ = {k: config_path / v for k, v in yaml.safe_load(yi).items()}
+
 
         SeqIO.write(
             (

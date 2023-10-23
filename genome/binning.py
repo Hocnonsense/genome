@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 21:04:37
+ * @LastEditTime: 2023-10-23 13:21:22
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -55,11 +55,16 @@ class BinningInput(NamedTuple):
     def file_from_prefix(cls, prefix: PathLike):
         return Path(str(prefix) + "-bins.yaml")
 
-    def dump_prefix(self, prefix: PathLike):
+    def dump_prefix(self, prefix: PathLike, relpath=True):
         config = self.file_from_prefix(prefix)
         config.parent.mkdir(parents=True, exist_ok=True)
+        if relpath:
+            _asdict = {k: os.path.relpath(v, config.parent) for k, v in self._asdict().items()}
+        else:
+            _asdict = self._asdict()
+
         with open(config, "w") as fo:
-            yaml.safe_dump(self._asdict(), fo)
+            yaml.safe_dump(_asdict, fo)
         return config
 
 
