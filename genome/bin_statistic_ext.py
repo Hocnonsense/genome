@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2022-12-07 12:40:21
+ * @LastEditTime: 2023-10-23 19:06:47
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -138,9 +138,9 @@ def checkm(
 
 def gunc(
     bin_input: PathLike,
-    support: Union[PathLike, str],
+    support: PathLike | str,
     GUNC_DB: PathLike,
-    output_dir: PathLike = None,
+    output_dir: PathLike | None = None,
     threads=10,
 ):
     """

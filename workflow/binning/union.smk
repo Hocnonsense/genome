@@ -12,7 +12,7 @@ rule DASTool_create:
         log="{any}-bins/union/{union_method}{marker}.log",
     wildcard_constraints:
         union_method="dastool",
-        marker="-.+|",
+        marker="-[^-]+|",
     threads: 64
     conda:
         "../../envs/binunion.yaml"
@@ -55,9 +55,9 @@ rule UniteM_profile_bin_temp:
     params:
         method="{method}",
     wildcard_constraints:
-        marker="-.+|",
+        marker="-[^-]+|",
     run:
-        from genome.bin_statistic_ext import contig2bin
+        from genome.bin_statistic import contig2bin
 
         out_dir = Path(output.profile)
         contig2bin(
@@ -84,7 +84,7 @@ rule UniteM_profile:
         log="{any}-bins/union/{union_method}{marker}.profile.log",
     wildcard_constraints:
         union_method="unitem",
-        marker="-.+|",
+        marker="-[^-]+|",
     threads: 64
     conda:
         "../../envs/binunion.yaml"
@@ -124,7 +124,7 @@ rule UniteM_refine:
     wildcard_constraints:
         union_method="unitem",
         selection="greedy|consensus|unanimous",
-        marker="-.+|",
+        marker="-[^-]+|",
     threads: 1
     conda:
         "../../envs/binunion.yaml"

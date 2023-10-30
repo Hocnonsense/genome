@@ -1,5 +1,12 @@
-MIN_BIN_CONTIG_LEN = config.get("MIN_BIN_CONTIG_LEN", "1500")
-bin_methods = config.get("bin_methods", [])
+MIN_BIN_CONTIG_LEN = int(config.get("MIN_BIN_CONTIG_LEN", 1500))
+bin_methods = config.get(
+    "bin_methods",
+    [
+        *(f"metabat2_{maxP}_{minS}" for maxP in (60, 75, 90) for minS in (60, 75, 90)),
+        *(f"maxbin2_{markerset}" for markerset in (40, 107)),
+        *("concoct", "metadecoder", "vamb"),
+    ],
+)
 
 
 include: "./single.smk"
@@ -14,6 +21,7 @@ rule clean_input_references:
         lsbams="{any}-bins/input/bams.ls",
         jgi="{any}-bins/input/jgi.tsv",
     run:
+        import os
         import yaml
         from pathlib import Path
         from Bio import SeqIO
@@ -21,7 +29,6 @@ rule clean_input_references:
         config_path = Path(input.config).parent
         with open(input.config) as yi:
             input_ = {k: config_path / v for k, v in yaml.safe_load(yi).items()}
-
 
         SeqIO.write(
             (
@@ -33,9 +40,10 @@ rule clean_input_references:
             format="fasta",
         )
 
+        input_lsbams = os.path.relpath(input_["lsbams"], Path(output.lsbams).parent)
         shell(
             f"""
-            ln -s {input_["lsbams"]} {output.lsbams}
+            ln -s {input_lsbams} {output.lsbams}
             """
         )
 

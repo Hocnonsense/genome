@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-17 18:11:49
+ * @LastEditTime: 2023-10-30 20:45:38
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -23,8 +23,31 @@ PathLike = Union[str, Path]
 
 
 def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
-    contig2bin_ = pd.read_csv(
-        contig2bin_tsv, sep="\t", names=["contig", "bin"], index_col=0
+    """
+    will read a table such without head such as:
+        (format: contig\tbin)
+        ```
+        k141_128353\tconcoct_0
+        k141_15265\tconcoct_0
+        k141_164694\tconcoct_0
+        k141_172306\tconcoct_0
+        k141_18944\tconcoct_0
+        ```
+
+    fix: will also support vamb-format table:
+        (format: contig\tbin)
+        ```
+        k141_135186 flag=1 multi=23.0000 len=8785\tvamb-1012                                                                                                         metabat2_90_90  metadecoder  vamb
+        k141_420558 flag=0 multi=35.2019 len=10561\tvamb-1012
+        k141_42780 flag=0 multi=26.0231 len=10767\tvamb-1012
+        k141_746716 flag=1 multi=21.0002 len=9798\tvamb-1012
+        k141_91422 flag=1 multi=50.0000 len=2703\tvamb-1012
+        ```
+    """
+    contig2bin_ = (
+        pd.read_csv(contig2bin_tsv, sep="\t", names=["contig", "bin"])
+        .assign(contig_id=lambda df: df["contig"].apply(lambda x: x.strip().split()[0]))
+        .set_index("contig_id")[["bin"]]
     )
 
     td = Path(outdir)
