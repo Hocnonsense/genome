@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 20:32:42
+ * @LastEditTime: 2023-10-31 10:43:11
  * @FilePath: /genome/workflow/binning/single.smk
  * @Description:
 """
@@ -18,6 +18,7 @@ rule metabat2:
         extension="fa",
         maxP="{maxP}",
         minS="{minS}",
+        MIN_BIN_CONTIG_LEN=MIN_BIN_CONTIG_LEN,
     threads: 1
     conda:
         "../../envs/binning.yaml"
@@ -34,7 +35,7 @@ rule metabat2:
             -o {params.dout}/{params.dout} \
             -t {threads} \
             -v \
-            --minContig {MIN_BIN_CONTIG_LEN} \
+            --minContig {max(params.MIN_BIN_CONTIG_LEN, 1500)} \
             --minS {params.minS} --maxP {params.maxP}
 
         for i in {params.dout}/*.{params.extension}
@@ -56,6 +57,7 @@ rule maxbin2:
         dout="maxbin2_{markerset}",
         extension="fasta",
         markerset="{markerset}",
+        MIN_BIN_CONTIG_LEN=MIN_BIN_CONTIG_LEN,
     wildcard_constraints:
         markerset="107|40",
     threads: 1
@@ -70,7 +72,7 @@ rule maxbin2:
         mkdir -p {params.dout}
 
         run_MaxBin.pl \
-            -min_contig_length {MIN_BIN_CONTIG_LEN} \
+            -min_contig_length {params.MIN_BIN_CONTIG_LEN} \
             -contig {input.contig} \
             -abund {input.jgi} \
             -out {params.dout}/{params.dout} \
