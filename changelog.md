@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 21:24:14
+ * @LastEditTime: 2023-11-25 23:03:02
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -10,6 +10,10 @@ changelog for genome
 
 ---
 ## changelog
+- 0.1.5:
+    - fix:
+        - fix metabat2 min contig length
+        - fix gff to faa/fa start
 - 0.1.4:
     - remove `genome.pyrule.gene`.
     - feat

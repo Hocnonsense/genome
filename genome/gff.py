@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-04 10:46:43
+ * @LastEditTime: 2023-11-25 22:56:26
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -204,7 +204,7 @@ class Parse:
                         str(i)
                         for i in (
                             "",
-                            fet.location.start,
+                            fet.location.start + 1,
                             fet.location.end,
                             fet.location.strand,
                             ";".join(
