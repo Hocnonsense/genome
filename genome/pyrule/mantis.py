@@ -2,8 +2,8 @@
 """
  * @Date: 2023-07-22 15:34:34
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 15:16:48
- * @FilePath: /genome/genome/pyrule/mantis.py
+ * @LastEditTime: 2023-11-05 15:08:45
+ * @FilePath: /meta-snakemake-minimal/src/libs/genome/genome/pyrule/mantis.py
  * @Description:
 """
 
@@ -37,7 +37,7 @@ mv smk-mantis \
 
 
 def register(workflow: _wf.Workflow, mantis_config: str):
-    mantis_config_check = mantis_config + ".check"
+    mantis_config_check = str(mantis_config) + ".mantis_setup.done"
 
     @workflow.rule(name="annotate_gene_mantis_check")
     @workflow.input(mantis_config=mantis_config)
