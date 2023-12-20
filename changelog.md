@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 20:25:18
+ * @LastEditTime: 2023-12-20 21:24:25
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -18,9 +18,10 @@ changelog for genome
     - fix metabat2 min contig length
     - fix gff to faa/fa start
     - fix mantis marker
-    - feat: mmseq_clust_95.register
   - feat:
     - add anchor_yaml to handle snakemake files
+    - `pyrule.mmseq_clust_95.register`
+    - `pyrule.binning.register`
 - 0.1.4:
   - remove `genome.pyrule.gene`.
   - feat

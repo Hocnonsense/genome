@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-11-25 22:56:26
+ * @LastEditTime: 2023-12-20 21:20:46
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -182,8 +182,9 @@ class Parse:
         call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
     ):
         """
-        min_aa_length acturally refer to at least 32 aa complete protein,
-        for a complete terminal codon.
+        min_aa_length acturally refers to
+          - at least 32 aa complete protein with a complete terminal codon.
+          - or at least 33 aa complete protein without terminal codon.
         """
         min_gene_length = min_aa_length * 3
 
