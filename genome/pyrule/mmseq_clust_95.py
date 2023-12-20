@@ -2,7 +2,7 @@
 """
  * @Date: 2023-09-05 11:40:31
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 20:22:13
+ * @LastEditTime: 2023-12-20 21:09:36
  * @FilePath: /genome/genome/pyrule/mmseq_clust_95.py
  * @Description:
 """
@@ -40,7 +40,7 @@ mo = MmseqOut.from_in_faa(mmseq_clust_95_input_protein)
 register = general_register(
     snakefile=Path(__file__).parent / "shell_conda_rule.smk",
     module_name=__name__.replace(".", "_DOT_"),
-    config=dict(
+    default_config=dict(
         name="annotate_gene_mantis",
         inputs=dict(protein=mmseq_clust_95_input_protein),
         outputs=mo._asdict(),

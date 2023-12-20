@@ -1,17 +1,16 @@
 MIN_BIN_CONTIG_LEN = config.get("MIN_BIN_CONTIG_LEN", "1500")
 
 
-module binning_workflow:
-    snakefile:
-        "./__init__.smk"
-    config:
-        {
-            "MIN_BIN_CONTIG_LEN": MIN_BIN_CONTIG_LEN,
-            "bin_methods": config.get("bin_methods", []),
-        }
+from genome.pyrule import binning
 
-
-use rule * from binning_workflow as binning_*
+binning.register(
+    workflow,
+    name="binning_workflow",
+    config={
+        "MIN_BIN_CONTIG_LEN": MIN_BIN_CONTIG_LEN,
+        "bin_methods": config.get("bin_methods", []),
+    },
+)(rules=["*"], name_modifier="binning_*")
 
 
 rule bam_bai:

@@ -2,7 +2,7 @@
 """
  * @Date: 2023-07-22 15:34:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 20:18:36
+ * @LastEditTime: 2023-12-20 21:05:20
  * @FilePath: /genome/genome/pyrule/__init__.py
  * @Description:
 """
@@ -19,15 +19,16 @@ envs_dir = Path(__file__).parent.parent.parent / "envs"
 def general_register(
     snakefile: str | Path,
     module_name: str,
-    config: dict[str, Any] | None = None,
+    default_config: dict[str, Any] | None = None,
     ruleinfo: str | Callable[[], None] = lambda: None,
 ):
-    def register(
-        workflow: _wf.Workflow,
-        name=None,
-    ):
+    def register(workflow: _wf.Workflow, name=None, config=None):
         name = name or module_name
-        workflow.module(name, snakefile=snakefile, config=config)
+        workflow.module(
+            name,
+            snakefile=snakefile,
+            config=((default_config or {}) | (config or {})) or None,
+        )
 
         def userule(
             rules=("*",),
