@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 21:24:25
+ * @LastEditTime: 2023-12-21 23:26:50
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -22,6 +22,10 @@ changelog for genome
     - add anchor_yaml to handle snakemake files
     - `pyrule.mmseq_clust_95.register`
     - `pyrule.binning.register`
+    - change from prodigal to pyrodigal
+      - mode: `meta`, `single`, `gvmeta`
+    - change bin_filter, now cannot run code
+      - the monkey fixes will be remove in next few versions (tests required)
 - 0.1.4:
   - remove `genome.pyrule.gene`.
   - feat

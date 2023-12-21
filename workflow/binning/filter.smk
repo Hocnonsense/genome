@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 22:59:55
+ * @LastEditTime: 2023-12-21 23:23:21
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -37,7 +37,7 @@ from genome.pyrule import gunc
 gunc.register(workflow, config["GUNC_DB"])
 
 
-use rule gunc_run with:
+use rule gunc_run_ctg2mag with:
     input:
         contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",

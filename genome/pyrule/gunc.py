@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 22:54:21
+ * @LastEditTime: 2023-12-21 23:23:40
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -95,7 +95,7 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
             bench_iteration=bench_iteration,
         )
 
-    @workflow.rule(name="gunc_run")
+    @workflow.rule(name="gunc_run_ctg2mag")
     @workflow.input(
         contig="{any}.fa", ctg2mag="{any}-ctg2mag.tsv", GUNC_DB=gunc_db_file
     )
@@ -107,7 +107,7 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
     @workflow.shadow("shallow")
     @workflow.shellcmd(gunc_run_shellcmd)
     @workflow.run
-    def __rule_gunc_run(
+    def __rule_gunc_ctg2mag(
         input,
         output,
         params,
@@ -156,6 +156,49 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
 
         shell(
             gunc_run_shellcmd,
+            bench_record=bench_record,
+            bench_iteration=bench_iteration,
+        )
+
+    @workflow.rule(name="gunc_run")
+    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=gunc_db_file)
+    @workflow.output(
+        gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
+    )
+    @workflow.threads(64)
+    @workflow.conda(envs_dir / "gunc.yaml")
+    @workflow.shadow("shallow")
+    @workflow.shellcmd(gunc_run_shellcmd)
+    @workflow.run
+    def __rule_gunc_run(
+        input,
+        output,
+        params,
+        wildcards,
+        threads,
+        resources,
+        log,
+        version,
+        rule,
+        conda_env,
+        container_img,
+        singularity_args,
+        use_singularity,
+        env_modules,
+        bench_record,
+        jobid,
+        is_shell,
+        bench_iteration,
+        cleanup_scripts,
+        shadow_dir,
+        edit_notebook,
+        conda_base_path,
+        basedir,
+        runtime_sourcecache_path,
+        __is_snakemake_rule_func=True,
+    ):
+        shell(
+            gunc_run_shellcmd.replace("smk-gunc-gene", "{input.bins_faa}"),
             bench_record=bench_record,
             bench_iteration=bench_iteration,
         )

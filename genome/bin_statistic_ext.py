@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 22:55:21
+ * @LastEditTime: 2023-12-21 23:20:00
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -11,7 +11,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
 from snakemake import main as smk
 import pandas as pd
@@ -212,12 +212,37 @@ def gunc(
         return pd.read_csv(tpmf_outs, sep="\t")
 
 
+@overload
 def bin_filter(
     bin_out_dir: PathLike,
     bin_input: PathLike,
     support: Union[PathLike, str],
+    *,
+    GUNC_DB: PathLike,
+    checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
+    gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
+    threads=10,
+):
+    ...
+
+
+@overload
+def bin_filter(
+    bin_out_dir: PathLike,
+    bin_input: PathLike,
+    support: Union[PathLike, str],
+    *,
     checkm_tsv_file: Union[PathLike, pd.DataFrame],
     gunc_tsv_file: Union[PathLike, pd.DataFrame],
+):
+    ...
+
+
+def bin_filter(
+    bin_out_dir: PathLike,
+    bin_input: PathLike,
+    support: Union[PathLike, str],
+    **kwargs,
 ):
     """
     filter input genomes carefully, applying two checks
@@ -229,17 +254,74 @@ def bin_filter(
     intermediate checkm and gunc table can be provided as DataFrame;
     or will be used as output dir
     """
-    if str(support).endswith("faa"):
-        raise ValueError("genome nucleotide sequences required only")
-    if isinstance(checkm_tsv_file, pd.DataFrame):
-        checkm_tsv = checkm_tsv_file
-    else:
-        checkm_tsv = pd.read_csv(checkm_tsv_file, sep="\t")
+    if "GUNC_DB" in kwargs:
+        GUNC_DB = kwargs["GUNC_DB"]
+        checkm_output_dir = kwargs.get("checkm_output_dir", None)
+        gunc_output_dir = kwargs.get("gunc_output_dir", None)
+        threads = kwargs.get("threads", 10)
+        with TemporaryDirectory() as _td:
+            # region format input to prodigal single faa
+            (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(
+                parents=True, exist_ok=True
+            )
+            if str(support).endswith("faa"):
+                raise ValueError("genome nucleotide sequences required only")
+            bin_input_dir, suffix = format_bin_input(
+                bin_output=f"{_td}/bin_fa_input",
+                bin_input=bin_input,
+                support=support,
+                keep_if_avail=False,
+            )
+            for bin_faa in prodigal_multithread(
+                bin_input_dir.glob(f"*{suffix}"),
+                mode="single",
+                out_dir=bin_faa_dir,
+                suffix="-ge33.faa",
+                threads=threads,
+            ):
+                bin_faa.rename(str(bin_faa)[:-20] + ".faa")
+            # endregion format input to prodigal single faa
 
-    if isinstance(gunc_tsv_file, pd.DataFrame):
-        gunc_tsv = gunc_tsv_file
+            if isinstance(checkm_output_dir, pd.DataFrame):
+                checkm_tsv = checkm_output_dir
+            else:
+                checkm_output_dir_ = Path(checkm_output_dir or f"{_td}/checkm")
+                checkm_output_dir_.mkdir(parents=True, exist_ok=True)
+                checkm_output_file = checkm_output_dir_ / f"checkm.tsv"
+                CheckMFakeOptions(
+                    file=str(bin_faa_dir),
+                    bin_input=str(bin_input_dir),
+                    output_dir=str(checkm_output_dir_),
+                    extension="faa",
+                    threads=threads,
+                ).run()
+                checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
+
+            if isinstance(gunc_output_dir, pd.DataFrame):
+                gunc_tsv = gunc_output_dir
+            else:
+                gunc_tsv = gunc(
+                    bin_input=str(bin_faa_dir),
+                    support="faa",
+                    GUNC_DB=GUNC_DB,
+                    output_dir=gunc_output_dir,
+                    threads=threads,
+                )
     else:
-        gunc_tsv = pd.read_csv(gunc_tsv_file, sep="\t")
+        checkm_tsv_file = kwargs["checkm_tsv_file"]
+        gunc_tsv_file = kwargs["gunc_tsv_file"]
+
+        if str(support).endswith("faa"):
+            raise ValueError("genome nucleotide sequences required only")
+        if isinstance(checkm_tsv_file, pd.DataFrame):
+            checkm_tsv = checkm_tsv_file
+        else:
+            checkm_tsv = pd.read_csv(checkm_tsv_file, sep="\t")
+
+        if isinstance(gunc_tsv_file, pd.DataFrame):
+            gunc_tsv = gunc_tsv_file
+        else:
+            gunc_tsv = pd.read_csv(gunc_tsv_file, sep="\t")
 
     checkm_gunc = checkm_tsv.merge(
         gunc_tsv[["genome", "taxonomic_level", "pass.GUNC"]].rename(
