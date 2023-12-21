@@ -2,8 +2,8 @@
 """
  * @Date: 2022-10-15 22:24:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 19:56:44
- * @FilePath: /genome/test/genome/test_gene_clust.py
+ * @LastEditTime: 2023-12-21 19:47:54
+ * @FilePath: /genome/tests/genome/test_gene_clust.py
  * @Description:
 __file__ = "test/genome/test_prokka.py"
 """
@@ -15,9 +15,9 @@ from genome.gff import Parse
 
 
 try:
-    from ._decorator import temp_output, test_files
+    from _decorator import temp_output, test_temp, test_files
 except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_files
+    from tests.genome._decorator import temp_output, test_temp, test_files
 
 
 @temp_output

@@ -19,7 +19,6 @@ dependencies:
   - gffutils
 
   # pipeline
-  - python=3.11 # fix snakemake f-string bug
   - snakemake
 
   # for checkm
@@ -31,3 +30,4 @@ dependencies:
   - pip
   - pip:
       - checkm-genome
+      - pyrodigal-gv

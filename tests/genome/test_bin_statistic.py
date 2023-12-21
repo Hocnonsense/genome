@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 17:09:49
+ * @LastEditTime: 2023-12-21 20:14:03
  * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
@@ -16,9 +16,9 @@ import pandas as pd
 from genome.bin_statistic import BinStatisticContainer, contig2bin
 
 try:
-    from ._decorator import temp_output, test_files
+    from _decorator import temp_output, test_temp, test_files
 except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_files
+    from tests.genome._decorator import temp_output, test_temp, test_files
 
 
 @temp_output

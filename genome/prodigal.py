@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 16:35:45
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 23:03:19
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-12-21 20:11:18
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -17,9 +17,11 @@ from typing import Iterable, Literal, Union, Optional
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
 
+import pyrodigal
+
 
 PathLike = Union[str, Path]
-prodigal_mode = Literal["single", "meta"]
+prodigal_mode = Literal["single", "meta", "gv-meta"]
 
 
 def check_genome_length_prodigal(
@@ -43,57 +45,50 @@ def prodigal_gff_onethread(
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("inital filename must provided")
+            raise ValueError("without gff output, inital filename must be provided")
         if not str(genome).endswith(".fa"):
-            raise ValueError("genome file must endswith '.fa'")
+            raise ValueError("without gff output, genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prodigal.{mode}.gff")
     else:
         gff_out_ = Path(gff_out)
 
-    with NamedTemporaryFile("w", suffix=".fa", delete=True) as tmpf:
+    if not isinstance(genome, str) and not isinstance(genome, Path):
+        seqs: Iterable[SeqRecord.SeqRecord] = genome  # type: ignore [union-attr]
+    else:
+        seqs = SeqIO.parse(genome, "fasta")
+
+    if mode == "gv-meta":
+        import pyrodigal_gv
+
+        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True)
+    else:
+        if mode == "meta":
+            gf = pyrodigal.GeneFinder(meta=True)
+        elif mode == "single":
+            seqs = list(seqs)
+            gf = pyrodigal.GeneFinder(meta=False)
+            gf.train(*(bytes(i.seq) for i in seqs))
+
+    with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
         tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal.{mode}.gff")
+        with open(tpmf_out, "w") as fo:
+            for i in seqs:
+                gf.find_genes(bytes(i.seq)).write_gff(
+                    fo, i.id, include_translation_table=True
+                )
+                SeqIO.write(i, tmpf, format="fasta-2line")
+            print("##FASTA", file=fo)
+            tmpf.flush()
+            tmpf.seek(0)
+            while True:
+                # read 16 Kib words one time
+                block = tmpf.read(65536)
+                if not block:
+                    break
+                fo.write(block)
 
-        if not isinstance(genome, str) and not isinstance(genome, Path):
-            SeqIO.write(genome, tmpf, "fasta")
-        else:
-            if not Path(genome).is_file():
-                raise FileNotFoundError(f"file {genome} does not exist, please check.")
-            with open(genome) as fi:
-                while True:
-                    # read 16 Kib words one time
-                    block = fi.read(65536)
-                    if not block:
-                        break
-                    tmpf.write(block)
-                tmpf.flush()
-        if mode == "single" and not check_genome_length_prodigal(genome):
-            return None
-
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = smk_workflow / "genome.smk"
-        smk_params = (
-            f"-s {target_smk_file} "
-            f"{tpmf_out} "
-            f"--use-conda "
-            f"--conda-prefix {smk_conda_env} "
-            f"-c1 -rp "
-        )
-
-        try:
-            os.system(f"ls {tmpf.name}")
-            print("params:", "snakemake", smk_params)
-            smk(smk_params)
-        except SystemExit as se:
-            if se.code:
-                print(se.code, se.with_traceback(None))
-                raise RuntimeError("snakemake seems not run successfully.")
-            else:
-                gff_out_.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(tpmf_out, gff_out_)
-                return gff_out_
-
-    raise NotImplementedError("")
+        shutil.move(tpmf_out, gff_out_)
+        return gff_out_
 
 
 def prodigal_multithread(
