@@ -2,17 +2,16 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 20:11:18
+ * @LastEditTime: 2023-12-21 22:22:44
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
 
 
-import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Iterable, Literal, Union, Optional
+from typing import Final, Iterable, Literal, Union, Optional
 
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
@@ -21,25 +20,23 @@ import pyrodigal
 
 
 PathLike = Union[str, Path]
-prodigal_mode = Literal["single", "meta", "gv-meta"]
+prodigal_mode: Final = ["single", "meta", "gvmeta"]
 
 
 def check_genome_length_prodigal(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
 ):
     """check if givem genome size is long enough to use prodigal single mode"""
-    if not isinstance(genome, str) and not isinstance(genome, Path):
-        genome_iter = genome
-    else:
-        if not Path(genome).is_file():
-            raise FileNotFoundError(f"file {genome} does not exist, please check.")
+    if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
+    else:
+        genome_iter = genome
     return sum(len(i) for i in genome_iter) >= 20000
 
 
 def prodigal_gff_onethread(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
-    mode: prodigal_mode = "single",
+    mode: Literal["single", "meta", "gvmeta"] = "single",
     gff_out: PathLike = "",
 ) -> Optional[Path]:
     # infer gff_out automatically if not given in some cases
@@ -57,7 +54,7 @@ def prodigal_gff_onethread(
     else:
         seqs = SeqIO.parse(genome, "fasta")
 
-    if mode == "gv-meta":
+    if mode == "gvmeta":
         import pyrodigal_gv
 
         gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True)
@@ -93,27 +90,25 @@ def prodigal_gff_onethread(
 
 def prodigal_multithread(
     genomes: Iterable[PathLike],
-    mode: prodigal_mode = "single",
+    mode: Literal["single", "meta", "gvmeta"] = "single",
     out_dir: PathLike = "",
-    suffix: Literal["gff", "faa", "fna"] = "gff",
+    suffix="gff",
     threads: int = 8,
 ) -> Iterable[Path]:
     """
     If in single mode, length should not shorter than 20000 bp.
+
+    suffix:
+        gff (.gff)
+        -ge33.faa
+        -ge33.fna
     """
     # if many genomes are provided, the file must exist
-    if mode == "single":
-        _genome_files = [
-            Path(file).expanduser().absolute()
-            for file in genomes
-            if check_genome_length_prodigal(file)
-        ]
-    else:
-        _genome_files = [
-            Path(file).expanduser().absolute()
-            for file in genomes
-            if check_genome_length_prodigal(file)
-        ]
+    _genome_files = [
+        Path(file).expanduser().absolute()
+        for file in genomes
+        if check_genome_length_prodigal(file)
+    ]
     if not _genome_files:
         return []
     for genome in _genome_files:
@@ -129,8 +124,8 @@ def prodigal_multithread(
         if len(_genome_files_dict) != len(_genome_files):
             raise ValueError("cannot collect genome_files with same name")
 
-        for genome_name, genome_path in _genome_files_dict.items():
-            new_file = gff_out_dir_ / genome_name
+        for genome_path in _genome_files:
+            new_file = gff_out_dir_ / genome_path.name
             if new_file.exists():
                 if new_file != genome_path:
                     raise FileExistsError(new_file)

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 21:20:46
+ * @LastEditTime: 2023-12-21 22:06:01
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -180,6 +180,7 @@ class Parse:
         translate=True,
         min_aa_length=33,
         call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
+        auto_fix=True,
     ):
         """
         min_aa_length acturally refers to
@@ -198,7 +199,15 @@ class Parse:
                 if len(seq) < min_gene_length:
                     continue
                 if translate:
-                    seq = seq.translate()
+                    seq = seq.translate(
+                        table=fet.qualifiers.get("transl_table", "Standard")
+                    )
+                    if (
+                        auto_fix
+                        and fet.qualifiers.get("partial", "00")[0] == "0"
+                        and seq.seq[0] != "M"
+                    ):
+                        seq.seq = "M" + seq.seq[1:]
                 seq.id = call_gene_id(rec.id, fet.id)
                 seq.description = " # ".join(
                     (

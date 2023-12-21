@@ -13,6 +13,11 @@ include: "./single.smk"
 include: "./union.smk"
 
 
+if config.get("GUNC_DB"):
+
+    include: "./filter.smk"
+
+
 rule clean_input_references:
     input:
         config="{any}-bins.yaml",

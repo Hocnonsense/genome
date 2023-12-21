@@ -84,7 +84,7 @@ class Gene2KO:
             if cls.iters is None:
                 cls.iters = []
             else:
-                cls.iters.append(new_cls)
+                cls.iters.append(new_cls)  # type: ignore
             return new_cls
 
     class GeneKoIter(metaclass=Annoters):

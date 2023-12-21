@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 14:33:38
+ * @LastEditTime: 2023-12-21 22:54:21
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -12,6 +12,9 @@ from pathlib import Path
 import snakemake.workflow as _wf
 from snakemake import shell
 from snakemake.io import directory
+
+from genome.bin_statistic_ext import format_bin_input
+from genome.prodigal import prodigal_multithread
 
 from . import envs_dir
 
@@ -35,7 +38,7 @@ mkdir smk-gunc
 
 gunc run \
     --db_file {input.GUNC_DB} \
-    --input_dir {input.bins_faa} \
+    --input_dir smk-gunc-gene \
     --file_suffix .faa \
     --gene_calls \
     --temp_dir smk-gunc \
@@ -93,7 +96,9 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
         )
 
     @workflow.rule(name="gunc_run")
-    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=gunc_db_file)
+    @workflow.input(
+        contig="{any}.fa", ctg2mag="{any}-ctg2mag.tsv", GUNC_DB=gunc_db_file
+    )
     @workflow.output(
         gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
     )
@@ -129,6 +134,26 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
         runtime_sourcecache_path,
         __is_snakemake_rule_func=True,
     ):
+        shell(
+            "rm -f smk-gunc-gene",
+            bench_record=bench_record,
+            bench_iteration=bench_iteration,
+        )
+
+        bin_input_dir, suffix = format_bin_input(
+            bin_output=f"smk-gunc-gene",
+            bin_input=input.ctg2mag,
+            support=input.contig,
+            keep_if_avail=True,
+        )
+        prodigal_multithread(
+            bin_input_dir.glob(f"*.fa"),
+            mode="meta",
+            out_dir=f"smk-gunc-gene",
+            suffix="-ge33.faa",
+            threads=threads,
+        )
+
         shell(
             gunc_run_shellcmd,
             bench_record=bench_record,

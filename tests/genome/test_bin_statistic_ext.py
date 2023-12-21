@@ -2,8 +2,8 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 21:34:25
- * @FilePath: /genome/test/genome/test_bin_statistic_ext.py
+ * @LastEditTime: 2023-12-21 22:07:56
+ * @FilePath: /genome/tests/genome/test_bin_statistic_ext.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
@@ -12,12 +12,17 @@ from pathlib import Path
 
 from genome.bin_statistic_ext import checkm
 
-test_temp = Path(__file__).parent.parent / "temp"
-test_files = Path(__file__).parent.parent / "file"
+try:
+    from _decorator import temp_output, test_temp, test_files
+except (ModuleNotFoundError, ImportError):
+    from tests.genome._decorator import temp_output, test_temp, test_files
 
 
-def test_checkm():
-    test_fa = test_files / "02_assem..TY.041_cut.fa"
-    test_c2b = test_temp / "union" / "dastool-all.tsv"
-    test_out = test_temp / "union" / "dastool-all-checkm.tsv"
-    (df := checkm(test_c2b, test_fa)).to_csv(test_out, sep="\t", index=False)
+@temp_output
+def test_checkm(test_temp: Path):
+    bin_input = test_files / "binny_unitem_unanimous.tsv"
+    support = test_files / "binny_contigs_4bins.fa"
+    test_out = test_temp / "union" / "binny_unitem_unanimous-checkm.tsv"
+    (df := checkm(bin_input, support, test_temp / "checkm")).to_csv(
+        test_out, sep="\t", index=False
+    )
