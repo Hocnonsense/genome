@@ -2,8 +2,8 @@
 """
  * @Date: 2022-10-25 20:53:06
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-23 13:22:27
- * @FilePath: /genome/test/genome/test_binning.py
+ * @LastEditTime: 2023-12-21 17:09:05
+ * @FilePath: /genome/tests/genome/test_binning.py
  * @Description:
 __file__ = "test/genome/test_binning.py"
 """
@@ -23,9 +23,9 @@ from genome.binning import (
 )
 
 try:
-    from ._decorator import temp_output, test_temp, test_files
+    from ._decorator import temp_output, test_files
 except (ModuleNotFoundError, ImportError):
-    from _decorator import temp_output, test_temp, test_files
+    from tests.genome._decorator import temp_output, test_files
 
 
 @temp_output

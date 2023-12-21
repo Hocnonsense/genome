@@ -2,8 +2,8 @@
 """
  * @Date: 2023-10-22 20:59:23
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-22 21:03:41
- * @FilePath: /genome/test/genome/__init__.py
+ * @LastEditTime: 2023-12-21 17:14:19
+ * @FilePath: /genome/tests/genome/_decorator.py
  * @Description:
 """
 # """

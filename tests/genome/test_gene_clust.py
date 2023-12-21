@@ -17,7 +17,7 @@ from genome.gff import Parse
 try:
     from ._decorator import temp_output, test_files
 except (ModuleNotFoundError, ImportError):
-    from _decorator import temp_output, test_files
+    from tests.genome._decorator import temp_output, test_files
 
 
 @temp_output
