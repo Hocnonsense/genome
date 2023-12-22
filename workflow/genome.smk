@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 21:36:10
+ * @LastEditTime: 2023-12-22 14:01:53
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -32,7 +32,8 @@ rule gff_2_fa:
         SeqIO.write(
             sorted(
                 gff.Parse(input.gff).extract(
-                    translate=params.suffix == "faa", min_aa_length=params.min_aa_len
+                    translate=params.suffix == "faa",
+                    min_aa_length=int(params.min_aa_len),
                 ),
                 key=lambda x: x.id,
             ),
@@ -116,8 +117,6 @@ rule prodigal_raw:
         genome="{any}.fa",
     output:
         gff="{any}-prodigal.{mode}.gff",
-    conda:
-        "../envs/prokka.yaml"
     params:
         mode="{mode}",
     wildcard_constraints:
