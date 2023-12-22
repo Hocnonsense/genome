@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 18:11:39
+ * @LastEditTime: 2023-12-22 21:12:26
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -163,7 +163,7 @@ def gunc(
         for gunc_tsv_file in Path(output_dir).glob("GUNC.*maxCSS_level.tsv"):
             return pd.read_csv(gunc_tsv_file, sep="\t")
     with TemporaryDirectory() as _td:
-        (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
+        (bin_faa_dir := Path(f"{_td}/out-bins")).mkdir(parents=True, exist_ok=True)
         if str(support).endswith("faa"):
             bin_input_dir = Path(bin_input)
             for bin_file in bin_input_dir.glob(f"*{support}"):
@@ -176,21 +176,22 @@ def gunc(
                 support=support,
                 keep_if_avail=True,
             )
-            prodigal_multithread(
+            for bin_faa in prodigal_multithread(
                 bin_input_dir.glob(f"*{suffix}"),
                 mode="meta",
                 out_dir=bin_faa_dir,
                 suffix="-ge33.faa",
                 threads=threads,
-            )
+            ):
+                bin_faa.rename(str(bin_faa)[:-25] + ".faa")
 
         # gunc_out_tsv = f"{_td}/out-gunc.tsv"
         # gunc_out_dir = f"{_td}/out-gunc-dir"
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
         smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = smk_workflow / "genome.smk"
-        tpmf_outs = f"{_td}/out-gunc.tsv"
+        target_smk_file = Path(__file__).parent / "pyrule" / "gunc.smk"
+        tpmf_outs = f"{_td}/out-bins-gunc.tsv"
         smk_params = (
             f"-s {target_smk_file} "
             f"{tpmf_outs} "
