@@ -13,7 +13,7 @@ include: "./single.smk"
 include: "./union.smk"
 
 
-if config.get("GUNC_DB"):
+if config.get("gunc_db_path"):
 
     include: "./filter.smk"
 

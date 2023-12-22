@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 16:47:33
+ * @LastEditTime: 2023-12-22 16:53:08
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -25,12 +25,9 @@ rule checkm_union_tsv:
 
 
 # if config.get("GUNC_DB", ""):
-from genome.pyrule import gunc
-
-
 rule gunc_download_db:
     output:
-        gunc.Path(config["gunc_db_path"]) / gunc.gunc_db_base,
+        GUNC_DB=gunc.Path(config["gunc_db_path"]) / "gunc_db_progenomes2.1.dmnd",
     params:
         GUNC_DB=config["gunc_db_path"],
     conda:
@@ -38,7 +35,17 @@ rule gunc_download_db:
     shadow:
         "shallow"
     shell:
-        gunc.gunc_download_db
+        """
+        mkdir -p {params.GUNC_DB}
+
+        gunc download_db {params.GUNC_DB} \
+        || (
+            wget \
+                https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz \
+                -O {output.GUNC_DB}.gz;
+            gunzip {output.GUNC_DB}.gz
+        )
+        """
 
 
 rule gunc_run_ctg2mag:
