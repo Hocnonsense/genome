@@ -2,203 +2,37 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 16:23:10
+ * @LastEditTime: 2023-12-22 20:19:50
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
 
-from pathlib import Path
+from . import general_register, _wf, Path
 
-import snakemake.workflow as _wf
-from snakemake import shell
-from snakemake.io import directory
 
-from genome.bin_statistic_ext import format_bin_input
-from genome.prodigal import prodigal_multithread
+target_smk_file = Path(__file__).parent / "gunc.smk"
 
-from . import envs_dir
-
-gunc_db_base = "gunc_db_progenomes2.1.dmnd"
-
-gunc_download_db = """
-mkdir -p {params.GUNC_DB}
-
-gunc download_db {params.GUNC_DB} \
-|| (
-    wget \
-        https://swifter.embl.de/~fullam/gunc/gunc_db_progenomes2.1.dmnd.gz \
-        -O {output.GUNC_DB}.gz;
-    gunzip {output.GUNC_DB}.gz
+register = general_register(
+    snakefile=target_smk_file,
+    module_name=__name__.replace(".", "_DOT_"),
+    default_config=dict(
+        gunc_db_path="data/database/gunc_db",
+    ),
 )
-"""
-
-gunc_run_shellcmd = """
-rm -f smk-gunc
-mkdir smk-gunc
-
-gunc run \
-    --db_file {input.GUNC_DB} \
-    --input_dir smk-gunc-gene \
-    --file_suffix .faa \
-    --gene_calls \
-    --temp_dir smk-gunc \
-    --out_dir smk-gunc \
-    --threads {threads} \
-    --detailed_output
-
-cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.gunc_out_tsv}
-mv smk-gunc {output.gunc_out_dir}
-"""
 
 
-def register(workflow: _wf.Workflow, GUNC_DB: str):
-    gunc_db_file = Path(GUNC_DB) / gunc_db_base
+def register_binning(workflow: _wf.Workflow, rules: _wf.Rules, GUNC_DB: str):
+    _userule = register(
+        workflow, name="gunc_workflow", config=dict(gunc_db_path=GUNC_DB)
+    )
+    _userule(rules=["gunc_download_db"])
 
-    @workflow.rule(name="gunc_download_db")
-    @workflow.output(GUNC_DB=gunc_db_file)
-    @workflow.params(GUNC_DB=GUNC_DB)
-    @workflow.threads(64)
-    @workflow.conda(envs_dir / "gunc.yaml")
-    @workflow.shadow("shallow")
-    @workflow.shellcmd(gunc_download_db)
-    @workflow.run
-    def __rule_gunc_download_db(
-        input,
-        output,
-        params,
-        wildcards,
-        threads,
-        resources,
-        log,
-        version,
-        rule,
-        conda_env,
-        container_img,
-        singularity_args,
-        use_singularity,
-        env_modules,
-        bench_record,
-        jobid,
-        is_shell,
-        bench_iteration,
-        cleanup_scripts,
-        shadow_dir,
-        edit_notebook,
-        conda_base_path,
-        basedir,
-        runtime_sourcecache_path,
-        __is_snakemake_rule_func=True,
-    ):
-        shell(
-            gunc_download_db,
-            bench_record=bench_record,
-            bench_iteration=bench_iteration,
-        )
-
-    @workflow.rule(name="gunc_run_ctg2mag")
+    @_userule(rules=["gunc_run_ctg2mag"])
     @workflow.input(
-        contig="{any}.fa", ctg2mag="{any}-ctg2mag.tsv", GUNC_DB=gunc_db_file
+        bins_faa="{any}-bins/union/{union_method}{marker}-binsfaa.tsv",
+        GUNC_DB=rules.gunc_download_db.output.GUNC_DB,
     )
-    @workflow.output(
-        gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
-    )
-    @workflow.threads(64)
-    @workflow.conda(envs_dir / "gunc.yaml")
-    @workflow.shadow("shallow")
-    @workflow.shellcmd(gunc_run_shellcmd)
-    @workflow.run
-    def __rule_gunc_ctg2mag(
-        input,
-        output,
-        params,
-        wildcards,
-        threads,
-        resources,
-        log,
-        version,
-        rule,
-        conda_env,
-        container_img,
-        singularity_args,
-        use_singularity,
-        env_modules,
-        bench_record,
-        jobid,
-        is_shell,
-        bench_iteration,
-        cleanup_scripts,
-        shadow_dir,
-        edit_notebook,
-        conda_base_path,
-        basedir,
-        runtime_sourcecache_path,
-        __is_snakemake_rule_func=True,
-    ):
-        shell(
-            "rm -f smk-gunc-gene",
-            bench_record=bench_record,
-            bench_iteration=bench_iteration,
-        )
-
-        bin_input_dir, binids, suffix = format_bin_input(
-            bin_output=f"smk-gunc-gene",
-            bin_input=input.ctg2mag,
-            support=input.contig,
-            keep_if_avail=True,
-        )
-        prodigal_multithread(
-            bin_input_dir.glob(f"*.fa"),
-            mode="meta",
-            out_dir=f"smk-gunc-gene",
-            suffix="-ge33.faa",
-            threads=threads,
-        )
-
-        shell(
-            gunc_run_shellcmd,
-            bench_record=bench_record,
-            bench_iteration=bench_iteration,
-        )
-
-    @workflow.rule(name="gunc_run")
-    @workflow.input(bins_faa="{any}-bins_faa", GUNC_DB=gunc_db_file)
-    @workflow.output(
-        gunc_out_tsv="{any}-gunc.tsv", gunc_out_dir=directory("{any}-gunc-dir")
-    )
-    @workflow.threads(64)
-    @workflow.conda(envs_dir / "gunc.yaml")
-    @workflow.shadow("shallow")
-    @workflow.shellcmd(gunc_run_shellcmd)
-    @workflow.run
-    def __rule_gunc_run(
-        input,
-        output,
-        params,
-        wildcards,
-        threads,
-        resources,
-        log,
-        version,
-        rule,
-        conda_env,
-        container_img,
-        singularity_args,
-        use_singularity,
-        env_modules,
-        bench_record,
-        jobid,
-        is_shell,
-        bench_iteration,
-        cleanup_scripts,
-        shadow_dir,
-        edit_notebook,
-        conda_base_path,
-        basedir,
-        runtime_sourcecache_path,
-        __is_snakemake_rule_func=True,
-    ):
-        shell(
-            gunc_run_shellcmd.replace("smk-gunc-gene", "{input.bins_faa}"),
-            bench_record=bench_record,
-            bench_iteration=bench_iteration,
-        )
+    @workflow.output(mag2gunc="{any}-bins/filter/{union_method}{marker}-gunc.tsv")
+    @workflow.params(bins_faa="{any}-bins/union/{union_method}{marker}-binsfaa")
+    def _():
+        pass
