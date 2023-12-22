@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 22:22:44
+ * @LastEditTime: 2023-12-22 15:03:05
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -138,8 +138,16 @@ def prodigal_multithread(
     smk_workflow = Path(__file__).parent.parent / "workflow"
     smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
     target_smk_file = smk_workflow / "genome.smk"
+
+    # region quick fix suffix
+    if suffix in ["faa", "fna"]:
+        suffix = "-ge33." + suffix
+    if "." not in suffix:
+        suffix = "." + suffix
+    # endregion quick fix suffix
+
     tpmf_outs = [
-        f"{str(genome)[:-3]}-prodigal.{mode}.{suffix}" for genome in genome_files
+        f"{str(genome)[:-3]}-prodigal.{mode}{suffix}" for genome in genome_files
     ]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (
