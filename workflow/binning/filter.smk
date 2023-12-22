@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 16:40:18
+ * @LastEditTime: 2023-12-22 16:47:33
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -30,7 +30,9 @@ from genome.pyrule import gunc
 
 rule gunc_download_db:
     output:
-        gunc.Path(config["GUNC_DB"]) / gunc.gunc_db_base,
+        gunc.Path(config["gunc_db_path"]) / gunc.gunc_db_base,
+    params:
+        GUNC_DB=config["gunc_db_path"],
     conda:
         "../../envs/gunc.yaml"
     shadow:
