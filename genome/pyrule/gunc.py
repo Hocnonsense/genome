@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 14:42:08
+ * @LastEditTime: 2023-12-22 16:23:10
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -18,7 +18,7 @@ from genome.prodigal import prodigal_multithread
 
 from . import envs_dir
 
-file_name = "gunc_db_progenomes2.1.dmnd"
+gunc_db_base = "gunc_db_progenomes2.1.dmnd"
 
 gunc_download_db = """
 mkdir -p {params.GUNC_DB}
@@ -52,7 +52,7 @@ mv smk-gunc {output.gunc_out_dir}
 
 
 def register(workflow: _wf.Workflow, GUNC_DB: str):
-    gunc_db_file = Path(GUNC_DB) / file_name
+    gunc_db_file = Path(GUNC_DB) / gunc_db_base
 
     @workflow.rule(name="gunc_download_db")
     @workflow.output(GUNC_DB=gunc_db_file)

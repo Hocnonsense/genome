@@ -1,17 +1,10 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 14:43:33
+ * @LastEditTime: 2023-12-22 16:40:18
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
-
-
-from genome.pyrule import gene_predict
-
-gene_predict.register(workflow, name="gene_predict_workflow")(
-    rules=["gff_2_fa", "prodigal_raw"], exclude_rules=[]
-)
 
 
 rule checkm_union_tsv:
@@ -34,14 +27,23 @@ rule checkm_union_tsv:
 # if config.get("GUNC_DB", ""):
 from genome.pyrule import gunc
 
-gunc.register(workflow, config["GUNC_DB"])
+
+rule gunc_download_db:
+    output:
+        gunc.Path(config["GUNC_DB"]) / gunc.gunc_db_base,
+    conda:
+        "../../envs/gunc.yaml"
+    shadow:
+        "shallow"
+    shell:
+        gunc.gunc_download_db
 
 
-use rule gunc_run_ctg2mag with:
+rule gunc_run_ctg2mag:
     input:
         contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
-    input:
+    output:
         gunc_out_tsv="{any}-bins/filter/{method}{marker}-gunc.tsv",
 
 
