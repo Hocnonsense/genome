@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 22:06:01
+ * @LastEditTime: 2023-12-22 14:17:35
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -200,7 +200,7 @@ class Parse:
                     continue
                 if translate:
                     seq = seq.translate(
-                        table=fet.qualifiers.get("transl_table", "Standard")
+                        table=fet.qualifiers.get("transl_table", "Standard")[0]
                     )
                     if (
                         auto_fix
