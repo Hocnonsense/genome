@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-22 15:23:06
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 19:57:45
- * @FilePath: /genome/genome/pyrule/gunc.smk
+ * @LastEditTime: 2023-12-22 20:56:01
+ * @FilePath: /genome/dssg/home/acct-trench/trench-0/software/genome/genome/pyrule/gunc.smk
  * @Description:
 """
 
@@ -37,7 +37,7 @@ rule gunc_run_ctg2mag:
         bins_faa="{any}",
         GUNC_DB=rules.gunc_download_db.output.GUNC_DB,
     output:
-        gunc_out_tsv="{any}-gunc.tsv",
+        mag2gunc="{any}-gunc.tsv",
     params:
         bins_faa="{any}",
     conda:
@@ -59,6 +59,5 @@ rule gunc_run_ctg2mag:
             --threads {threads} \
             --detailed_output
 
-        cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.gunc_out_tsv}
-        mv smk-gunc {output.gunc_out_dir}
+        cp `ls smk-gunc/GUNC.*maxCSS_level.tsv|head -n1` {output.mag2gunc}
         """
