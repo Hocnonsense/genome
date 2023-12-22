@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:26:10
+ * @LastEditTime: 2023-12-22 21:28:42
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -142,7 +142,7 @@ def checkm(
 def gunc(
     bin_input: PathLike,
     support: PathLike | str,
-    GUNC_DB: PathLike,
+    gunc_db_path: PathLike,
     output_dir: PathLike | None = None,
     threads=10,
 ):
@@ -195,7 +195,7 @@ def gunc(
         smk_params = (
             f"-s {target_smk_file} "
             f"{tpmf_outs} "
-            f"--config GUNC_DB='{GUNC_DB}' "
+            f"--config gunc_db_path='{gunc_db_path}' "
             f"--use-conda "
             f"--conda-prefix {smk_conda_env} "
             f"-c{threads} -rp "
@@ -222,7 +222,7 @@ def bin_filter(
     bin_input: PathLike,
     support: Union[PathLike, str],
     *,
-    GUNC_DB: PathLike,
+    gunc_db_path: PathLike,
     checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     threads=10,
@@ -258,8 +258,8 @@ def bin_filter(
     intermediate checkm and gunc table can be provided as DataFrame;
     or will be used as output dir
     """
-    if "GUNC_DB" in kwargs:
-        GUNC_DB = kwargs["GUNC_DB"]
+    if "gunc_db_path" in kwargs:
+        gunc_db_path = kwargs["gunc_db_path"]
         checkm_output_dir = kwargs.get("checkm_output_dir", None)
         gunc_output_dir = kwargs.get("gunc_output_dir", None)
         threads = kwargs.get("threads", 10)
@@ -308,7 +308,7 @@ def bin_filter(
                 gunc_tsv = gunc(
                     bin_input=str(bin_faa_dir),
                     support="faa",
-                    GUNC_DB=GUNC_DB,
+                    gunc_db_path=gunc_db_path,
                     output_dir=gunc_output_dir,
                     threads=threads,
                 )
