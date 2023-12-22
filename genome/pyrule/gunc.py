@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:50:18
+ * @LastEditTime: 2023-12-22 20:53:38
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -34,5 +34,6 @@ def register_binning(workflow: _wf.Workflow, rules: _wf.Rules, GUNC_DB: str):
     )
     @workflow.output(mag2gunc="{any}-bins/filter/{union_method}{marker}-gunc.tsv")
     @workflow.params(bins_faa="{any}-bins/union/{union_method}{marker}-binsfaa")
+    @workflow.run
     def _():
         pass
