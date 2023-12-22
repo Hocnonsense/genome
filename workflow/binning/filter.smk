@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:21:43
+ * @LastEditTime: 2023-12-22 20:45:40
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -77,7 +77,7 @@ rule ctg2faa_checkm:
         ).run()
 
 
-if config.get("GUNC_DB"):
+if config.get("gunc_db_path"):
     from genome.pyrule import gunc
 
     gunc.register_binning(workflow, rules, config.get("gunc_db_path"))

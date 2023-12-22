@@ -2,14 +2,13 @@
 """
  * @Date: 2023-12-21 21:05:25
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 21:36:49
+ * @LastEditTime: 2023-12-22 20:28:08
  * @FilePath: /genome/genome/pyrule/gene_predict.py
  * @Description:
 """
 
 
-from . import envs_dir, general_register, _wf, Path
-from ..gene_clust import MmseqOut
+from . import general_register, Path
 
 
 smk_workflow = Path(__file__).parent.parent.parent / "workflow"

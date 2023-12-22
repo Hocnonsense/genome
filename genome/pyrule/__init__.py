@@ -20,7 +20,6 @@ def general_register(
     snakefile: str | Path,
     module_name: str,
     default_config: dict[str, Any] | None = None,
-    ruleinfo: str | Callable[[], None] = lambda: None,
 ):
     def register(workflow: _wf.Workflow, name=None, config=None):
         name = name or module_name
@@ -34,6 +33,7 @@ def general_register(
             rules=("*",),
             exclude_rules=(),
             name_modifier: str | None = None,
+            ruleinfo: str | Callable[[], None] = lambda: None,
         ):
             return workflow.userule(
                 rules=rules,
