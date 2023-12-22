@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 15:01:07
+ * @LastEditTime: 2023-12-22 18:11:39
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -132,6 +132,7 @@ def checkm(
             bin_input=str(bin_input_),
             output_dir=output_dir,
             extension=support_.strip("."),
+            bCalledGenes=support_.endswith("faa"),
             threads=threads,
             **checkm_options,  # type: ignore  # confirmed by users
         ).run()
