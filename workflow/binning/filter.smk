@@ -1,10 +1,12 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 16:53:08
+ * @LastEditTime: 2023-12-22 16:56:24
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
+
+from pathlib import Path
 
 
 rule checkm_union_tsv:
@@ -27,7 +29,7 @@ rule checkm_union_tsv:
 # if config.get("GUNC_DB", ""):
 rule gunc_download_db:
     output:
-        GUNC_DB=gunc.Path(config["gunc_db_path"]) / "gunc_db_progenomes2.1.dmnd",
+        GUNC_DB=Path(config["gunc_db_path"]) / "gunc_db_progenomes2.1.dmnd",
     params:
         GUNC_DB=config["gunc_db_path"],
     conda:
