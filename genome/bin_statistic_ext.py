@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:28:42
+ * @LastEditTime: 2023-12-22 21:34:42
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -340,7 +340,7 @@ def bin_filter(
     ]
 
     with TemporaryDirectory() as _td:
-        bin_input_dir, suffix = format_bin_input(
+        bin_input_dir, binids, suffix = format_bin_input(
             bin_output=f"{_td}/bin_fa_input",
             bin_input=bin_input,
             support=support,
