@@ -1,18 +1,45 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 13:34:54
+ * @LastEditTime: 2023-12-22 14:01:53
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
 import os
 
 
-def get_env_var(env_var: str, default: str) -> str:
-    return os.environ.get(env_var, default)
+prokka_output_suffixes = config.get(
+    "prokka_output_suffixes", os.environ.get("prokka_output_suffixes", "gff").split()
+)
 
 
-prokka_output_suffixes: list[str] = get_env_var("prokka_output_suffixes", "gff").split()
+rule gff_2_fa:
+    input:
+        gff="{any}.gff",
+    output:
+        faa="{any}-ge{min_aa_len}.{suffix}",
+    params:
+        min_aa_len="{min_aa_len}",
+        suffix="{suffix}",
+    wildcard_constraints:
+        suffix="faa|fna",
+        min_aa_len="\d+",
+    threads: 1
+    run:
+        from Bio import SeqIO
+        from genome import gff
+
+        SeqIO.write(
+            sorted(
+                gff.Parse(input.gff).extract(
+                    translate=params.suffix == "faa",
+                    min_aa_length=int(params.min_aa_len),
+                ),
+                key=lambda x: x.id,
+            ),
+            output.faa,
+            "fasta-2line",
+        )
 
 
 rule prokka_raw:
@@ -89,33 +116,13 @@ rule prodigal_raw:
     input:
         genome="{any}.fa",
     output:
-        faa="{any}-prodigal.{mode}.faa",
-        fna="{any}-prodigal.{mode}.fna",
         gff="{any}-prodigal.{mode}.gff",
-    conda:
-        "../envs/prokka.yaml"
     params:
         mode="{mode}",
     wildcard_constraints:
-        mode="single|meta",
+        mode="single|meta|gvmeta",
     threads: 1
-    shell:
-        """
-        prodigal \
-            -i {input.genome} \
-            -p {params.mode} \
-            -d {output.fna} \
-            -a {output.faa} \
-            -f gff \
-            -o {output.gff} \
-            -q
+    run:
+        from genome.prodigal import prodigal_gff_onethread
 
-        echo '##FASTA' >> {output.gff}
-        cat {input.genome} >> {output.gff}
-        """
-
-
-if config.get("GUNC_DB", ""):
-    from genome.pyrule import gunc
-
-    gunc.register(workflow, config["GUNC_DB"])
+        prodigal_gff_onethread(input.genome, params.mode, output.gff)

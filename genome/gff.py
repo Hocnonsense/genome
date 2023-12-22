@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-04 10:46:43
+ * @LastEditTime: 2023-12-22 14:17:35
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -180,10 +180,12 @@ class Parse:
         translate=True,
         min_aa_length=33,
         call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
+        auto_fix=True,
     ):
         """
-        min_aa_length acturally refer to at least 32 aa complete protein,
-        for a complete terminal codon.
+        min_aa_length acturally refers to
+          - at least 32 aa complete protein with a complete terminal codon.
+          - or at least 33 aa complete protein without terminal codon.
         """
         min_gene_length = min_aa_length * 3
 
@@ -197,14 +199,22 @@ class Parse:
                 if len(seq) < min_gene_length:
                     continue
                 if translate:
-                    seq = seq.translate()
+                    seq = seq.translate(
+                        table=fet.qualifiers.get("transl_table", "Standard")[0]
+                    )
+                    if (
+                        auto_fix
+                        and fet.qualifiers.get("partial", "00")[0] == "0"
+                        and seq.seq[0] != "M"
+                    ):
+                        seq.seq = "M" + seq.seq[1:]
                 seq.id = call_gene_id(rec.id, fet.id)
                 seq.description = " # ".join(
                     (
                         str(i)
                         for i in (
                             "",
-                            fet.location.start,
+                            fet.location.start + 1,
                             fet.location.end,
                             fet.location.strand,
                             ";".join(

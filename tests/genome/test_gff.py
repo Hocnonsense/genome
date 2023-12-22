@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:53:55
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-21 16:34:54
- * @FilePath: /genome/test/genome/test_gff.py
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-12-21 21:58:36
+ * @FilePath: /genome/tests/genome/test_gff.py
  * @Description:
-__file__ = "test/genome/test_prokka.py"
+__file__ = "tests/genome/test_prokka.py"
 """
 
 import os
@@ -18,7 +18,9 @@ test_files = Path(__file__).parent.parent / "file"
 
 
 def test_gff_extract_protein_fa():
-    gff = test_files / "metadecoder.1-prokka.Bacteria.gff"
+    gff = test_files / "binny_contigs_4bins-prodigal.single.gff"
+    for i in Parse(gff).extract(min_aa_length=33):
+        pass
     expect = test_files / "metadecoder.1.prokka.faa"
 
     test_out = test_temp / "metadecoder.1.prokka.faa"

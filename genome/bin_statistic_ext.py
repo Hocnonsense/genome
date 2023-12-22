@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-23 19:06:47
+ * @LastEditTime: 2023-12-22 21:34:42
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -11,7 +11,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Optional, Union
+from typing import Optional, Union, overload
 
 from snakemake import main as smk
 import pandas as pd
@@ -91,21 +91,23 @@ def format_bin_input(
     (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
     if bin_input.is_dir():
         assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-        if str(support).endswith("fa") and keep_if_avail:
+        if str(support).endswith(".fa") and keep_if_avail:
+            binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
             suffix = str(support)
             bin_input_dir = bin_input
         else:
-            suffix = "fa"
+            suffix = ".fa"
             bin_input_dir = bin_output_
             support_str_len = len(str(support))
+            binids = []
             for bin_file in bin_input.glob(f"*{support}"):
-                bin_name = bin_file.name[:-support_str_len].strip(".")
+                binids.append(bin_name := bin_file.name[:-support_str_len].rstrip("."))
                 shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
     else:
         assert bin_input.is_file() and Path(support).is_file()
-        bin_input_dir = contig2bin(bin_output_, bin_input, support)
-        suffix = "fa"
-    return bin_input_dir, suffix
+        bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
+        suffix = ".fa"
+    return bin_input_dir, binids, suffix
 
 
 def checkm(
@@ -117,7 +119,7 @@ def checkm(
 ):
     with TemporaryDirectory() as _td:
         file = f"{_td}/checkm.tsv"
-        bin_input_, support_ = format_bin_input(
+        bin_input_, binids_, support_ = format_bin_input(
             bin_output=f"{_td}/bin_input",
             bin_input=bin_input,
             support=support,
@@ -129,7 +131,8 @@ def checkm(
             file=file,
             bin_input=str(bin_input_),
             output_dir=output_dir,
-            extension=support_,
+            extension=support_.strip("."),
+            bCalledGenes=support_.endswith("faa"),
             threads=threads,
             **checkm_options,  # type: ignore  # confirmed by users
         ).run()
@@ -139,7 +142,7 @@ def checkm(
 def gunc(
     bin_input: PathLike,
     support: PathLike | str,
-    GUNC_DB: PathLike,
+    gunc_db_path: PathLike,
     output_dir: PathLike | None = None,
     threads=10,
 ):
@@ -160,7 +163,7 @@ def gunc(
         for gunc_tsv_file in Path(output_dir).glob("GUNC.*maxCSS_level.tsv"):
             return pd.read_csv(gunc_tsv_file, sep="\t")
     with TemporaryDirectory() as _td:
-        (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
+        (bin_faa_dir := Path(f"{_td}/out-bins")).mkdir(parents=True, exist_ok=True)
         if str(support).endswith("faa"):
             bin_input_dir = Path(bin_input)
             for bin_file in bin_input_dir.glob(f"*{support}"):
@@ -173,25 +176,26 @@ def gunc(
                 support=support,
                 keep_if_avail=True,
             )
-            prodigal_multithread(
+            for bin_faa in prodigal_multithread(
                 bin_input_dir.glob(f"*{suffix}"),
                 mode="meta",
                 out_dir=bin_faa_dir,
-                suffix="faa",
+                suffix="-ge33.faa",
                 threads=threads,
-            )
+            ):
+                bin_faa.rename(str(bin_faa)[:-25] + ".faa")
 
         # gunc_out_tsv = f"{_td}/out-gunc.tsv"
         # gunc_out_dir = f"{_td}/out-gunc-dir"
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
         smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = smk_workflow / "genome.smk"
-        tpmf_outs = f"{_td}/out-gunc.tsv"
+        target_smk_file = Path(__file__).parent / "pyrule" / "gunc.smk"
+        tpmf_outs = f"{_td}/out-bins-gunc.tsv"
         smk_params = (
             f"-s {target_smk_file} "
             f"{tpmf_outs} "
-            f"--config GUNC_DB='{GUNC_DB}' "
+            f"--config gunc_db_path='{gunc_db_path}' "
             f"--use-conda "
             f"--conda-prefix {smk_conda_env} "
             f"-c{threads} -rp "
@@ -212,14 +216,37 @@ def gunc(
         return pd.read_csv(tpmf_outs, sep="\t")
 
 
+@overload
 def bin_filter(
     bin_out_dir: PathLike,
     bin_input: PathLike,
     support: Union[PathLike, str],
-    GUNC_DB: PathLike,
+    *,
+    gunc_db_path: PathLike,
     checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     threads=10,
+):
+    ...
+
+
+@overload
+def bin_filter(
+    bin_out_dir: PathLike,
+    bin_input: PathLike,
+    support: Union[PathLike, str],
+    *,
+    checkm_tsv_file: Union[PathLike, pd.DataFrame],
+    gunc_tsv_file: Union[PathLike, pd.DataFrame],
+):
+    ...
+
+
+def bin_filter(
+    bin_out_dir: PathLike,
+    bin_input: PathLike,
+    support: Union[PathLike, str],
+    **kwargs,
 ):
     """
     filter input genomes carefully, applying two checks
@@ -231,71 +258,101 @@ def bin_filter(
     intermediate checkm and gunc table can be provided as DataFrame;
     or will be used as output dir
     """
-    with TemporaryDirectory() as _td:
-        # region format input to prodigal single faa
-        (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(parents=True, exist_ok=True)
+    if "gunc_db_path" in kwargs:
+        gunc_db_path = kwargs["gunc_db_path"]
+        checkm_output_dir = kwargs.get("checkm_output_dir", None)
+        gunc_output_dir = kwargs.get("gunc_output_dir", None)
+        threads = kwargs.get("threads", 10)
+        with TemporaryDirectory() as _td:
+            # region format input to prodigal single faa
+            (bin_faa_dir := Path(f"{_td}/out-bins_faa")).mkdir(
+                parents=True, exist_ok=True
+            )
+            if str(support).endswith("faa"):
+                raise ValueError("genome nucleotide sequences required only")
+            bin_input_dir, binids, suffix = format_bin_input(
+                bin_output=f"{_td}/bin_fa_input",
+                bin_input=bin_input,
+                support=support,
+                keep_if_avail=False,
+            )
+            for bin_faa in prodigal_multithread(
+                bin_input_dir.glob(f"*{suffix}"),
+                mode="single",
+                out_dir=bin_faa_dir,
+                suffix="-ge33.faa",
+                threads=threads,
+            ):
+                bin_faa.rename(str(bin_faa)[:-25] + ".faa")
+            # endregion format input to prodigal single faa
+
+            if isinstance(checkm_output_dir, pd.DataFrame):
+                checkm_tsv = checkm_output_dir
+            else:
+                checkm_output_dir_ = Path(checkm_output_dir or f"{_td}/checkm")
+                checkm_output_dir_.mkdir(parents=True, exist_ok=True)
+                checkm_output_file = checkm_output_dir_ / f"checkm.tsv"
+                CheckMFakeOptions(
+                    file=str(bin_faa_dir),
+                    bin_input=str(bin_input_dir),
+                    output_dir=str(checkm_output_dir_),
+                    extension="faa",
+                    bCalledGenes=True,
+                    threads=threads,
+                ).run()
+                checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
+
+            if isinstance(gunc_output_dir, pd.DataFrame):
+                gunc_tsv = gunc_output_dir
+            else:
+                gunc_tsv = gunc(
+                    bin_input=str(bin_faa_dir),
+                    support="faa",
+                    gunc_db_path=gunc_db_path,
+                    output_dir=gunc_output_dir,
+                    threads=threads,
+                )
+    else:
+        checkm_tsv_file = kwargs["checkm_tsv_file"]
+        gunc_tsv_file = kwargs["gunc_tsv_file"]
+
         if str(support).endswith("faa"):
             raise ValueError("genome nucleotide sequences required only")
-        bin_input_dir, suffix = format_bin_input(
+        if isinstance(checkm_tsv_file, pd.DataFrame):
+            checkm_tsv = checkm_tsv_file
+        else:
+            checkm_tsv = pd.read_csv(checkm_tsv_file, sep="\t")
+
+        if isinstance(gunc_tsv_file, pd.DataFrame):
+            gunc_tsv = gunc_tsv_file
+        else:
+            gunc_tsv = pd.read_csv(gunc_tsv_file, sep="\t")
+
+    checkm_gunc = checkm_tsv.merge(
+        gunc_tsv[["genome", "taxonomic_level", "pass.GUNC"]].rename(
+            {"genome": "Bin Id"}, axis=1
+        )
+    )
+    checkm_gunc_filter = checkm_gunc[
+        (checkm_gunc["Completeness"] >= 50)
+        & (checkm_gunc["Contamination"] <= 10)
+        & (checkm_gunc["pass.GUNC"])
+    ]
+
+    with TemporaryDirectory() as _td:
+        bin_input_dir, binids, suffix = format_bin_input(
             bin_output=f"{_td}/bin_fa_input",
             bin_input=bin_input,
             support=support,
             keep_if_avail=False,
         )
-        for bin_faa in prodigal_multithread(
-            bin_input_dir.glob(f"*{suffix}"),
-            mode="single",
-            out_dir=bin_faa_dir,
-            suffix="faa",
-            threads=threads,
-        ):
-            bin_faa.rename(str(bin_faa)[:-20] + ".faa")
-        # endregion format input to prodigal single faa
-
-        if isinstance(checkm_output_dir, pd.DataFrame):
-            checkm_tsv = checkm_output_dir
-        else:
-            checkm_output_dir_ = Path(checkm_output_dir or f"{_td}/checkm")
-            checkm_output_dir_.mkdir(parents=True, exist_ok=True)
-            checkm_output_file = checkm_output_dir_ / f"checkm.tsv"
-            CheckMFakeOptions(
-                file=str(bin_faa_dir),
-                bin_input=str(bin_input_dir),
-                output_dir=str(checkm_output_dir_),
-                extension="faa",
-                threads=threads,
-            ).run()
-            checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
-
-        if isinstance(gunc_output_dir, pd.DataFrame):
-            gunc_tsv = gunc_output_dir
-        else:
-            gunc_tsv = gunc(
-                bin_input=str(bin_faa_dir),
-                support="faa",
-                GUNC_DB=GUNC_DB,
-                output_dir=gunc_output_dir,
-                threads=threads,
-            )
-
-        checkm_gunc = checkm_tsv.merge(
-            gunc_tsv[["genome", "taxonomic_level", "pass.GUNC"]].rename(
-                {"genome": "Bin Id"}, axis=1
-            )
-        )
-        checkm_gunc_filter = checkm_gunc[
-            (checkm_gunc["Completeness"] >= 50)
-            & (checkm_gunc["Contamination"] <= 10)
-            & (checkm_gunc["pass.GUNC"])
-        ]
-
         (bin_out_dir_ := Path(bin_out_dir)).mkdir(parents=True, exist_ok=True)
         for bin_fa in checkm_gunc_filter["Bin Id"]:
             shutil.move(bin_input_dir / f"{bin_fa}.fa", bin_out_dir_ / f"{bin_fa}.fa")
 
         shutil.move(bin_input_dir, bin_out_dir_ / "discard")
-        checkm_gunc.to_csv(
-            bin_out_dir_ / "discard" / "checkm_gunc.tsv", sep="\t", index=False
-        )
+    checkm_gunc.to_csv(
+        bin_out_dir_ / "discard" / "checkm_gunc.tsv", sep="\t", index=False
+    )
 
-        return checkm_gunc_filter
+    return checkm_gunc_filter

@@ -2,16 +2,14 @@
 """
  * @Date: 2023-09-05 11:40:31
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-05 11:55:33
+ * @LastEditTime: 2023-12-20 21:09:36
  * @FilePath: /genome/genome/pyrule/mmseq_clust_95.py
  * @Description:
 """
 
-import snakemake.workflow as _wf
-from snakemake import shell
-
-from . import envs_dir
+from . import envs_dir, general_register, _wf, Path
 from ..gene_clust import MmseqOut
+
 
 mmseq_clust_95_shellcmd = """
 rm -f smk-mmseq smk-mmseq-2
@@ -35,47 +33,22 @@ mmseqs convert2fasta ${{DB}}_clu_rep {output.all_clu_faa}
 """
 
 
-def register(workflow: _wf.Workflow):
-    protein = "{any}.faa"
-    mo = MmseqOut.from_in_faa(protein)
+mmseq_clust_95_input_protein = "{any}.faa"
+mo = MmseqOut.from_in_faa(mmseq_clust_95_input_protein)
 
-    @workflow.rule(name="annotate_gene_mantis")
-    @workflow.input(protein=protein)
-    @workflow.output(all_100=mo.all_100, all_clu=mo.all_clu, all_clu_faa=mo.all_clu_faa)
-    @workflow.threads(64)
-    @workflow.conda(envs_dir / "gene_clust.yaml")
-    @workflow.shadow("shallow")
-    @workflow.shellcmd(mmseq_clust_95_shellcmd)
-    @workflow.run
-    def __rule_annotate_gene_mantis(
-        input,
-        output,
-        params,
-        wildcards,
-        threads,
-        resources,
-        log,
-        version,
-        rule,
-        conda_env,
-        container_img,
-        singularity_args,
-        use_singularity,
-        env_modules,
-        bench_record,
-        jobid,
-        is_shell,
-        bench_iteration,
-        cleanup_scripts,
-        shadow_dir,
-        edit_notebook,
-        conda_base_path,
-        basedir,
-        runtime_sourcecache_path,
-        __is_snakemake_rule_func=True,
-    ):
-        shell(
-            mmseq_clust_95_shellcmd,
-            bench_record=bench_record,
-            bench_iteration=bench_iteration,
-        )
+
+register = general_register(
+    snakefile=Path(__file__).parent / "shell_conda_rule.smk",
+    module_name=__name__.replace(".", "_DOT_"),
+    default_config=dict(
+        name="annotate_gene_mantis",
+        inputs=dict(protein=mmseq_clust_95_input_protein),
+        outputs=mo._asdict(),
+        params=dict(protein="{any}"),
+        conda=envs_dir / "gene_clust.yaml",
+        threads=64,
+        shadow="shallow",
+        shell=mmseq_clust_95_shellcmd,
+    ),
+    # "test include 'rules.smk'",
+)

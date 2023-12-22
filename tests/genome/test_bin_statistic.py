@@ -2,8 +2,8 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-09-17 18:16:16
- * @FilePath: /genome/test/genome/test_bin_statistic.py
+ * @LastEditTime: 2023-12-21 20:14:03
+ * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
@@ -15,8 +15,19 @@ import pandas as pd
 
 from genome.bin_statistic import BinStatisticContainer, contig2bin
 
-test_temp = Path(__file__).parent.parent / "temp"
-test_files = Path(__file__).parent.parent / "file"
+try:
+    from _decorator import temp_output, test_temp, test_files
+except (ModuleNotFoundError, ImportError):
+    from tests.genome._decorator import temp_output, test_temp, test_files
+
+
+@temp_output
+def test_contig2bin(test_temp: Path):
+    test_fa = test_files / "binny_contigs_4bins.fa"
+    test_c2b = test_files / "binny_unitem_unanimous.tsv"
+    temp_bin = test_temp / "binny_unitem_unanimous"
+
+    contig2bin(temp_bin, test_c2b, test_fa)
 
 
 def test_prokka_gff_bin_statistic():
@@ -80,11 +91,3 @@ def test_genome_stat_speed():
     )
     print(f"if only calculate seq length, will spend {quick_time:.4f} seconds")
     print(f"if calculate more featuers, will spend {normal_time:.4f} seconds")
-
-
-def test_contig2bin():
-    test_fa = test_files / "02_assem..TY.041_cut.fa"
-    test_c2b = test_files / "binsingle" / "dastool.tsv"
-    temp_bin = test_temp / "dastool"
-
-    contig2bin(temp_bin, test_c2b, test_fa)

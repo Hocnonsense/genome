@@ -1,124 +1,114 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 16:35:45
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-11-25 23:03:19
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2023-12-22 15:03:05
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
 
 
-import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Iterable, Literal, Union, Optional
+from typing import Final, Iterable, Literal, Union, Optional
 
 from Bio import SeqIO, SeqRecord
 from snakemake import main as smk
 
+import pyrodigal
+
 
 PathLike = Union[str, Path]
-prodigal_mode = Literal["single", "meta"]
+prodigal_mode: Final = ["single", "meta", "gvmeta"]
 
 
 def check_genome_length_prodigal(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
 ):
     """check if givem genome size is long enough to use prodigal single mode"""
-    if not isinstance(genome, str) and not isinstance(genome, Path):
-        genome_iter = genome
-    else:
-        if not Path(genome).is_file():
-            raise FileNotFoundError(f"file {genome} does not exist, please check.")
+    if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
+    else:
+        genome_iter = genome
     return sum(len(i) for i in genome_iter) >= 20000
 
 
 def prodigal_gff_onethread(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
-    mode: prodigal_mode = "single",
+    mode: Literal["single", "meta", "gvmeta"] = "single",
     gff_out: PathLike = "",
 ) -> Optional[Path]:
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("inital filename must provided")
+            raise ValueError("without gff output, inital filename must be provided")
         if not str(genome).endswith(".fa"):
-            raise ValueError("genome file must endswith '.fa'")
+            raise ValueError("without gff output, genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prodigal.{mode}.gff")
     else:
         gff_out_ = Path(gff_out)
 
-    with NamedTemporaryFile("w", suffix=".fa", delete=True) as tmpf:
+    if not isinstance(genome, str) and not isinstance(genome, Path):
+        seqs: Iterable[SeqRecord.SeqRecord] = genome  # type: ignore [union-attr]
+    else:
+        seqs = SeqIO.parse(genome, "fasta")
+
+    if mode == "gvmeta":
+        import pyrodigal_gv
+
+        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True)
+    else:
+        if mode == "meta":
+            gf = pyrodigal.GeneFinder(meta=True)
+        elif mode == "single":
+            seqs = list(seqs)
+            gf = pyrodigal.GeneFinder(meta=False)
+            gf.train(*(bytes(i.seq) for i in seqs))
+
+    with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
         tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal.{mode}.gff")
+        with open(tpmf_out, "w") as fo:
+            for i in seqs:
+                gf.find_genes(bytes(i.seq)).write_gff(
+                    fo, i.id, include_translation_table=True
+                )
+                SeqIO.write(i, tmpf, format="fasta-2line")
+            print("##FASTA", file=fo)
+            tmpf.flush()
+            tmpf.seek(0)
+            while True:
+                # read 16 Kib words one time
+                block = tmpf.read(65536)
+                if not block:
+                    break
+                fo.write(block)
 
-        if not isinstance(genome, str) and not isinstance(genome, Path):
-            SeqIO.write(genome, tmpf, "fasta")
-        else:
-            if not Path(genome).is_file():
-                raise FileNotFoundError(f"file {genome} does not exist, please check.")
-            with open(genome) as fi:
-                while True:
-                    # read 16 Kib words one time
-                    block = fi.read(65536)
-                    if not block:
-                        break
-                    tmpf.write(block)
-                tmpf.flush()
-        if mode == "single" and not check_genome_length_prodigal(genome):
-            return None
-
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = smk_workflow / "genome.smk"
-        smk_params = (
-            f"-s {target_smk_file} "
-            f"{tpmf_out} "
-            f"--use-conda "
-            f"--conda-prefix {smk_conda_env} "
-            f"-c1 -rp "
-        )
-
-        try:
-            os.system(f"ls {tmpf.name}")
-            print("params:", "snakemake", smk_params)
-            smk(smk_params)
-        except SystemExit as se:
-            if se.code:
-                print(se.code, se.with_traceback(None))
-                raise RuntimeError("snakemake seems not run successfully.")
-            else:
-                gff_out_.parent.mkdir(parents=True, exist_ok=True)
-                shutil.move(tpmf_out, gff_out_)
-                return gff_out_
-
-    raise NotImplementedError("")
+        shutil.move(tpmf_out, gff_out_)
+        return gff_out_
 
 
 def prodigal_multithread(
     genomes: Iterable[PathLike],
-    mode: prodigal_mode = "single",
+    mode: Literal["single", "meta", "gvmeta"] = "single",
     out_dir: PathLike = "",
-    suffix: Literal["gff", "faa", "fna"] = "gff",
+    suffix="gff",
     threads: int = 8,
 ) -> Iterable[Path]:
     """
     If in single mode, length should not shorter than 20000 bp.
+
+    suffix:
+        gff (.gff)
+        -ge33.faa
+        -ge33.fna
     """
     # if many genomes are provided, the file must exist
-    if mode == "single":
-        _genome_files = [
-            Path(file).expanduser().absolute()
-            for file in genomes
-            if check_genome_length_prodigal(file)
-        ]
-    else:
-        _genome_files = [
-            Path(file).expanduser().absolute()
-            for file in genomes
-            if check_genome_length_prodigal(file)
-        ]
+    _genome_files = [
+        Path(file).expanduser().absolute()
+        for file in genomes
+        if check_genome_length_prodigal(file)
+    ]
     if not _genome_files:
         return []
     for genome in _genome_files:
@@ -134,8 +124,8 @@ def prodigal_multithread(
         if len(_genome_files_dict) != len(_genome_files):
             raise ValueError("cannot collect genome_files with same name")
 
-        for genome_name, genome_path in _genome_files_dict.items():
-            new_file = gff_out_dir_ / genome_name
+        for genome_path in _genome_files:
+            new_file = gff_out_dir_ / genome_path.name
             if new_file.exists():
                 if new_file != genome_path:
                     raise FileExistsError(new_file)
@@ -148,8 +138,16 @@ def prodigal_multithread(
     smk_workflow = Path(__file__).parent.parent / "workflow"
     smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
     target_smk_file = smk_workflow / "genome.smk"
+
+    # region quick fix suffix
+    if suffix in ["faa", "fna"]:
+        suffix = "-ge33." + suffix
+    if "." not in suffix:
+        suffix = "." + suffix
+    # endregion quick fix suffix
+
     tpmf_outs = [
-        f"{str(genome)[:-3]}-prodigal.{mode}.{suffix}" for genome in genome_files
+        f"{str(genome)[:-3]}-prodigal.{mode}{suffix}" for genome in genome_files
     ]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (

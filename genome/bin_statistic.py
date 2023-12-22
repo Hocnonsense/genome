@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-30 20:45:38
+ * @LastEditTime: 2023-12-22 14:26:46
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -63,7 +63,7 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
             bf.flush()
             bf.close()
 
-    return td
+    return td, list(binfiles)
 
 
 def calculateN50(seqLens: list[int]):

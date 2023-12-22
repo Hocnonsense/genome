@@ -30,3 +30,4 @@ dependencies:
   - pip
   - pip:
       - checkm-genome
+      - pyrodigal-gv
