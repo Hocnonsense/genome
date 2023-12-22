@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:12:26
+ * @LastEditTime: 2023-12-22 21:26:10
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -270,7 +270,7 @@ def bin_filter(
             )
             if str(support).endswith("faa"):
                 raise ValueError("genome nucleotide sequences required only")
-            bin_input_dir, suffix = format_bin_input(
+            bin_input_dir, binids, suffix = format_bin_input(
                 bin_output=f"{_td}/bin_fa_input",
                 bin_input=bin_input,
                 support=support,
@@ -297,6 +297,7 @@ def bin_filter(
                     bin_input=str(bin_input_dir),
                     output_dir=str(checkm_output_dir_),
                     extension="faa",
+                    bCalledGenes=True,
                     threads=threads,
                 ).run()
                 checkm_tsv = pd.read_csv(checkm_output_file, sep="\t")
