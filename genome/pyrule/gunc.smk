@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-22 15:23:06
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:56:01
- * @FilePath: /genome/dssg/home/acct-trench/trench-0/software/genome/genome/pyrule/gunc.smk
+ * @LastEditTime: 2023-12-22 21:10:20
+ * @FilePath: /genome/genome/pyrule/gunc.smk
  * @Description:
 """
 
@@ -44,6 +44,7 @@ rule gunc_run_ctg2mag:
         "../../envs/gunc.yaml"
     shadow:
         "shallow"
+    threads: 64
     shell:
         """
         rm -f smk-gunc

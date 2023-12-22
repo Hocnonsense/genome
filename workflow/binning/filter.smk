@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:45:40
+ * @LastEditTime: 2023-12-22 21:09:30
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -36,13 +36,14 @@ rule ctg2faa:
             bin_input=input.ctg2mag,
             support=input.contig,
         )
-        prodigal_multithread(
+        for bin_faa in prodigal_multithread(
             (bin_input_dir / (binid + suffix) for binid in binids),
             mode="single",
             out_dir=bin_input_dir,
             suffix="-ge33.faa",
             threads=threads,
-        )
+        ):
+            bin_faa.rename(str(bin_faa)[:-25] + ".faa")
         shell(
             """
             mkdir smk-gene/genes
