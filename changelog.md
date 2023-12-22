@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 23:26:50
+ * @LastEditTime: 2023-12-22 15:05:17
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -24,8 +24,14 @@ changelog for genome
     - `pyrule.binning.register`
     - change from prodigal to pyrodigal
       - mode: `meta`, `single`, `gvmeta`
+      - change `suffix` allowed values in `prodigal_multithread`
     - change bin_filter, now cannot run code
       - the monkey fixes will be remove in next few versions (tests required)
+      - contig2bin return `out_dir (str), bin_id (list[str], without suffix)`
+    - change contig2bin and format_bin_input
+      - contig2bin return `out_dir (str), bin_id (list[str], without suffix)`
+      - format_bin_input return
+          `out_dir (str), bin_id (list[str], without suffix), suffix`
 - 0.1.4:
   - remove `genome.pyrule.gene`.
   - feat

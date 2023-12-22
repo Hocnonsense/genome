@@ -2,7 +2,7 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 23:23:40
+ * @LastEditTime: 2023-12-22 14:42:08
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
@@ -140,7 +140,7 @@ def register(workflow: _wf.Workflow, GUNC_DB: str):
             bench_iteration=bench_iteration,
         )
 
-        bin_input_dir, suffix = format_bin_input(
+        bin_input_dir, binids, suffix = format_bin_input(
             bin_output=f"smk-gunc-gene",
             bin_input=input.ctg2mag,
             support=input.contig,

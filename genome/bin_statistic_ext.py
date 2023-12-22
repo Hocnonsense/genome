@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 23:20:00
+ * @LastEditTime: 2023-12-22 15:01:07
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -91,21 +91,23 @@ def format_bin_input(
     (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
     if bin_input.is_dir():
         assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-        if str(support).endswith("fa") and keep_if_avail:
+        if str(support).endswith(".fa") and keep_if_avail:
+            binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
             suffix = str(support)
             bin_input_dir = bin_input
         else:
-            suffix = "fa"
+            suffix = ".fa"
             bin_input_dir = bin_output_
             support_str_len = len(str(support))
+            binids = []
             for bin_file in bin_input.glob(f"*{support}"):
-                bin_name = bin_file.name[:-support_str_len].strip(".")
+                binids.append(bin_name := bin_file.name[:-support_str_len].rstrip("."))
                 shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
     else:
         assert bin_input.is_file() and Path(support).is_file()
-        bin_input_dir = contig2bin(bin_output_, bin_input, support)
-        suffix = "fa"
-    return bin_input_dir, suffix
+        bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
+        suffix = ".fa"
+    return bin_input_dir, binids, suffix
 
 
 def checkm(
@@ -117,7 +119,7 @@ def checkm(
 ):
     with TemporaryDirectory() as _td:
         file = f"{_td}/checkm.tsv"
-        bin_input_, support_ = format_bin_input(
+        bin_input_, binids_, support_ = format_bin_input(
             bin_output=f"{_td}/bin_input",
             bin_input=bin_input,
             support=support,
@@ -129,7 +131,7 @@ def checkm(
             file=file,
             bin_input=str(bin_input_),
             output_dir=output_dir,
-            extension=support_,
+            extension=support_.strip("."),
             threads=threads,
             **checkm_options,  # type: ignore  # confirmed by users
         ).run()
@@ -177,7 +179,7 @@ def gunc(
                 bin_input_dir.glob(f"*{suffix}"),
                 mode="meta",
                 out_dir=bin_faa_dir,
-                suffix="faa",
+                suffix="-ge33.faa",
                 threads=threads,
             )
 
@@ -279,7 +281,7 @@ def bin_filter(
                 suffix="-ge33.faa",
                 threads=threads,
             ):
-                bin_faa.rename(str(bin_faa)[:-20] + ".faa")
+                bin_faa.rename(str(bin_faa)[:-25] + ".faa")
             # endregion format input to prodigal single faa
 
             if isinstance(checkm_output_dir, pd.DataFrame):
