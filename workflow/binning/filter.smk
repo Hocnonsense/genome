@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 23:23:21
+ * @LastEditTime: 2023-12-22 14:43:33
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -65,8 +65,6 @@ rule filter_union_to_fa:
         "shallow"
     run:
         shell("/bin/rm -f smk-fliter smk-fliter.tsv")
-
-        from genome.bin_statistic_ext import format_bin_input, pd
 
         mags_tsv = bin_filter(
             bin_out_dir="smk-fliter",
