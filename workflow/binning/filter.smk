@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:09:30
+ * @LastEditTime: 2023-12-24 12:44:20
  * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
@@ -95,7 +95,6 @@ rule filter_union_to_fa:
         mags_tsv="{any}-bins/filter/{method}{marker}-bins.tsv",
     params:
         mags="{any}-bins/filter/{method}{marker}-bins",
-        GUNC_DB=config["gunc_db_path"],
     threads: 64
     wildcard_constraints:
         marker="-[^-]+|",

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:34:42
+ * @LastEditTime: 2023-12-24 14:43:40
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -13,11 +13,11 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional, Union, overload
 
-from snakemake import main as smk
 import pandas as pd
 
 from .bin_statistic import contig2bin
 from .prodigal import prodigal_multithread
+from .pyrule import smk
 
 PathLike = Union[str, Path]
 

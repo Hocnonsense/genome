@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-05-19 17:14:29
+ * @LastEditTime: 2023-12-24 14:44:36
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -14,7 +14,8 @@ from tempfile import NamedTemporaryFile
 from typing import Iterable, Literal, Union
 
 from Bio import SeqIO, SeqRecord
-from snakemake import main as smk
+
+from .pyrule import smk
 
 
 PathLike = Union[str, Path]

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 15:03:05
+ * @LastEditTime: 2023-12-24 14:45:37
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -14,9 +14,9 @@ from tempfile import NamedTemporaryFile
 from typing import Final, Iterable, Literal, Union, Optional
 
 from Bio import SeqIO, SeqRecord
-from snakemake import main as smk
-
 import pyrodigal
+
+from .pyrule import smk
 
 
 PathLike = Union[str, Path]
