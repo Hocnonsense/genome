@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 14:01:53
+ * @LastEditTime: 2023-12-24 15:44:00
  * @FilePath: /genome/workflow/genome.smk
  * @Description:
 """
@@ -23,7 +23,7 @@ rule gff_2_fa:
         suffix="{suffix}",
     wildcard_constraints:
         suffix="faa|fna",
-        min_aa_len="\d+",
+        min_aa_len="\\d+",
     threads: 1
     run:
         from Bio import SeqIO
