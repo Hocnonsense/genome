@@ -2,7 +2,7 @@
 """
  * @Date: 2023-07-22 15:34:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:43:16
+ * @LastEditTime: 2023-12-28 14:05:38
  * @FilePath: /genome/genome/pyrule/__init__.py
  * @Description:
 """
@@ -10,12 +10,12 @@
 from pathlib import Path
 from typing import Any, Callable
 
-import snakemake.workflow as _wf
-
 try:
     from snakemake import main as smk
 except ImportError:
     from snakemake.cli import main as smk
+
+import snakemake.workflow as _wf
 
 
 envs_dir = Path(__file__).parent.parent.parent / "envs"
