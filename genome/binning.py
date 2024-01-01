@@ -132,7 +132,7 @@ class BinningConfig:
                 # f"--drop-metadata "  # add this if necessary
                 f"--use-conda "
                 f"--conda-prefix {smk_conda_env} "
-                f"-c{threads} -rp "
+                f"-c{threads} -p "
                 f"--configfile {tmp_config} "
             )
 

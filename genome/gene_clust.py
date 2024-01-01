@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:45:26
+ * @LastEditTime: 2024-01-01 17:21:33
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -105,7 +105,7 @@ def mmseq_clust(
             f"{tpmf_out_str} "
             f"--use-conda "
             f"--conda-prefix {smk_conda_env} "
-            f"-c{threads} -rp "
+            f"-c{threads} -p "
         )
 
         try:

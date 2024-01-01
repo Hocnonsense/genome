@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-23 17:07:05
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:44:40
+ * @LastEditTime: 2024-01-01 17:21:28
  * @FilePath: /genome/genome/create_conda_env.py
  * @Description:
 """
@@ -25,7 +25,7 @@ def create_conda_env(*envs: str):
             f"--use-conda "
             f"--conda-create-envs-only "
             f"--conda-prefix {smk_conda_env} "
-            f"-c1 -rp "
+            f"-c1 -p "
         )
         try:
             print("params:", "snakemake", smk_params)

@@ -198,7 +198,7 @@ def gunc(
             f"--config gunc_db_path='{gunc_db_path}' "
             f"--use-conda "
             f"--conda-prefix {smk_conda_env} "
-            f"-c{threads} -rp "
+            f"-c{threads} -p "
         )
         try:
             print("params:", "snakemake", smk_params)

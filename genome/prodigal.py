@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:45:37
+ * @LastEditTime: 2024-01-01 17:21:40
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -155,7 +155,7 @@ def prodigal_multithread(
         f"{tpmf_outs_str} "
         f"--use-conda "
         f"--conda-prefix {smk_conda_env} "
-        f"-c{threads} -rp "
+        f"-c{threads} -p "
     )
     try:
         print("params:", "snakemake", smk_params)
