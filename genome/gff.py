@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 14:17:35
+ * @LastEditTime: 2024-01-10 20:37:40
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -13,8 +13,8 @@ from pathlib import Path
 from typing import Callable, Generator, Iterable, Optional, TextIO, Union
 
 import gffutils
+import gffutils.feature
 from Bio import SeqFeature, SeqIO, SeqRecord
-from gffutils.biopython_integration import to_seqfeature
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line, six
@@ -127,6 +127,45 @@ def infer_prodigal_gene_id(rec_id: str, fet_id: str):
 
 def infer_refseq_gene_id(rec_id: str, fet_id: str):
     return fet_id.rsplit("-", 1)[1]
+
+
+_biopython_strand = {
+    "+": 1,
+    "-": -1,
+    ".": 0,
+}
+
+
+def to_seqfeature(feature: gffutils.feature.Feature):
+    """
+    Converts a gffutils.Feature object to a Bio.SeqFeature object.
+
+    The GFF fields `source`, `score`, `seqid`, and `frame` are stored as
+    qualifiers.  GFF `attributes` are also stored as qualifiers.
+
+    Parameters
+    ----------
+    feature : Feature object, or string
+        If string, assume it is a GFF or GTF-format line; otherwise just use
+        the provided feature directly.
+    """
+    qualifiers = {
+        "source": [feature.source],
+        "score": [feature.score],
+        "seqid": [feature.seqid],
+        "frame": [feature.frame],
+    }
+    qualifiers.update(feature.attributes)
+    return SeqFeature.SeqFeature(
+        # Convert from GFF 1-based to standard Python 0-based indexing used by
+        # BioPython
+        SeqFeature.SimpleLocation(
+            feature.start - 1, feature.stop, strand=_biopython_strand[feature.strand]
+        ),
+        id=feature.id,
+        type=feature.featuretype,
+        qualifiers=qualifiers,
+    )
 
 
 class Parse:
