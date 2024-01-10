@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 16:46:28
- * @FilePath: /2023_10-HotSprClt/src/libs/genome/workflow/binning/filter.smk
+ * @LastEditTime: 2024-01-10 20:20:41
+ * @FilePath: /genome/workflow/binning/filter.smk
  * @Description:
 """
 
@@ -26,7 +26,7 @@ rule ctg2faa:
         "shallow"
     threads: 16
     run:
-        shell("rm -rf smk-gene {params.ctg2faa}")
+        shell("rm -rf smk-gene {params.ctg2faa} .snakemake")
 
         from genome.bin_statistic_ext import format_bin_input
         from genome.prodigal import prodigal_multithread
