@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-10 16:05:33
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 17:03:05
+ * @LastEditTime: 2024-01-10 19:46:35
  * @FilePath: /genome/workflow/checkm2.smk
  * @Description:
 """
@@ -11,7 +11,7 @@ rule checkm2_db:
     output:
         checkm2_db=directory(config["checkm2_db_path"]),
     conda:
-        "../../envs/checkm2.yaml"
+        "../envs/checkm2.yaml"
     shadow:
         "shallow"
     shell:
@@ -29,7 +29,7 @@ rule ctg2faa_checkm2:
     params:
         ctg2faa="{any}-bins/union/{union_method}{marker}-binsfaa",
     conda:
-        "../../envs/checkm2.yaml"
+        "../envs/checkm2.yaml"
     shadow:
         "shallow"
     threads: 64
@@ -57,7 +57,7 @@ rule filter_fa_via_checkm2:
     input:
         contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
-        mag2checkm="{any}-bins/filter/{union_method}{marker}-checkm2.tsv",
+        mag2checkm="{any}-bins/filter/{method}{marker}-checkm2.tsv",
     output:
         lsmags="{any}-bins/filter/{method}{marker}-checkm2-bins.ls",
         mags_tsv="{any}-bins/filter/{method}{marker}-checkm2-bins.tsv",
