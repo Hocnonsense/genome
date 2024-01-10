@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-23 17:07:05
- * @LastEditors: Hwrn
- * @LastEditTime: 2022-10-23 21:41:09
+ * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-01-01 17:21:28
  * @FilePath: /genome/genome/create_conda_env.py
  * @Description:
 """
@@ -10,10 +10,10 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from snakemake import main as smk
+from .pyrule import smk
 
 
-def create_conda_env(*envs: list[str]):
+def create_conda_env(*envs: str):
     with TemporaryDirectory() as tmpd:
         rule_files = [f"{tmpd}/create_conda_env-{env}-finished" for env in envs]
         smk_workflow = Path(__file__).parent.parent / "workflow"
@@ -25,7 +25,7 @@ def create_conda_env(*envs: list[str]):
             f"--use-conda "
             f"--conda-create-envs-only "
             f"--conda-prefix {smk_conda_env} "
-            f"-c1 -rp "
+            f"-c1 -p "
         )
         try:
             print("params:", "snakemake", smk_params)
@@ -59,6 +59,7 @@ def create_conda_env_binning():
 def create_conda_env_all():
     return create_conda_env(*list_envs())
 
+
 if __name__ == "__main__":
-    print('Creating all envs...')
+    print("Creating all envs...")
     create_conda_env_all()

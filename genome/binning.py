@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-23 13:21:22
+ * @LastEditTime: 2023-12-24 14:45:07
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -15,7 +15,7 @@ from tempfile import TemporaryDirectory
 from typing import Final, Literal, NamedTuple
 
 import yaml
-from snakemake import main as smk
+from .pyrule import smk
 
 PathLike = str | Path
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
@@ -59,7 +59,9 @@ class BinningInput(NamedTuple):
         config = self.file_from_prefix(prefix)
         config.parent.mkdir(parents=True, exist_ok=True)
         if relpath:
-            _asdict = {k: os.path.relpath(v, config.parent) for k, v in self._asdict().items()}
+            _asdict = {
+                k: os.path.relpath(v, config.parent) for k, v in self._asdict().items()
+            }
         else:
             _asdict = self._asdict()
 
@@ -130,7 +132,7 @@ class BinningConfig:
                 # f"--drop-metadata "  # add this if necessary
                 f"--use-conda "
                 f"--conda-prefix {smk_conda_env} "
-                f"-c{threads} -rp "
+                f"-c{threads} -p "
                 f"--configfile {tmp_config} "
             )
 

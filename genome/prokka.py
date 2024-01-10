@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-05-19 17:14:29
+ * @LastEditTime: 2024-01-01 17:21:50
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -14,7 +14,8 @@ from tempfile import NamedTemporaryFile
 from typing import Iterable, Literal, Union
 
 from Bio import SeqIO, SeqRecord
-from snakemake import main as smk
+
+from .pyrule import smk
 
 
 PathLike = Union[str, Path]
@@ -55,7 +56,7 @@ def prokka_gff_onethread(
 
         smk_workflow = Path(__file__).parent.parent / "workflow"
         target_smk_file = smk_workflow / "genome.smk"
-        smk_params = f"-s {target_smk_file} " f"{tpmf_out} " f"--use-conda " f"-c1 -rp"
+        smk_params = f"-s {target_smk_file} " f"{tpmf_out} " f"--use-conda " f"-c1 -p"
 
         try:
             os.system(f"ls {tmpf.name}")
@@ -121,7 +122,7 @@ def prokka_gff_multithread(
         f"{tpmf_outs_str} "
         f"--use-conda "
         f"--conda-prefix {smk_conda_env} "
-        f"-c{threads} -rp "
+        f"-c{threads} -p "
     )
     try:
         print("params:", "snakemake", smk_params)

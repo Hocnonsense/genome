@@ -100,7 +100,7 @@ rule UniteM_profile:
         find smk-unitem/bins/ \
             -size -5k \
             -type f \
-            -exec rm {{}} \;
+            -exec rm {{}} \\;
 
         unitem profile \
             -b smk-unitem/bins/* \

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-13 09:49:04
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-08-07 15:25:45
+ * @LastEditTime: 2023-12-24 13:25:41
  * @FilePath: /genome/setup.py
  * @Description:
 """
@@ -15,12 +15,14 @@ repo_path = Path(__file__).parent
 os.chdir(repo_path)
 
 
-def get_version(file: str):
+def get_version(file: str | Path):
     with open(file) as f:
         for line in f:
             if line.startswith("## changelog"):
                 break
-        line = next(f)
+        for line in f:
+            if line.strip():
+                break
         version = line.strip().rsplit(maxsplit=1)[1].rstrip(":")
     return version
 

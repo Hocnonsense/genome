@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 22:16:46
+ * @LastEditTime: 2024-01-10 17:38:34
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,10 @@ changelog for genome
 
 ## changelog
 
+- 0.1.6:
+  - feat:
+    - checkm2 that can be enabled by `config["checkm2_db_path"]`
+    - support snakemake>=8
 - 0.1.5:
   - fix:
     - fix metabat2 min contig length

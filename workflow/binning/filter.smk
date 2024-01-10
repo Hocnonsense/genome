@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:09:30
- * @FilePath: /genome/workflow/binning/filter.smk
+ * @LastEditTime: 2024-01-10 16:46:28
+ * @FilePath: /2023_10-HotSprClt/src/libs/genome/workflow/binning/filter.smk
  * @Description:
 """
 
@@ -78,13 +78,18 @@ rule ctg2faa_checkm:
         ).run()
 
 
+if config.get("checkm2_db_path"):
+
+    include: "../checkm2.smk"
+
+
 if config.get("gunc_db_path"):
     from genome.pyrule import gunc
 
     gunc.register_binning(workflow, rules, config.get("gunc_db_path"))
 
 
-rule filter_union_to_fa:
+rule filter_fa_via_bin_filter:
     input:
         contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
@@ -95,7 +100,6 @@ rule filter_union_to_fa:
         mags_tsv="{any}-bins/filter/{method}{marker}-bins.tsv",
     params:
         mags="{any}-bins/filter/{method}{marker}-bins",
-        GUNC_DB=config["gunc_db_path"],
     threads: 64
     wildcard_constraints:
         marker="-[^-]+|",
@@ -104,6 +108,8 @@ rule filter_union_to_fa:
         "shallow"
     run:
         shell("/bin/rm -f smk-fliter smk-fliter.tsv")
+
+        from genome.bin_statistic_ext import bin_filter
 
         mags_tsv = bin_filter(
             bin_out_dir="smk-fliter",

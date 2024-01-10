@@ -23,11 +23,11 @@ dependencies:
 
   # for checkm
   - hmmer
-  - prodigal
   - pplacer
 
   # pipe
   - pip
   - pip:
+      - snakemake-executor-plugin-cluster-generic
       - checkm-genome
       - pyrodigal-gv
