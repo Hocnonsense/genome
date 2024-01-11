@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-10 16:05:33
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 19:46:35
+ * @LastEditTime: 2024-01-10 21:17:20
  * @FilePath: /genome/workflow/checkm2.smk
  * @Description:
 """
@@ -49,7 +49,7 @@ rule ctg2faa_checkm2:
             --output-directory smk-checkm2 \
             --force
 
-        mv smk-checkm/quality_report.tsv {output.mag2checkm}
+        mv smk-checkm2/quality_report.tsv {output.mag2checkm}
         """
 
 
@@ -63,6 +63,8 @@ rule filter_fa_via_checkm2:
         mags_tsv="{any}-bins/filter/{method}{marker}-checkm2-bins.tsv",
     params:
         mags="{any}-bins/filter/{method}{marker}-checkm2-bins",
+    shadow:
+        "shallow"
     run:
         shell("/bin/rm -f smk-fliter smk-fliter.tsv")
 
@@ -81,7 +83,7 @@ rule filter_fa_via_checkm2:
         checkm2_filter = checkm2[
             (checkm2["Completeness"] >= 50) & (checkm2["Contamination"] <= 10)
         ]
-        for bin_fa in checkm_gunc_filter["Bin Id"]:
+        for bin_fa in checkm2_filter["Bin Id"]:
             shell(f"mv smk-fliter/discard/{bin_fa}.fa smk-fliter/")
 
         checkm2_filter.to_csv("smk-fliter.tsv", sep="\t", index=False)
