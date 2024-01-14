@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-28 13:54:59
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-28 13:57:49
- * @FilePath: /genome/genome/pyrule/mantis.smk
+ * @LastEditTime: 2024-01-14 17:30:51
+ * @FilePath: /genome/genome/pyrule/workflow/mantis.smk
  * @Description:
 """
 
@@ -16,7 +16,7 @@ rule annotate_gene_mantis_checkdb:
     shadow:
         "shallow"
     conda:
-        config.get("conda")
+        "../envs/mantis.yaml"
     shell:
         """
         mantis setup \
@@ -39,7 +39,7 @@ rule annotate_gene_mantis:
     shadow:
         "shallow"
     conda:
-        config.get("conda")
+        "../envs/mantis.yaml"
     shell:
         """
         rm -f smk-mantis
