@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-23 17:07:05
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-01 17:21:28
+ * @LastEditTime: 2024-01-14 17:17:26
  * @FilePath: /genome/genome/create_conda_env.py
  * @Description:
 """
@@ -10,14 +10,12 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from .pyrule import smk
+from .pyrule import smk, smk_workflow, smk_conda_env
 
 
 def create_conda_env(*envs: str):
     with TemporaryDirectory() as tmpd:
         rule_files = [f"{tmpd}/create_conda_env-{env}-finished" for env in envs]
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
         target_smk_file = smk_workflow / "create_conda_env.smk"
         smk_params = (
             f"-s {target_smk_file} "

@@ -2,13 +2,14 @@
 """
  * @Date: 2023-07-22 15:34:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-28 14:05:38
+ * @LastEditTime: 2024-01-14 17:05:01
  * @FilePath: /genome/genome/pyrule/__init__.py
  * @Description:
 """
 
 from pathlib import Path
 from typing import Any, Callable
+import importlib_resources
 
 try:
     from snakemake import main as smk
@@ -17,8 +18,9 @@ except ImportError:
 
 import snakemake.workflow as _wf
 
-
-envs_dir = Path(__file__).parent.parent.parent / "envs"
+envs_dir = importlib_resources.files("genome.pyrule") / "envs"
+smk_conda_env = Path(__file__).parent.parent.parent / ".snakemake" / "conda"
+smk_workflow = importlib_resources.files("genome.pyrule") / "workflow"
 
 
 def general_register(
@@ -52,18 +54,7 @@ def general_register(
     return register
 
 
-class __Workflow:
-    def __getattribute__(self, __name: str):
-        def decorate(*nargs, **kwargs):
-            def decorate1(f):
-                return f
-
-            return decorate1
-
-        return decorate
-
-
-cache: dict = {"workflow": __Workflow()}
+cache: dict[str, _wf.Workflow] = {}
 
 
 def register(**kwargs):

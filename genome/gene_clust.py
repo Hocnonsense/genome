@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-01 17:21:33
+ * @LastEditTime: 2024-01-14 17:18:00
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -17,7 +17,7 @@ from typing import Iterable, Literal, Optional, Union, NamedTuple
 from Bio import SeqIO, SeqRecord
 import pandas as pd
 
-from .pyrule import smk
+from .pyrule import smk, smk_workflow, smk_conda_env
 
 
 PathLike = Union[str, Path]
@@ -97,8 +97,6 @@ def mmseq_clust(
                             tmpf.write(block)
                         tmpf.flush()
 
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
         target_smk_file = smk_workflow / "gene_clust.smk"
         smk_params = (
             f"-s {target_smk_file} "

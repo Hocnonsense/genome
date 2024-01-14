@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-01 17:21:40
+ * @LastEditTime: 2024-01-14 17:08:19
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -16,7 +16,7 @@ from typing import Final, Iterable, Literal, Union, Optional
 from Bio import SeqIO, SeqRecord
 import pyrodigal
 
-from .pyrule import smk
+from .pyrule import smk, smk_workflow, smk_conda_env
 
 
 PathLike = Union[str, Path]
@@ -135,8 +135,6 @@ def prodigal_multithread(
     else:
         genome_files.extend(_genome_files)
 
-    smk_workflow = Path(__file__).parent.parent / "workflow"
-    smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
     target_smk_file = smk_workflow / "genome.smk"
 
     # region quick fix suffix

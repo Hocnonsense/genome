@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:43:40
+ * @LastEditTime: 2024-01-14 17:14:47
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -17,7 +17,7 @@ import pandas as pd
 
 from .bin_statistic import contig2bin
 from .prodigal import prodigal_multithread
-from .pyrule import smk
+from .pyrule import smk, smk_workflow, smk_conda_env
 
 PathLike = Union[str, Path]
 
@@ -188,9 +188,7 @@ def gunc(
         # gunc_out_tsv = f"{_td}/out-gunc.tsv"
         # gunc_out_dir = f"{_td}/out-gunc-dir"
 
-        smk_workflow = Path(__file__).parent.parent / "workflow"
-        smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
-        target_smk_file = Path(__file__).parent / "pyrule" / "gunc.smk"
+        target_smk_file = smk_workflow.parent / "gunc.smk"
         tpmf_outs = f"{_td}/out-bins-gunc.tsv"
         smk_params = (
             f"-s {target_smk_file} "
