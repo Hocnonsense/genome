@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-25 16:45:32
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 14:45:07
+ * @LastEditTime: 2024-01-14 17:17:07
  * @FilePath: /genome/genome/binning.py
  * @Description:
 """
@@ -15,7 +15,7 @@ from tempfile import TemporaryDirectory
 from typing import Final, Literal, NamedTuple
 
 import yaml
-from .pyrule import smk
+from .pyrule import smk, smk_workflow, smk_conda_env
 
 PathLike = str | Path
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
@@ -121,8 +121,6 @@ class BinningConfig:
             tpmf_out = self.output(out_basename)
             tmp_config = self.to_config(f"{_td}/config")
 
-            smk_workflow = Path(__file__).parent.parent / "workflow"
-            smk_conda_env = Path(__file__).parent.parent / ".snakemake" / "conda"
             target_smk_file = smk_workflow / "binning" / "genomecall.smk"
 
             smk_params2 = (

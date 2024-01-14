@@ -15,7 +15,7 @@ rule gunc_download_db:
     params:
         GUNC_DB=config["gunc_db_path"],
     conda:
-        "../../envs/gunc.yaml"
+        "envs/gunc.yaml"
     shadow:
         "shallow"
     shell:
@@ -41,7 +41,7 @@ rule gunc_run_ctg2mag:
     params:
         bins_faa="{any}",
     conda:
-        "../../envs/gunc.yaml"
+        "envs/gunc.yaml"
     shadow:
         "shallow"
     threads: 64
