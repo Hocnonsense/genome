@@ -2,15 +2,15 @@
 """
  * @Date: 2023-08-06 18:29:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:53:38
+ * @LastEditTime: 2024-01-14 17:22:20
  * @FilePath: /genome/genome/pyrule/gunc.py
  * @Description:
 """
 
-from . import general_register, _wf, Path
+from . import general_register, _wf, smk_workflow
 
 
-target_smk_file = Path(__file__).parent / "gunc.smk"
+target_smk_file = smk_workflow.parent / "gunc.smk"
 
 register = general_register(
     snakefile=target_smk_file,
