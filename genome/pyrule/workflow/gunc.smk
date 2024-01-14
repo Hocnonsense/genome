@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-22 15:23:06
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 21:10:20
- * @FilePath: /genome/genome/pyrule/gunc.smk
+ * @LastEditTime: 2024-01-14 17:28:52
+ * @FilePath: /genome/genome/pyrule/workflow/gunc.smk
  * @Description:
 """
 
@@ -15,7 +15,7 @@ rule gunc_download_db:
     params:
         GUNC_DB=config["gunc_db_path"],
     conda:
-        "envs/gunc.yaml"
+        "../envs/gunc.yaml"
     shadow:
         "shallow"
     shell:
@@ -41,7 +41,7 @@ rule gunc_run_ctg2mag:
     params:
         bins_faa="{any}",
     conda:
-        "envs/gunc.yaml"
+        "../envsenvs/gunc.yaml"
     shadow:
         "shallow"
     threads: 64
