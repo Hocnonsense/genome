@@ -6,13 +6,12 @@
  * @FilePath: /genome/genome/pyrule/mantis.py
  * @Description:
 """
-from . import envs_dir, general_register, _wf, Path
+from . import general_register, smk_workflow
 
 register = general_register(
-    snakefile=Path(__file__).parent / "mantis.smk",
+    snakefile=smk_workflow / "mantis.smk",
     module_name=__name__.replace(".", "_DOT_"),
     default_config=dict(
-        conda=envs_dir / "mantis.yaml",
         threads=64,
         # mantis_config=str(mantis_config),
     ),

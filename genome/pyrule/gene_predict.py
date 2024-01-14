@@ -2,16 +2,15 @@
 """
  * @Date: 2023-12-21 21:05:25
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 20:28:08
+ * @LastEditTime: 2024-01-14 17:21:49
  * @FilePath: /genome/genome/pyrule/gene_predict.py
  * @Description:
 """
 
 
-from . import general_register, Path
+from . import general_register, smk_workflow
 
 
-smk_workflow = Path(__file__).parent.parent.parent / "workflow"
 target_smk_file = smk_workflow / "genome.smk"
 
 register = general_register(

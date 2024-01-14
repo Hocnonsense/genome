@@ -2,17 +2,16 @@
 """
  * @Date: 2023-12-20 20:58:03
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-20 21:08:54
+ * @LastEditTime: 2024-01-14 17:20:55
  * @FilePath: /genome/genome/pyrule/binning.py
  * @Description:
 """
 # """
 
-from . import envs_dir, general_register, _wf, Path
+from . import general_register, smk_workflow
 from .. import binning
 
 
-smk_workflow = Path(__file__).parent.parent.parent / "workflow"
 target_smk_file = smk_workflow / "binning" / "__init__.smk"
 
 register = general_register(
