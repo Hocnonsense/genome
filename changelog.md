@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 17:38:34
+ * @LastEditTime: 2024-01-14 16:55:54
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,9 @@ changelog for genome
 
 ## changelog
 
+- 0.1.7:
+  - fix:
+    - checkm2
 - 0.1.6:
   - feat:
     - checkm2 that can be enabled by `config["checkm2_db_path"]`
