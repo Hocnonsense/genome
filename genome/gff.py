@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 23:03:52
+ * @LastEditTime: 2024-01-15 23:39:56
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -170,14 +170,17 @@ def to_seqfeature(feature: gffutils.feature.Feature):
 
 class Parse:
     def __init__(self, gff_file: PathLike, create_now: Union[bool, PathLike] = True):
-        self.gff = _FastaGffFileIterator(gff_file)
+        self.fa = _FastaGffFileIterator(gff_file)
+        self.gff_file = Path(gff_file)
         self.db: gffutils.FeatureDB = None
         if isinstance(create_now, (Path, str)):
-            self.genome_fa = Path(create_now)
-        else:
-            self.genome_fa = Path(gff_file)
-        if create_now is not False:
+            self.gff_file = Path(create_now)
             self.create()
+            self.fa = _FastaGffFileIterator(create_now)
+            self.fa.fasta_start_pointer = 0
+        else:
+            if create_now is not False:
+                self.create()
 
     def reset_reference(self, refernce_file: PathLike, create_now=False):
         p = Parse(refernce_file, create_now=create_now)
@@ -188,18 +191,18 @@ class Parse:
         if self.db is None:
             pass
         p = Parse(db_file, create_now=create_now)
-        p.gff = self.gff
+        p.fa = self.fa
         return p
 
     def create(self, dbfn=":memory:", verbose=True, **kwargs):
         try:
-            self.db = gffutils.create_db(self.gff, dbfn=dbfn, verbose=verbose, **kwargs)
-            if self.gff.fasta_start_pointer == -1:
+            self.db = gffutils.create_db(self.fa, dbfn=dbfn, verbose=verbose, **kwargs)
+            if self.fa.fasta_start_pointer == -1:
                 warnings.warn(
                     "No sequences found in file. Please check.", RuntimeWarning
                 )
         except EmptyInputError:
-            self.gff.fasta_start_pointer = 0
+            self.fa.fasta_start_pointer = 0
 
     def __call__(
         self, limit_info: Optional[str] = None
@@ -208,7 +211,7 @@ class Parse:
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
         Add type hints to this function.
         """
-        for rec in self.gff.parse_seq():
+        for rec in self.fa.parse_seq():
             if self.db:
                 rec.features.extend(
                     (to_seqfeature(fet) for fet in self.db.region(seqid=rec.id))

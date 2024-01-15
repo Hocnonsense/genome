@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 22:50:13
+ * @LastEditTime: 2024-01-15 23:43:29
  * @FilePath: /genome/tests/genome/test_gff.py
  * @Description:
 __file__ = "tests/genome/test_prokka.py"
@@ -44,7 +44,7 @@ def test_gff_reset_reference(test_temp: Path):
     test_out = test_temp / "binny_contigs_4bins-top10-prodigal.gvmeta-ge33.faa"
     SeqIO.write(
         sorted(
-            Parse(gff, gff).extract(min_aa_length=33),
+            Parse(gff, genome).extract(min_aa_length=33),
             key=lambda x: x.id,
         ),
         test_out,
