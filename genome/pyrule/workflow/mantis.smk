@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-28 13:54:59
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:30:51
+ * @LastEditTime: 2024-01-15 11:00:34
  * @FilePath: /genome/genome/pyrule/workflow/mantis.smk
  * @Description:
 """
@@ -53,6 +53,6 @@ rule annotate_gene_mantis:
 
         mv smk-mantis/consensus_annotation.tsv \
             {output.annot}
-        mv smk-mantis \
-            {input.faa}-mantis/
+        rm -rf {input.faa}-mantis/
+        mv smk-mantis {input.faa}-mantis/
         """

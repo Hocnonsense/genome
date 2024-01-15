@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:48:35
+ * @LastEditTime: 2024-01-15 23:17:13
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,10 @@ changelog for genome
 
 ## changelog
 
+- 0.2.1:
+  - fix:
+    - make mantis more robust
+    - use gff.Parse with a gff and another genome easier.
 - 0.2.0:
   - feat: change dir of workflow rules and envs and make `genome` capable to be install via git
 - 0.1.6:
