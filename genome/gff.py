@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 23:39:56
+ * @LastEditTime: 2024-01-16 00:01:10
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -129,6 +129,11 @@ def infer_refseq_gene_id(rec_id: str, fet_id: str):
     return fet_id.rsplit("-", 1)[1]
 
 
+def infer_trnascan_rna_id(rec_id: str, fet_id: str):
+    # assert fet_id.startswith(rec_id)
+    return fet_id
+
+
 _biopython_strand = {
     "+": 1,
     "-": -1,
@@ -220,9 +225,10 @@ class Parse:
 
     def extract(
         self,
+        fet_type="CDS",
         translate=True,
         min_aa_length=33,
-        call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
+        call_gene_id: Union[Callable[[str, str], str], str] = infer_prodigal_gene_id,
         auto_fix=True,
     ):
         """
@@ -231,15 +237,20 @@ class Parse:
           - or at least 33 aa complete protein without terminal codon.
         """
         min_gene_length = min_aa_length * 3
+        if fet_type != "CDS":
+            assert not translate
+
+        if isinstance(call_gene_id, str):
+            call_gene_id = globals()[call_gene_id]
 
         rec: SeqRecord.SeqRecord = None
         for rec in self():
             fet: SeqFeature.SeqFeature = None
             for fet in rec.features:
-                if fet.type != "CDS":
+                if fet.type != fet_type:
                     continue
                 seq: SeqRecord.SeqRecord = fet.extract(rec)
-                if len(seq) < min_gene_length:
+                if fet_type == "CDS" and len(seq) < min_gene_length:
                     continue
                 if translate:
                     seq = seq.translate(
@@ -251,7 +262,7 @@ class Parse:
                         and seq.seq[0] != "M"
                     ):
                         seq.seq = "M" + seq.seq[1:]
-                seq.id = call_gene_id(rec.id, fet.id)
+                seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
                 seq.description = " # ".join(
                     (
                         str(i)
