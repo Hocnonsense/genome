@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-16 00:01:10
+ * @LastEditTime: 2024-01-16 23:34:46
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -174,16 +174,15 @@ def to_seqfeature(feature: gffutils.feature.Feature):
 
 
 class Parse:
-    def __init__(self, gff_file: PathLike, create_now: Union[bool, PathLike] = True):
-        self.fa = _FastaGffFileIterator(gff_file)
-        self.gff_file = Path(gff_file)
+    def __init__(self, gff_or_fa: PathLike, create_now: Union[bool, PathLike] = True):
+        self.fa = _FastaGffFileIterator(gff_or_fa)
         self.db: gffutils.FeatureDB = None
         if isinstance(create_now, (Path, str)):
+            self.create(verbose=False)
+            self.create(_FastaGffFileIterator(create_now))
             self.gff_file = Path(create_now)
-            self.create()
-            self.fa = _FastaGffFileIterator(create_now)
-            self.fa.fasta_start_pointer = 0
         else:
+            self.gff_file = Path(gff_or_fa)
             if create_now is not False:
                 self.create()
 
@@ -199,15 +198,26 @@ class Parse:
         p.fa = self.fa
         return p
 
-    def create(self, dbfn=":memory:", verbose=True, **kwargs):
-        try:
-            self.db = gffutils.create_db(self.fa, dbfn=dbfn, verbose=verbose, **kwargs)
-            if self.fa.fasta_start_pointer == -1:
-                warnings.warn(
-                    "No sequences found in file. Please check.", RuntimeWarning
+    def create(
+        self,
+        gff: Optional[_FastaGffFileIterator] = None,
+        dbfn=":memory:",
+        verbose=True,
+        **kwargs,
+    ):
+        if gff is not None:
+            self.db = gffutils.create_db(gff, dbfn=dbfn, verbose=verbose, **kwargs)
+        else:
+            try:
+                self.db = gffutils.create_db(
+                    gff or self.fa, dbfn=dbfn, verbose=verbose, **kwargs
                 )
-        except EmptyInputError:
-            self.fa.fasta_start_pointer = 0
+                if verbose and self.fa.fasta_start_pointer == -1:
+                    warnings.warn(
+                        "No sequences found in file. Please check.", RuntimeWarning
+                    )
+            except EmptyInputError:
+                self.fa.fasta_start_pointer = 0
 
     def __call__(
         self, limit_info: Optional[str] = None
@@ -226,9 +236,9 @@ class Parse:
     def extract(
         self,
         fet_type="CDS",
+        call_gene_id: Union[Callable[[str, str], str], str] = infer_prodigal_gene_id,
         translate=True,
         min_aa_length=33,
-        call_gene_id: Union[Callable[[str, str], str], str] = infer_prodigal_gene_id,
         auto_fix=True,
     ):
         """
@@ -236,7 +246,7 @@ class Parse:
           - at least 32 aa complete protein with a complete terminal codon.
           - or at least 33 aa complete protein without terminal codon.
         """
-        min_gene_length = min_aa_length * 3
+        min_gene_length = int(min_aa_length) * 3
         if fet_type != "CDS":
             assert not translate
 
@@ -250,19 +260,20 @@ class Parse:
                 if fet.type != fet_type:
                     continue
                 seq: SeqRecord.SeqRecord = fet.extract(rec)
-                if fet_type == "CDS" and len(seq) < min_gene_length:
-                    continue
-                if translate:
-                    seq = seq.translate(
-                        table=fet.qualifiers.get("transl_table", "Standard")[0]
-                    )
-                    if (
-                        auto_fix
-                        and fet.qualifiers.get("partial", "00")[0] == "0"
-                        and seq.seq[0] != "M"
-                    ):
-                        seq.seq = "M" + seq.seq[1:]
-                seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
+                if fet_type == "CDS":
+                    if len(seq) < min_gene_length:
+                        continue
+                    if translate:
+                        seq = seq.translate(
+                            table=fet.qualifiers.get("transl_table", "Standard")[0]
+                        )
+                        if (
+                            auto_fix
+                            and fet.qualifiers.get("partial", "00")[0] == "0"
+                            and seq.seq[0] != "M"
+                        ):
+                            seq.seq = "M" + seq.seq[1:]
+                    seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
                 seq.description = " # ".join(
                     (
                         str(i)

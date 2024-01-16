@@ -44,7 +44,7 @@ def test_gff_reset_reference(test_temp: Path):
     test_out = test_temp / "binny_contigs_4bins-top10-prodigal.gvmeta-ge33.faa"
     SeqIO.write(
         sorted(
-            Parse(gff, genome).extract(min_aa_length=33),
+            Parse(genome, gff).extract(min_aa_length=33),
             key=lambda x: x.id,
         ),
         test_out,
