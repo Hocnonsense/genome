@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-16 23:34:46
+ * @LastEditTime: 2024-01-17 16:17:03
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -247,8 +247,8 @@ class Parse:
           - or at least 33 aa complete protein without terminal codon.
         """
         min_gene_length = int(min_aa_length) * 3
-        if fet_type != "CDS":
-            assert not translate
+        # if fet_type != "CDS":
+        #    assert not translate
 
         if isinstance(call_gene_id, str):
             call_gene_id = globals()[call_gene_id]
@@ -273,7 +273,7 @@ class Parse:
                             and seq.seq[0] != "M"
                         ):
                             seq.seq = "M" + seq.seq[1:]
-                    seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
+                seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
                 seq.description = " # ".join(
                     (
                         str(i)
