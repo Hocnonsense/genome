@@ -153,7 +153,7 @@ class BinStatisticContainer:
         parser: Parse,
         min_contig_len=0,
     ):
-        return cls(SeqStat.load_seq_stats(parser()), parser.genome_fa, min_contig_len)
+        return cls(SeqStat.load_seq_stats(parser()), parser.gff_file, min_contig_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):

@@ -1,13 +1,13 @@
 """
  * @Date: 2023-12-28 13:54:59
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 11:00:34
+ * @LastEditTime: 2024-01-20 17:42:30
  * @FilePath: /genome/genome/pyrule/workflow/mantis.smk
  * @Description:
 """
 
 
-rule annotate_gene_mantis_checkdb:
+rule annotate_gene_mantis_check_db:
     input:
         mantis_config=config["mantis_config"],
     output:
@@ -28,7 +28,7 @@ rule annotate_gene_mantis_checkdb:
 rule annotate_gene_mantis:
     input:
         faa="{any}.faa",
-        mantis_config_check=str(config["mantis_config"]) + ".mantis_setup.done",
+        mantis_config_check=rules.annotate_gene_mantis_check_db.output.mantis_config_check,
     output:
         annot="{any}-{method}.tsv",
     params:

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 23:17:13
+ * @LastEditTime: 2024-03-24 12:30:57
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,10 @@ changelog for genome
 
 ## changelog
 
+- 0.2.2:
+  - fix:
+    - update gff.Parse
+    - bug in binning/filter
 - 0.2.1:
   - fix:
     - make mantis more robust

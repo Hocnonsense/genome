@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-15 23:03:52
+ * @LastEditTime: 2024-01-19 21:33:22
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -129,6 +129,11 @@ def infer_refseq_gene_id(rec_id: str, fet_id: str):
     return fet_id.rsplit("-", 1)[1]
 
 
+def infer_trnascan_rna_id(rec_id: str, fet_id: str):
+    # assert fet_id.startswith(rec_id)
+    return fet_id
+
+
 _biopython_strand = {
     "+": 1,
     "-": -1,
@@ -156,11 +161,12 @@ def to_seqfeature(feature: gffutils.feature.Feature):
         "frame": [feature.frame],
     }
     qualifiers.update(feature.attributes)
+    start, stop = sorted((feature.start, feature.end))
     return SeqFeature.SeqFeature(
         # Convert from GFF 1-based to standard Python 0-based indexing used by
         # BioPython
         SeqFeature.SimpleLocation(
-            feature.start - 1, feature.stop, strand=_biopython_strand[feature.strand]
+            start - 1, stop, strand=_biopython_strand[feature.strand]
         ),
         id=feature.id,
         type=feature.featuretype,
@@ -169,15 +175,17 @@ def to_seqfeature(feature: gffutils.feature.Feature):
 
 
 class Parse:
-    def __init__(self, gff_file: PathLike, create_now: Union[bool, PathLike] = True):
-        self.gff = _FastaGffFileIterator(gff_file)
+    def __init__(self, gff_or_fa: PathLike, create_now: Union[bool, PathLike] = True):
+        self.fa = _FastaGffFileIterator(gff_or_fa)
         self.db: gffutils.FeatureDB = None
         if isinstance(create_now, (Path, str)):
-            self.genome_fa = Path(create_now)
+            self.create(verbose=False)
+            self.create(_FastaGffFileIterator(create_now))
+            self.gff_file = Path(create_now)
         else:
-            self.genome_fa = Path(gff_file)
-        if create_now is not False:
-            self.create()
+            self.gff_file = Path(gff_or_fa)
+            if create_now is not False:
+                self.create()
 
     def reset_reference(self, refernce_file: PathLike, create_now=False):
         p = Parse(refernce_file, create_now=create_now)
@@ -188,18 +196,29 @@ class Parse:
         if self.db is None:
             pass
         p = Parse(db_file, create_now=create_now)
-        p.gff = self.gff
+        p.fa = self.fa
         return p
 
-    def create(self, dbfn=":memory:", verbose=True, **kwargs):
-        try:
-            self.db = gffutils.create_db(self.gff, dbfn=dbfn, verbose=verbose, **kwargs)
-            if self.gff.fasta_start_pointer == -1:
-                warnings.warn(
-                    "No sequences found in file. Please check.", RuntimeWarning
+    def create(
+        self,
+        gff: Optional[_FastaGffFileIterator] = None,
+        dbfn=":memory:",
+        verbose=True,
+        **kwargs,
+    ):
+        if gff is not None:
+            self.db = gffutils.create_db(gff, dbfn=dbfn, verbose=verbose, **kwargs)
+        else:
+            try:
+                self.db = gffutils.create_db(
+                    gff or self.fa, dbfn=dbfn, verbose=verbose, **kwargs
                 )
-        except EmptyInputError:
-            self.gff.fasta_start_pointer = 0
+                if verbose and self.fa.fasta_start_pointer == -1:
+                    warnings.warn(
+                        "No sequences found in file. Please check.", RuntimeWarning
+                    )
+            except EmptyInputError:
+                self.fa.fasta_start_pointer = 0
 
     def __call__(
         self, limit_info: Optional[str] = None
@@ -208,7 +227,7 @@ class Parse:
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
         Add type hints to this function.
         """
-        for rec in self.gff.parse_seq():
+        for rec in self.fa.parse_seq():
             if self.db:
                 rec.features.extend(
                     (to_seqfeature(fet) for fet in self.db.region(seqid=rec.id))
@@ -217,9 +236,10 @@ class Parse:
 
     def extract(
         self,
+        fet_type="CDS",
+        call_gene_id: Union[Callable[[str, str], str], str] = infer_prodigal_gene_id,
         translate=True,
         min_aa_length=33,
-        call_gene_id: Callable[[str, str], str] = infer_prodigal_gene_id,
         auto_fix=True,
     ):
         """
@@ -227,28 +247,34 @@ class Parse:
           - at least 32 aa complete protein with a complete terminal codon.
           - or at least 33 aa complete protein without terminal codon.
         """
-        min_gene_length = min_aa_length * 3
+        min_gene_length = int(min_aa_length) * 3
+        # if fet_type != "CDS":
+        #    assert not translate
+
+        if isinstance(call_gene_id, str):
+            call_gene_id = globals()[call_gene_id]
 
         rec: SeqRecord.SeqRecord = None
         for rec in self():
             fet: SeqFeature.SeqFeature = None
             for fet in rec.features:
-                if fet.type != "CDS":
+                if fet.type != fet_type:
                     continue
                 seq: SeqRecord.SeqRecord = fet.extract(rec)
-                if len(seq) < min_gene_length:
-                    continue
-                if translate:
-                    seq = seq.translate(
-                        table=fet.qualifiers.get("transl_table", "Standard")[0]
-                    )
-                    if (
-                        auto_fix
-                        and fet.qualifiers.get("partial", "00")[0] == "0"
-                        and seq.seq[0] != "M"
-                    ):
-                        seq.seq = "M" + seq.seq[1:]
-                seq.id = call_gene_id(rec.id, fet.id)
+                if fet_type == "CDS":
+                    if len(seq) < min_gene_length:
+                        continue
+                    if translate:
+                        seq = seq.translate(
+                            table=fet.qualifiers.get("transl_table", "Standard")[0]
+                        )
+                        if (
+                            auto_fix
+                            and fet.qualifiers.get("partial", "00")[0] == "0"
+                            and seq.seq[0] != "M"
+                        ):
+                            seq.seq = "M" + seq.seq[1:]
+                seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
                 seq.description = " # ".join(
                     (
                         str(i)
@@ -264,3 +290,11 @@ class Parse:
                     )
                 ).strip()
                 yield seq
+
+
+def recover_qualifiers(description: str):
+    _, qualifiers_s = description.rsplit(" # ", 1)
+    qualifiers = {
+        k: v.split(",") for k, v in (i.split("=", 1) for i in qualifiers_s.split(";"))
+    }
+    return qualifiers

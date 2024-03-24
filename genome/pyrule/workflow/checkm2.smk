@@ -1,13 +1,13 @@
 """
  * @Date: 2024-01-10 16:05:33
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 21:17:20
- * @FilePath: /genome/workflow/checkm2.smk
+ * @LastEditTime: 2024-01-20 17:41:05
+ * @FilePath: /genome/genome/pyrule/workflow/checkm2.smk
  * @Description:
 """
 
 
-rule checkm2_db:
+rule checkm2_download_db:
     output:
         checkm2_db=directory(config["checkm2_db_path"]),
     conda:
@@ -22,7 +22,7 @@ rule checkm2_db:
 
 rule ctg2faa_checkm2:
     input:
-        checkm2_db=rules.checkm2_db.output.checkm2_db,
+        checkm2_db=rules.checkm2_download_db.output.checkm2_db,
         ctg2faa="{any}-bins/union/{union_method}{marker}-binsfaa.tsv",
     output:
         mag2checkm="{any}-bins/filter/{union_method}{marker}-checkm2.tsv",
