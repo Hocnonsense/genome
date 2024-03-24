@@ -93,7 +93,7 @@ rule filter_fa_via_bin_filter:
     input:
         contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
-        mag2checkm="{any}-bins/filter/{union_method}{marker}-checkm.tsv",
+        mag2checkm="{any}-bins/filter/{method}{marker}-checkm.tsv",
         gunc_out_tsv="{any}-bins/filter/{method}{marker}-gunc.tsv",
     output:
         lsmags="{any}-bins/filter/{method}{marker}-bins.ls",

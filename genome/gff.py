@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-17 16:17:03
+ * @LastEditTime: 2024-01-19 21:33:22
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -161,11 +161,12 @@ def to_seqfeature(feature: gffutils.feature.Feature):
         "frame": [feature.frame],
     }
     qualifiers.update(feature.attributes)
+    start, stop = sorted((feature.start, feature.end))
     return SeqFeature.SeqFeature(
         # Convert from GFF 1-based to standard Python 0-based indexing used by
         # BioPython
         SeqFeature.SimpleLocation(
-            feature.start - 1, feature.stop, strand=_biopython_strand[feature.strand]
+            start - 1, stop, strand=_biopython_strand[feature.strand]
         ),
         id=feature.id,
         type=feature.featuretype,
@@ -289,3 +290,11 @@ class Parse:
                     )
                 ).strip()
                 yield seq
+
+
+def recover_qualifiers(description: str):
+    _, qualifiers_s = description.rsplit(" # ", 1)
+    qualifiers = {
+        k: v.split(",") for k, v in (i.split("=", 1) for i in qualifiers_s.split(";"))
+    }
+    return qualifiers
