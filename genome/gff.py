@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-19 21:33:22
+ * @LastEditTime: 2024-03-24 13:02:53
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -254,9 +254,9 @@ class Parse:
         if isinstance(call_gene_id, str):
             call_gene_id = globals()[call_gene_id]
 
-        rec: SeqRecord.SeqRecord = None
+        rec: SeqRecord.SeqRecord
         for rec in self():
-            fet: SeqFeature.SeqFeature = None
+            fet: SeqFeature.SeqFeature
             for fet in rec.features:
                 if fet.type != fet_type:
                     continue
@@ -275,6 +275,7 @@ class Parse:
                         ):
                             seq.seq = "M" + seq.seq[1:]
                 seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
+                assert fet.location is not None
                 seq.description = " # ".join(
                     (
                         str(i)

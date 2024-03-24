@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-22 15:23:06
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:28:52
+ * @LastEditTime: 2024-03-24 13:04:11
  * @FilePath: /genome/genome/pyrule/workflow/gunc.smk
  * @Description:
 """
@@ -41,7 +41,7 @@ rule gunc_run_ctg2mag:
     params:
         bins_faa="{any}",
     conda:
-        "../envsenvs/gunc.yaml"
+        "../envs/gunc.yaml"
     shadow:
         "shallow"
     threads: 64
