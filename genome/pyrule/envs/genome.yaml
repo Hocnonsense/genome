@@ -31,3 +31,4 @@ dependencies:
       - snakemake-executor-plugin-cluster-generic
       - checkm-genome
       - pyrodigal-gv
+      - tqdm
