@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-10 20:20:41
- * @FilePath: /genome/workflow/binning/filter.smk
+ * @LastEditTime: 2024-03-29 15:38:05
+ * @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
 
@@ -14,7 +14,7 @@ except NameError:
 
 rule ctg2faa:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{union_method}{marker}.tsv",
     output:
         ctg2faa="{any}-bins/union/{union_method}{marker}-binsfaa.tsv",
@@ -91,13 +91,13 @@ if config.get("gunc_db_path"):
 
 rule filter_fa_via_bin_filter:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
         mag2checkm="{any}-bins/filter/{method}{marker}-checkm.tsv",
         gunc_out_tsv="{any}-bins/filter/{method}{marker}-gunc.tsv",
     output:
-        lsmags="{any}-bins/filter/{method}{marker}-bins.ls",
-        mags_tsv="{any}-bins/filter/{method}{marker}-bins.tsv",
+        lsmags="{any}-bins/filter/{method}{marker}-checkmgunc_bins.ls",
+        mags_tsv="{any}-bins/filter/{method}{marker}-checkmgunc_bins.tsv",
     params:
         mags="{any}-bins/filter/{method}{marker}-bins",
     threads: 64
@@ -120,6 +120,49 @@ rule filter_fa_via_bin_filter:
         )
         mags_tsv.to_csv("smk-fliter.tsv", sep="\t", index=False)
 
+        shell(
+            """
+            mv smk-fliter.tsv {output.mags_tsv}
+            mv smk-fliter {params.mags}
+            realpath {params.mags}/*.fa > {output.lsmags}
+            """
+        )
+
+
+rule filter_fa_via_checkm2:
+    input:
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
+        ctg2mag="{any}-bins/union/{method}{marker}.tsv",
+        mag2checkm="{any}-bins/filter/{method}{marker}-checkm2.tsv",
+    output:
+        lsmags="{any}-bins/filter/{method}{marker}-checkm2_bins.ls",
+        mags_tsv="{any}-bins/filter/{method}{marker}-checkm2_bins.tsv",
+    params:
+        mags="{any}-bins/filter/{method}{marker}-checkm2_bins",
+    shadow:
+        "shallow"
+    run:
+        shell("/bin/rm -f smk-fliter smk-fliter.tsv")
+
+        from genome.bin_statistic_ext import format_bin_input
+        import pandas as pd
+
+        bin_input_dir, binids, suffix = format_bin_input(
+            bin_output=f"smk-fliter/discard",
+            bin_input=input.ctg2mag,
+            support=input.contig,
+        )
+
+        checkm2 = pd.read_csv(input.mag2checkm, sep="\t").rename(
+            columns={"Name": "Bin Id"}
+        )
+        checkm2_filter = checkm2[
+            (checkm2["Completeness"] >= 50) & (checkm2["Contamination"] <= 10)
+        ]
+        for bin_fa in checkm2_filter["Bin Id"]:
+            shell(f"mv smk-fliter/discard/{bin_fa}.fa smk-fliter/")
+
+        checkm2_filter.to_csv("smk-fliter.tsv", sep="\t", index=False)
         shell(
             """
             mv smk-fliter.tsv {output.mags_tsv}

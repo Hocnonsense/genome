@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-10 16:48:56
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-24 15:44:00
- * @FilePath: /genome/workflow/genome.smk
+ * @LastEditTime: 2024-03-29 15:25:40
+ * @FilePath: /genome/genome/pyrule/workflow/genome.smk
  * @Description:
 """
 import os
@@ -47,15 +47,15 @@ rule prokka_raw:
         genome="{any}.fa",
     output:
         filetypes=[
-            "{any}-prokka_raw.{kingdom}." f"{suffix}"
+            "{any}-prokka_{kingdom}_raw." f"{suffix}"
             for suffix in prokka_output_suffixes
         ],
-        log="{any}-prokka.{kingdom}.log",
+        log="{any}-prokka_{kingdom}.log",
     conda:
         "../envs/prokka.yaml"
     params:
         filetypes=prokka_output_suffixes,
-        output_prefix="{any}-prokka_raw.{kingdom}.",
+        output_prefix="{any}-prokka_{kingdom}_raw.",
         kingdom="{kingdom}",
     wildcard_constraints:
         kingdom="Archaea|Bacteria|Mitochondria|Viruses",
@@ -85,10 +85,10 @@ rule prokka_raw:
 
 rule prokka_fix:
     input:
-        filetype="{any}-prokka_raw.{kingdom}.{suffix}",
-        log="{any}-prokka.{kingdom}.log",
+        filetype="{any}-prokka_{kingdom}_raw.{suffix}",
+        log="{any}-prokka_{kingdom}.log",
     output:
-        filetype="{any}-prokka.{kingdom}.{suffix}",
+        filetype="{any}-prokka_{kingdom}.{suffix}",
     run:
         from pathlib import Path
 
@@ -116,7 +116,7 @@ rule prodigal_raw:
     input:
         genome="{any}.fa",
     output:
-        gff="{any}-prodigal.{mode}.gff",
+        gff="{any}-prodigal_{mode}.gff",
     params:
         mode="{mode}",
     wildcard_constraints:

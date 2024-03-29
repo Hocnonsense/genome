@@ -29,7 +29,7 @@ rule bam_bai:
 
 use rule binning_clean_input_references as clean_input_references_python with:
     output:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         lsbams="{any}-bins/input/bams_uncheck.ls",
         jgi="{any}-bins/input/jgi.tsv",
 

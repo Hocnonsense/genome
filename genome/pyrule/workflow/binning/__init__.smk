@@ -22,7 +22,7 @@ rule clean_input_references:
     input:
         config="{any}-bins.yaml",
     output:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         lsbams="{any}-bins/input/bams.ls",
         jgi="{any}-bins/input/jgi.tsv",
     run:

@@ -9,7 +9,7 @@
 
 rule metabat2:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         jgi="{any}-bins/input/jgi.tsv",
     output:
         ctg2mag="{any}-bins/single/metabat2_{maxP}_{minS}.tsv",
@@ -49,7 +49,7 @@ rule metabat2:
 
 rule maxbin2:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         jgi="{any}-bins/input/jgi.tsv",
     output:
         ctg2mag="{any}-bins/single/maxbin2_{markerset}.tsv",
@@ -89,7 +89,7 @@ rule maxbin2:
 
 rule concoct:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         lsbams="{any}-bins/input/bams.ls",
     output:
         ctg2mag="{any}-bins/single/concoct.tsv",
@@ -130,7 +130,7 @@ rule concoct:
 
 rule metadecoder:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         lsbams="{any}-bins/input/bams.ls",
     output:
         ctg2mag="{any}-bins/single/metadecoder.tsv",
@@ -181,7 +181,7 @@ rule metadecoder:
 
 rule vamb:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         jgi="{any}-bins/input/jgi.tsv",
     output:
         ctg2mag="{any}-bins/single/vamb.tsv",

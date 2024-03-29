@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-24 12:30:57
+ * @LastEditTime: 2024-03-29 15:49:44
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,12 @@ changelog for genome
 
 ## changelog
 
+- 0.2.3:
+  - feat!:
+    - rename API for snakemake output:
+      - `-`: indicate the software
+      - `_`: indicate the param select in given software
+      - `.`: indicate a format, and is preferred that `-`
 - 0.2.2:
   - fix:
     - update gff.Parse

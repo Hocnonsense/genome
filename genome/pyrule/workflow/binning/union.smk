@@ -1,7 +1,7 @@
 
 rule DASTool_create:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         union_methods=[
             ("{any}-bins/single/" f"{bin_method}.tsv") for bin_method in bin_methods
         ],
@@ -44,7 +44,7 @@ rule DASTool_create:
 
 rule UniteM_profile_bin_temp:
     input:
-        contig="{any}-bins/input/" f"filter_lt.{MIN_BIN_CONTIG_LEN}.fa",
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         ctg2bin="{any}-bins/single/{method}.tsv",
     output:
         profile=temp(
