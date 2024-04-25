@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-13 09:49:04
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-22 22:54:53
+ * @LastEditTime: 2024-04-25 11:23:07
  * @FilePath: /genome/setup.py
  * @Description:
 """
@@ -32,7 +32,10 @@ def get_version(file: str | Path):
         for line in f:
             if line.strip():
                 break
-        version = line.strip().rsplit(maxsplit=1)[1].rstrip(":")
+            v = line.strip().rsplit(maxsplit=1)
+        else:
+            v = ["", "0+unknown"]
+        version = v[1].rstrip(":")
     return version
 
 
