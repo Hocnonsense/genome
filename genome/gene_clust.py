@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-15 21:29:41
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:18:00
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-04-27 00:32:36
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -31,16 +31,27 @@ class MmseqOut(NamedTuple):
 
     @classmethod
     def from_in_faa(cls, faa: PathLike):
+        "create MmseqOut from input faa file"
         assert str(faa).endswith(".faa")
         return cls.from_prefix(str(faa)[:-4])
 
     @classmethod
     def from_prefix(cls, prefix: PathLike):
+        "create MmseqOut from prefix of output files"
         return cls(
             Path(f"{prefix}-clu_100.tsv"),
             Path(f"{prefix}-clu.tsv"),
             Path(f"{prefix}-clu_rep.faa"),
         )
+
+    @classmethod
+    def from_aout(cls, aout: PathLike):
+        "auto recognize prefix from output"
+        aout_ = str(aout)
+        for suffix in ("-clu_100.tsv", "-clu.tsv", "-clu_rep.faa"):
+            if aout_.endswith(suffix):
+                return cls.from_prefix(aout_[: -len(suffix)])
+        raise KeyError("Cannot determine suffix, please check file name")
 
     @classmethod
     def from_prefix_modify(
@@ -56,14 +67,29 @@ class MmseqOut(NamedTuple):
 
         return cls(Path(all_100_), Path(all_clu_), Path(all_clu_faa_))
 
-    def load_rep2all(self):
+    def load_rep2all(
+        self,
+        keep: Iterable[Literal["Rep", "Rep100", "All"]] | Literal[True] = (
+            "Rep",
+            "All",
+        ),
+    ):
+        """
+        keep:
+            if True, keep all columns,
+            else: keep the columns in the list
+        """
+        if keep is True:
+            keep_ = ["Rep", "Rep100", "All"]
+        else:
+            keep_ = list(keep)
         all_100 = pd.read_csv(
             self.all_100, sep="\t", header=None, names=["Rep100", "All"]
         )
         all_clu = pd.read_csv(
             self.all_clu, sep="\t", header=None, names=["Rep", "Rep100"]
         )
-        rep2all = all_100.merge(all_clu)[["Rep", "All"]]
+        rep2all = all_100.merge(all_clu)[keep_]
         return rep2all
 
 

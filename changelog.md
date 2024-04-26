@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-22 23:03:39
+ * @LastEditTime: 2024-04-27 00:29:27
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -20,6 +20,9 @@ changelog for genome
       - `_`: indicate the param select in given software
       - `.`: indicate a format, and is preferred than `-`
     - `_version` for report version when installing this reposity
+    - MmseqOut
+      - allow `MmseqOut.from_aout` to auto recognize prefix from output
+      - allow `MmseqOut.load_rep2all` to output "Rep100" if needed
 - 0.2.2:
   - fix:
     - update gff.Parse
