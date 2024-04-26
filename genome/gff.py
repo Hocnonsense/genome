@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:32:50
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-24 13:02:53
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-04-26 14:52:54
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -17,7 +17,7 @@ import gffutils.feature
 from Bio import SeqFeature, SeqIO, SeqRecord
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
-from gffutils.iterators import feature_from_line, six
+from gffutils.iterators import feature_from_line
 
 from . import GFFOutput
 
@@ -74,7 +74,7 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
                     return
                 i += 1
 
-                if isinstance(line, six.binary_type):
+                if isinstance(line, bytes):
                     line = line.decode("utf-8")
                 self.current_item = line
                 self.current_item_number = i
