@@ -15,11 +15,17 @@ from genome.gff import Parse
 
 
 try:
-    from _decorator import temp_output, test_temp, test_files
+    from _decorator import temp_output, test_temp, test_files, pytest_mark_resource
 except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_temp, test_files
+    from tests.genome._decorator import (
+        temp_output,
+        test_temp,
+        test_files,
+        pytest_mark_resource,
+    )
 
 
+@pytest_mark_resource
 @temp_output
 def test_mmseq_clust(test_temp: Path):
     expect_prefix = test_temp / "some_gene"
