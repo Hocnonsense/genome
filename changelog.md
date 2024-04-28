@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-27 00:29:27
+ * @LastEditTime: 2024-04-28 20:09:47
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -23,6 +23,7 @@ changelog for genome
     - MmseqOut
       - allow `MmseqOut.from_aout` to auto recognize prefix from output
       - allow `MmseqOut.load_rep2all` to output "Rep100" if needed
+    - tests and docs
 - 0.2.2:
   - fix:
     - update gff.Parse
