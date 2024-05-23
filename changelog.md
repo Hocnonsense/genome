@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-28 20:09:47
+ * @LastEditTime: 2024-05-23 11:06:49
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,10 @@ changelog for genome
 
 ## changelog
 
+- 0.2.4:
+  - fix:
+    - update `bin_statistic.contig2bin`,
+      previously it will open a lot of file and may panic if there are more than 1024 bins.
 - 0.2.3:
   - feat!:
     - rename API for snakemake output:
