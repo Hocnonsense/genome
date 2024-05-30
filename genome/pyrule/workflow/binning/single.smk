@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-27 19:16:12
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-11-02 16:16:15
- * @FilePath: /genome/workflow/binning/single.smk
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-05-30 10:27:41
+ * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
 
@@ -38,12 +38,18 @@ rule metabat2:
             --minContig {params.MIN_BIN_CONTIG_LEN} \
             --minS {params.minS} --maxP {params.maxP}
 
-        for i in {params.dout}/*.{params.extension}
-        do
-            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-        done \
-        > {output.ctg2mag}
+        if [ -f {params.dout}/*.{params.extension} ]
+        then
+            for i in {params.dout}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done \
+            > {output.ctg2mag}
+        else
+            touch {output.ctg2mag}.fail
+            touch {output.ctg2mag}
+        fi
         """
 
 
@@ -78,12 +84,18 @@ rule maxbin2:
             -out {params.dout}/{params.dout} \
             -markerset {wildcards.markerset} -thread {threads}
 
-        for i in {params.dout}/*.{params.extension}
-        do
-            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-        done \
-        > {output.ctg2mag}
+        if [ -f {params.dout}/*.{params.extension} ]
+        then
+            for i in {params.dout}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done \
+            > {output.ctg2mag}
+        else
+            touch {output.ctg2mag}.fail
+            touch {output.ctg2mag}
+        fi
         """
 
 
@@ -170,12 +182,18 @@ rule metadecoder:
             -s {params.dout}/metadecoder.seed \
             -o {params.dout}/{params.dout}
 
-        for i in {params.dout}/*.{params.extension}
-        do
-            binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
-            grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-        done \
-        > {output.ctg2mag}
+        if [ -f {params.dout}/*.{params.extension} ]
+        then
+            for i in {params.dout}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done \
+            > {output.ctg2mag}
+        else
+            touch {output.ctg2mag}.fail
+            touch {output.ctg2mag}
+        fi
         """
 
 

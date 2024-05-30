@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-23 11:04:35
+ * @LastEditTime: 2024-05-30 10:31:02
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -59,7 +59,8 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
             bin2seqs[contig2bin_.loc[i.name, "bin"]].add(i.format("fasta-2line"))
     for b, seqs in bin2seqs.items():
         with open(td / f"{b}.fa", "w") as po:
-            po.write("\n".join(seqs))
+            for seq in seqs:
+                print(seq, file=po)
 
     return td, list(bin2seqs)
 
