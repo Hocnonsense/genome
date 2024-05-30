@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-30 10:33:45
+ * @LastEditTime: 2024-05-30 15:03:20
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -19,6 +19,8 @@ changelog for genome
       previously it will open a lot of file and may panic if there are more than 1024 bins.
     - update `pyrule/workflow/binning/single.smk`,
       now it will just touch output and output.fail if nothing binned
+  - chore:
+    - update `metadecoder` from `1.0.17` to `1.0.19`,
 - 0.2.3:
   - feat!:
     - rename API for snakemake output:
