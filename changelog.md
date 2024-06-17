@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-30 15:03:20
+ * @LastEditTime: 2024-06-17 15:49:56
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -19,6 +19,10 @@ changelog for genome
       previously it will open a lot of file and may panic if there are more than 1024 bins.
     - update `pyrule/workflow/binning/single.smk`,
       now it will just touch output and output.fail if nothing binned
+    - update `prodigal.prodigal_gff_onethread`, now mask by default
+    - update `gff.Parse`
+      - a clearer `__init__` function, and silence at that time
+      - can extract feature across end of (a circular) genome
   - chore:
     - update `metadecoder` from `1.0.17` to `1.0.19`,
 - 0.2.3:

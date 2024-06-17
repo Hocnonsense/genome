@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-26 14:52:54
+ * @LastEditTime: 2024-06-17 15:56:30
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -10,7 +10,7 @@
 import gzip
 import warnings
 from pathlib import Path
-from typing import Callable, Generator, Iterable, Optional, TextIO, Union
+from typing import Callable, Generator, Iterable, TextIO, override
 
 import gffutils
 import gffutils.feature
@@ -18,11 +18,12 @@ from Bio import SeqFeature, SeqIO, SeqRecord
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line
+from matplotlib.pylab import overload
 
 from . import GFFOutput
 
-PathLike = Union[str, Path]
-GeneralInput = Union[PathLike, TextIO]
+PathLike = str | Path
+GeneralInput = PathLike | TextIO
 
 
 def as_text_io(data: GeneralInput) -> TextIO:
@@ -43,7 +44,7 @@ def as_text_io(data: GeneralInput) -> TextIO:
 
 def write(
     recs: Iterable[SeqRecord.SeqRecord],
-    out_handle: Union[PathLike, TextIO],
+    out_handle: PathLike | TextIO,
     include_fasta=False,
 ):
     """
@@ -175,17 +176,25 @@ def to_seqfeature(feature: gffutils.feature.Feature):
 
 
 class Parse:
-    def __init__(self, gff_or_fa: PathLike, create_now: Union[bool, PathLike] = True):
+    @overload
+    def __init__(self, gff: PathLike, /): ...
+    @overload
+    def __init__(self, fa: PathLike, gff: PathLike, /): ...
+    @overload
+    def __init__(self, gff_or_fa: PathLike, create_now: bool): ...
+
+    def __init__(self, gff_or_fa: PathLike, create_now: bool | PathLike = True):
         self.fa = _FastaGffFileIterator(gff_or_fa)
         self.db: gffutils.FeatureDB = None
         if isinstance(create_now, (Path, str)):
-            self.create(verbose=False)
-            self.create(_FastaGffFileIterator(create_now))
-            self.gff_file = Path(create_now)
+            gff_file = create_now
+            self.create(verbose=False, expect_fa=False)  # init pointer of fa
+            self.create(_FastaGffFileIterator(gff_file), verbose=False)
+            self.gff_file = Path(gff_file)
         else:
             self.gff_file = Path(gff_or_fa)
             if create_now is not False:
-                self.create()
+                self.create(verbose=False)
 
     def reset_reference(self, refernce_file: PathLike, create_now=False):
         p = Parse(refernce_file, create_now=create_now)
@@ -201,9 +210,10 @@ class Parse:
 
     def create(
         self,
-        gff: Optional[_FastaGffFileIterator] = None,
+        gff: _FastaGffFileIterator | None = None,
         dbfn=":memory:",
         verbose=True,
+        expect_fa=True,
         **kwargs,
     ):
         if gff is not None:
@@ -213,7 +223,7 @@ class Parse:
                 self.db = gffutils.create_db(
                     gff or self.fa, dbfn=dbfn, verbose=verbose, **kwargs
                 )
-                if verbose and self.fa.fasta_start_pointer == -1:
+                if expect_fa and self.fa.fasta_start_pointer == -1:
                     warnings.warn(
                         "No sequences found in file. Please check.", RuntimeWarning
                     )
@@ -221,7 +231,7 @@ class Parse:
                 self.fa.fasta_start_pointer = 0
 
     def __call__(
-        self, limit_info: Optional[str] = None
+        self, limit_info: str | None = None
     ) -> Generator[SeqRecord.SeqRecord, None, None]:
         """
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
@@ -237,13 +247,13 @@ class Parse:
     def extract(
         self,
         fet_type="CDS",
-        call_gene_id: Union[Callable[[str, str], str], str] = infer_prodigal_gene_id,
+        call_gene_id: Callable[[str, str], str] | str = infer_prodigal_gene_id,
         translate=True,
         min_aa_length=33,
         auto_fix=True,
     ):
         """
-        min_aa_length acturally refers to
+        `min_aa_length=33` acturally refers to
           - at least 32 aa complete protein with a complete terminal codon.
           - or at least 33 aa complete protein without terminal codon.
         """
@@ -256,11 +266,18 @@ class Parse:
 
         rec: SeqRecord.SeqRecord
         for rec in self():
+            len_rec = len(rec)
             fet: SeqFeature.SeqFeature
             for fet in rec.features:
-                if fet.type != fet_type:
+                if fet.type != fet_type or fet.location is None:
                     continue
-                seq: SeqRecord.SeqRecord = fet.extract(rec)
+                # region extract seq
+                if fet.location.end >= len_rec:
+                    # circular genome without overlap
+                    seq: SeqRecord.SeqRecord = fet.extract(rec + rec)
+                else:
+                    seq = fet.extract(rec)
+                # endregion extract seq
                 if fet_type == "CDS":
                     if len(seq) < min_gene_length:
                         continue
@@ -275,10 +292,9 @@ class Parse:
                         ):
                             seq.seq = "M" + seq.seq[1:]
                 seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
-                assert fet.location is not None
                 seq.description = " # ".join(
                     (
-                        str(i)
+                        str(i).strip()
                         for i in (
                             "",
                             fet.location.start + 1,
@@ -289,7 +305,7 @@ class Parse:
                             ),
                         )
                     )
-                ).strip()
+                )
                 yield seq
 
 
