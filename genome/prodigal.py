@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 16:35:45
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:27:51
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-06-17 14:48:16
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -57,13 +57,13 @@ def prodigal_gff_onethread(
     if mode == "gvmeta":
         import pyrodigal_gv
 
-        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True)
+        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True, mask=True)
     else:
         if mode == "meta":
-            gf = pyrodigal.GeneFinder(meta=True)
+            gf = pyrodigal.GeneFinder(meta=True, mask=True)
         elif mode == "single":
             seqs = list(seqs)
-            gf = pyrodigal.GeneFinder(meta=False)
+            gf = pyrodigal.GeneFinder(meta=False, mask=True)
             gf.train(*(bytes(i.seq) for i in seqs))
 
     with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
