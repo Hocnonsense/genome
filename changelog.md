@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-17 15:49:56
+ * @LastEditTime: 2024-06-18 11:26:53
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -14,6 +14,11 @@ changelog for genome
 ## changelog
 
 - 0.2.4:
+  - feat:
+    - `UniRefClu` method to cluster genes
+      - `gene_clust.UniRefClu` to clust gene in UniRef standard
+      - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
+      - `mmseq_clust_95` will be removed in next few versions
   - fix:
     - update `bin_statistic.contig2bin`,
       previously it will open a lot of file and may panic if there are more than 1024 bins.
@@ -24,7 +29,8 @@ changelog for genome
       - a clearer `__init__` function, and silence at that time
       - can extract feature across end of (a circular) genome
   - chore:
-    - update `metadecoder` from `1.0.17` to `1.0.19`,
+    - update `metadecoder` from `1.0.17` to `1.0.19`
+    - update tests imports
 - 0.2.3:
   - feat!:
     - rename API for snakemake output:
@@ -63,7 +69,7 @@ changelog for genome
       - mode: `meta`, `single`, `gvmeta`
       - change `suffix` allowed values in `prodigal_multithread`
     - change bin_filter
-      - the monkey fixes will be remove in next few versions (tests required)
+      - the monkey fixes will be removed in next few versions (tests required)
     - change contig2bin and format_bin_input
       - contig2bin return `out_dir (str), bin_id (list[str], without suffix)`
       - format_bin_input return

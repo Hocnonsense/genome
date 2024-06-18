@@ -2,13 +2,12 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-27 18:26:42
+ * @LastEditTime: 2024-06-18 11:13:01
  * @FilePath: /genome/tests/genome/test_bin_statistic_ext.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
 
-from pathlib import Path
 import pytest
 
 with pytest.deprecated_call():
@@ -16,15 +15,8 @@ with pytest.deprecated_call():
 
 from genome.bin_statistic_ext import checkm, format_bin_input
 
-try:
-    from _decorator import temp_output, test_temp, test_files, MARK_LIMIT_RESOURCE
-except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import (
-        temp_output,
-        test_temp,
-        test_files,
-        MARK_LIMIT_RESOURCE,
-    )
+from tests import Path, temp_output, test_files, test_temp
+from tests.genome._decorator import MARK_LIMIT_RESOURCE
 
 
 @temp_output

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 20:11:35
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-27 18:49:16
+ * @LastEditTime: 2024-06-18 11:14:52
  * @FilePath: /genome/tests/genome/test_prokka.py
  * @Description:
 __file__ = "test/genome/test_prokka.py"
@@ -14,15 +14,8 @@ from Bio import SeqIO
 from genome.bin_statistic_ext import format_bin_input
 from genome.prokka import prokka_gff_onethread, prokka_gff_multithread
 
-try:
-    from _decorator import temp_output, test_temp, test_files, pytest_mark_resource
-except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import (
-        temp_output,
-        test_temp,
-        test_files,
-        pytest_mark_resource,
-    )
+from tests import Path, temp_output, test_files, test_temp
+from tests.genome._decorator import pytest_mark_resource
 
 
 @pytest_mark_resource

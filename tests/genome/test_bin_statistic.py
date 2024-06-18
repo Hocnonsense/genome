@@ -2,23 +2,19 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-27 17:27:27
+ * @LastEditTime: 2024-06-18 11:13:20
  * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
 
-from pathlib import Path
 from timeit import timeit
 
 import pandas as pd
 
 from genome.bin_statistic import BinStatisticContainer, contig2bin
 
-try:
-    from _decorator import temp_output, test_temp, test_files
-except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_temp, test_files
+from tests import Path, temp_output, test_files, test_temp
 
 
 @temp_output

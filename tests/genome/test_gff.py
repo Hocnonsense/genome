@@ -2,21 +2,16 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-28 20:40:37
+ * @LastEditTime: 2024-06-18 11:14:22
  * @FilePath: /genome/tests/genome/test_gff.py
  * @Description:
 __file__ = "tests/genome/test_prokka.py"
 """
 
-import os
-from pathlib import Path
 from genome.gff import Parse
 from Bio import SeqIO
 
-try:
-    from _decorator import temp_output, test_temp, test_files
-except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_temp, test_files
+from tests import Path, temp_output, test_files, test_temp
 
 
 @temp_output
