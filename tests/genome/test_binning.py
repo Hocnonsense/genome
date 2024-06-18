@@ -1,15 +1,13 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-25 20:53:06
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-21 20:13:59
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-06-18 11:14:01
  * @FilePath: /genome/tests/genome/test_binning.py
  * @Description:
 __file__ = "test/genome/test_binning.py"
 """
 # """
-
-from pathlib import Path
 
 import pandas as pd
 import yaml
@@ -22,10 +20,8 @@ from genome.binning import (
     default_bin_methods,
 )
 
-try:
-    from _decorator import temp_output, test_temp, test_files
-except (ModuleNotFoundError, ImportError):
-    from tests.genome._decorator import temp_output, test_temp, test_files
+from tests import Path, temp_output, test_files, test_temp
+from tests.genome._decorator import pytest_mark_resource
 
 
 @temp_output
@@ -57,6 +53,7 @@ def test_binning_config_to_config(test_temp: Path):
         }
 
 
+@pytest_mark_resource
 @temp_output
 def test_unitem_profile(test_temp: Path):
     binunion_tsv = bin_union(

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 16:35:45
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:08:19
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-06-17 14:48:16
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -45,7 +45,7 @@ def prodigal_gff_onethread(
             raise ValueError("without gff output, inital filename must be provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("without gff output, genome file must endswith '.fa'")
-        gff_out_ = Path(str(genome)[:-3] + f"-prodigal.{mode}.gff")
+        gff_out_ = Path(str(genome)[:-3] + f"-prodigal_{mode}.gff")
     else:
         gff_out_ = Path(gff_out)
 
@@ -57,21 +57,21 @@ def prodigal_gff_onethread(
     if mode == "gvmeta":
         import pyrodigal_gv
 
-        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True)
+        gf: pyrodigal.GeneFinder = pyrodigal_gv.ViralGeneFinder(meta=True, mask=True)
     else:
         if mode == "meta":
-            gf = pyrodigal.GeneFinder(meta=True)
+            gf = pyrodigal.GeneFinder(meta=True, mask=True)
         elif mode == "single":
             seqs = list(seqs)
-            gf = pyrodigal.GeneFinder(meta=False)
+            gf = pyrodigal.GeneFinder(meta=False, mask=True)
             gf.train(*(bytes(i.seq) for i in seqs))
 
     with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
-        tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal.{mode}.gff")
+        tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal_{mode}.gff")
         with open(tpmf_out, "w") as fo:
             for i in seqs:
                 gf.find_genes(bytes(i.seq)).write_gff(
-                    fo, i.id, include_translation_table=True
+                    fo, str(i.id), include_translation_table=True
                 )
                 SeqIO.write(i, tmpf, format="fasta-2line")
             print("##FASTA", file=fo)
@@ -145,7 +145,7 @@ def prodigal_multithread(
     # endregion quick fix suffix
 
     tpmf_outs = [
-        f"{str(genome)[:-3]}-prodigal.{mode}{suffix}" for genome in genome_files
+        f"{str(genome)[:-3]}-prodigal_{mode}{suffix}" for genome in genome_files
     ]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (

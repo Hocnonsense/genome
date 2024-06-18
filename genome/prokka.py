@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-11 13:49:35
  * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:18:41
+ * @LastEditTime: 2024-03-29 15:27:08
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -33,12 +33,12 @@ def prokka_gff_onethread(
             raise ValueError("inital filename must provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("genome file must endswith '.fa'")
-        gff_out_ = Path(str(genome)[:-3] + f"-prokka.{kingdom}.gff")
+        gff_out_ = Path(str(genome)[:-3] + f"-prokka_{kingdom}.gff")
     else:
         gff_out_ = Path(gff_out)
 
     with NamedTemporaryFile("w", suffix=".fa", delete=True) as tmpf:
-        tpmf_out = Path(f"{tmpf.name[:-3]}-prokka.{kingdom}.gff")
+        tpmf_out = Path(f"{tmpf.name[:-3]}-prokka_{kingdom}.gff")
 
         if not isinstance(genome, str) and not isinstance(genome, Path):
             SeqIO.write(genome, tmpf, "fasta")
@@ -113,7 +113,7 @@ def prokka_gff_multithread(
         genome_files.extend(_genome_files)
 
     target_smk_file = smk_workflow / "genome.smk"
-    tpmf_outs = [f"{str(genome)[:-3]}-prokka.{kingdom}.gff" for genome in genome_files]
+    tpmf_outs = [f"{str(genome)[:-3]}-prokka_{kingdom}.gff" for genome in genome_files]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (
         f"-s {target_smk_file} "

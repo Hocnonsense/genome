@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-13 09:49:04
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 15:18:42
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-04-25 11:23:07
  * @FilePath: /genome/setup.py
  * @Description:
 """
@@ -16,6 +16,15 @@ os.chdir(repo_path)
 
 
 def get_version(file: str | Path):
+    "first try get version via versionneer, then try to get version from changelog.md"
+    try:
+        from tests.genome._version import get_versions
+
+        version = get_versions()["version"]
+        if version:
+            return version
+    except ImportError:
+        pass
     with open(file) as f:
         for line in f:
             if line.startswith("## changelog"):
@@ -23,7 +32,10 @@ def get_version(file: str | Path):
         for line in f:
             if line.strip():
                 break
-        version = line.strip().rsplit(maxsplit=1)[1].rstrip(":")
+            v = line.strip().rsplit(maxsplit=1)
+        else:
+            v = ["", "0+unknown"]
+        version = v[1].rstrip(":")
     return version
 
 

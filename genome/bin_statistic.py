@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-15 17:05:11
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-12-22 14:26:46
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-05-30 10:31:02
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -53,17 +53,16 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
     td = Path(outdir)
     td.mkdir(parents=True, exist_ok=True)
 
-    try:
-        binfiles = {b: open(td / f"{b}.fa", "w") for b in contig2bin_["bin"].unique()}
-        for i in Parse(contigs)():
-            if i.name in contig2bin_.index:
-                binfiles[contig2bin_.loc[i.name, "bin"]].write(i.format("fasta-2line"))
-    finally:
-        for bf in binfiles.values():
-            bf.flush()
-            bf.close()
+    bin2seqs: dict[str, set[str]] = {b: set() for b in contig2bin_["bin"].unique()}
+    for i in Parse(contigs)():
+        if i.name in contig2bin_.index:
+            bin2seqs[contig2bin_.loc[i.name, "bin"]].add(i.format("fasta-2line"))
+    for b, seqs in bin2seqs.items():
+        with open(td / f"{b}.fa", "w") as po:
+            for seq in seqs:
+                print(seq, file=po)
 
-    return td, list(binfiles)
+    return td, list(bin2seqs)
 
 
 def calculateN50(seqLens: list[int]):
@@ -107,9 +106,10 @@ class SeqStat(NamedTuple):
                 # fet: SeqFeature.SeqFeature
                 int(fet.location.end - fet.location.start)
                 for fet in seq.features
-                if fet.type == "CDS"
+                if fet.type == "CDS" and fet.location
             ]
 
+            assert seq.id
             _seq_stats[seq.id] = cls(len(seq), gcContent, gc, at, n, len(cc), sum(cc))
         return _seq_stats
 
@@ -124,6 +124,7 @@ class SeqStat(NamedTuple):
         for seq in seq_iter:
             if len(seq.seq) < min_contig_len:
                 continue
+            assert seq.id
             _seq_stats[seq.id] = cls(len(seq), 0, 0, 0, 0, 0, 0)
 
         return _seq_stats

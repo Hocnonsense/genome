@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-24 12:30:57
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-06-18 11:26:53
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,35 @@ changelog for genome
 
 ## changelog
 
+- 0.2.4:
+  - feat:
+    - `UniRefClu` method to cluster genes
+      - `gene_clust.UniRefClu` to clust gene in UniRef standard
+      - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
+      - `mmseq_clust_95` will be removed in next few versions
+  - fix:
+    - update `bin_statistic.contig2bin`,
+      previously it will open a lot of file and may panic if there are more than 1024 bins.
+    - update `pyrule/workflow/binning/single.smk`,
+      now it will just touch output and output.fail if nothing binned
+    - update `prodigal.prodigal_gff_onethread`, now mask by default
+    - update `gff.Parse`
+      - a clearer `__init__` function, and silence at that time
+      - can extract feature across end of (a circular) genome
+  - chore:
+    - update `metadecoder` from `1.0.17` to `1.0.19`
+    - update tests imports
+- 0.2.3:
+  - feat!:
+    - rename API for snakemake output:
+      - `-`: indicate the software
+      - `_`: indicate the param select in given software
+      - `.`: indicate a format, and is preferred than `-`
+    - `_version` for report version when installing this reposity
+    - MmseqOut
+      - allow `MmseqOut.from_aout` to auto recognize prefix from output
+      - allow `MmseqOut.load_rep2all` to output "Rep100" if needed
+    - tests and docs
 - 0.2.2:
   - fix:
     - update gff.Parse
@@ -40,7 +69,7 @@ changelog for genome
       - mode: `meta`, `single`, `gvmeta`
       - change `suffix` allowed values in `prodigal_multithread`
     - change bin_filter
-      - the monkey fixes will be remove in next few versions (tests required)
+      - the monkey fixes will be removed in next few versions (tests required)
     - change contig2bin and format_bin_input
       - contig2bin return `out_dir (str), bin_id (list[str], without suffix)`
       - format_bin_input return
