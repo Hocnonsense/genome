@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-18 11:26:53
+ * @LastEditTime: 2024-07-02 23:17:15
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,9 @@ changelog for genome
 
 ## changelog
 
+- 0.2.4+:
+  - feat:
+    - `rename_filtered_ls_tsv` to rename bin name after filtering
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes

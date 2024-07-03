@@ -2,15 +2,19 @@
 """
  * @Date: 2022-10-25 20:53:06
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-18 11:14:01
+ * @LastEditTime: 2024-07-02 23:27:05
  * @FilePath: /genome/tests/genome/test_binning.py
  * @Description:
 __file__ = "test/genome/test_binning.py"
 """
 # """
 
+import os
 import pandas as pd
 import yaml
+
+from tests import Path, temp_output, test_files, test_temp
+from tests.genome._decorator import pytest_mark_resource
 
 from genome.binning import (
     BinningConfig,
@@ -18,10 +22,8 @@ from genome.binning import (
     bin_union,
     check_bams,
     default_bin_methods,
+    smk_workflow,
 )
-
-from tests import Path, temp_output, test_files, test_temp
-from tests.genome._decorator import pytest_mark_resource
 
 
 @temp_output
@@ -75,3 +77,40 @@ def test_unitem_profile(test_temp: Path):
         .to_dict()
     )
     test_files / "binny_unitem_unanimous.tsv"
+
+
+@temp_output
+def test_smk_filter__rename_filtered_ls_tsv(test_temp: Path):
+    prefix = test_temp / "{any}-bins/filter/{method}{marker}-{check}_bins".format(
+        any="any", method="method", marker="marker", check="check"
+    )
+    checkm_raw_str = (
+        "Bin Id\tMarker lineage\tCompleteness\tContamination\tStrain heterogeneity\n"
+        "bin_1\tBacteria\t99.99\t0.11\t0.33\n"
+        "bin_2\tBacteria\t76.42\t5.23\t63.24\n"
+        "bin_3\tBacteria\t99.99\t0.22\t0.44\n"
+    )
+    prefix = Path(prefix)
+    prefix.mkdir(parents=True, exist_ok=True)
+    with prefix.with_suffix(".tsv").open("w") as f:
+        f.write(checkm_raw_str)
+    with prefix.with_suffix(".ls").open("w") as f:
+        for i in range(1, 4):
+            bini = prefix / f"bin_{i}.fa"
+            bini.touch()
+            f.write(f"{bini}\n")
+    o_prefix = Path(f"{prefix}-rename/Hoho_bins")
+    assert not os.system(
+        f"cd {test_temp} && "
+        "python -m snakemake "
+        f"-s {Path(smk_workflow).resolve() / "binning" / "filter.smk"} "
+        f"{o_prefix}.ls "
+        "-p -c 1 "
+        "> dryrun.log"
+    )
+    with o_prefix.with_suffix(".tsv").open() as f:
+        assert f.read() == checkm_raw_str.replace("bin_", "Hoho-000")
+    with o_prefix.with_suffix(".ls").open() as f:
+        assert f.read() == "".join(
+            f"{o_prefix}/Hoho-000{i}/Hoho-000{i}.fa\n" for i in range(1, 4)
+        )

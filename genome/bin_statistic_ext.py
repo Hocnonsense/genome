@@ -224,8 +224,7 @@ def bin_filter(
     checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     threads=10,
-):
-    ...
+): ...
 
 
 @overload
@@ -236,8 +235,7 @@ def bin_filter(
     *,
     checkm_tsv_file: Union[PathLike, pd.DataFrame],
     gunc_tsv_file: Union[PathLike, pd.DataFrame],
-):
-    ...
+): ...
 
 
 def bin_filter(

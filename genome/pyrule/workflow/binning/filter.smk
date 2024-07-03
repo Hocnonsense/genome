@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:38:05
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2024-07-02 23:24:01
  * @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
@@ -170,3 +170,54 @@ rule filter_fa_via_checkm2:
             realpath {params.mags}/*.fa > {output.lsmags}
             """
         )
+
+
+rule rename_filtered_ls_tsv:
+    input:
+        lsmags="{any}-bins/filter/{method}{marker}-{check}_bins.ls",
+        mags_tsv="{any}-bins/filter/{method}{marker}-{check}_bins.tsv",
+    output:
+        lsmags="{any}-bins/filter/{method}{marker}-{check}_bins-rename/{prefix}_bins.ls",
+        mags_tsv="{any}-bins/filter/{method}{marker}-{check}_bins-rename/{prefix}_bins.tsv",
+    params:
+        mags="{any}-bins/filter/{method}{marker}-{check}_bins-rename/{prefix}_bins",
+        new_bin_name=lambda _: (lambda binid: f"{_.prefix}-{binid:>04}", ),
+    run:
+        import os
+        import pandas as pd
+        from pathlib import Path
+
+
+        def readonly_and_ln_to(file_source: Path, file_target: Path):
+            file_source.chmod(0o444)  # make the file readonly
+            file_target.parent.mkdir(parents=True, exist_ok=True)
+            if file_target.is_file() and file_source.lstat() == file_target.lstat():
+                pass
+            else:
+                file_target.hardlink_to(file_source)
+            return file_target
+
+
+        bin_ls = pd.read_csv(input.lsmags, names=["Path"])
+        bin_ls.index = bin_ls["Path"].apply(lambda s: Path(s).name.rsplit(".fa", 1)[0])
+        checkm = pd.read_csv(input.mags_tsv, sep="\t")
+        common_prefix_len = len(os.path.commonprefix(list(checkm["Bin Id"])))
+        checkm_sort = checkm.assign(
+            genome=lambda df: df["Bin Id"].apply(
+                lambda x: params.new_bin_name[0](x[common_prefix_len:])
+            )
+        )
+        bin_ls_new = bin_ls.merge(
+            checkm_sort[["Bin Id", "genome"]],
+            left_index=True,
+            right_on="Bin Id",
+        ).assign(
+            New_path=lambda df: df["genome"].apply(
+                lambda x: Path(params.mags) / x / (x + ".fa")
+            )
+        )
+        bin_ls_new.apply(lambda s: readonly_and_ln_to(Path(s["Path"]), s["New_path"]), axis=1)
+        bin_ls_new[["New_path"]].to_csv(output.lsmags, index=False, header=False)
+        checkm_sort.set_index("genome").reset_index().drop(columns=["Bin Id"]).rename(
+            columns={"genome": "Bin Id"}
+        ).to_csv(output.mags_tsv, sep="\t", index=False)
