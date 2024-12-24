@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-17 15:56:30
+ * @LastEditTime: 2024-11-14 19:41:53
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -173,6 +173,12 @@ def to_seqfeature(feature: gffutils.feature.Feature):
         type=feature.featuretype,
         qualifiers=qualifiers,
     )
+
+
+def parse(gff: PathLike, fa: PathLike | None = None):
+    if fa is None:
+        return Parse(gff)
+    return Parse(fa, gff)
 
 
 class Parse:
