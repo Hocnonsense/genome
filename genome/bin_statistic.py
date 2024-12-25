@@ -2,17 +2,18 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-30 10:31:02
+ * @LastEditTime: 2024-12-25 11:08:15
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
 
 
 import math
+import pickle
 from pathlib import Path
-from pickle import dump, load
 from typing import Iterable, NamedTuple, Union
 
+import numpy as np
 import pandas as pd
 from Bio import SeqIO, SeqRecord
 from numpy import mean
@@ -85,8 +86,8 @@ class SeqStat(NamedTuple):
     gc: int = 0
     at: int = 0
     n: int = 0
-    n_aa: int = 0
-    len_aa: int = 0
+    n_cds: int = 0
+    len_cds: int = 0
 
     @classmethod
     def load_seq_stats(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
@@ -102,15 +103,16 @@ class SeqStat(NamedTuple):
 
             gcContent = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
 
-            cc: list[int] = [
-                # fet: SeqFeature.SeqFeature
-                int(fet.location.end - fet.location.start)
-                for fet in seq.features
-                if fet.type == "CDS" and fet.location
-            ]
-
+            cds_mask = np.zeros(len(seq.seq))
+            n_cds = 0
+            for fet in seq.features:
+                if fet.type == "CDS" and fet.location is not None:
+                    cds_mask[fet.location.start : fet.location.end] = 1
+                    n_cds += 1
             assert seq.id
-            _seq_stats[seq.id] = cls(len(seq), gcContent, gc, at, n, len(cc), sum(cc))
+            _seq_stats[seq.id] = cls(
+                len(seq), gcContent, gc, at, n, n_cds, int(np.sum(cds_mask))
+            )
         return _seq_stats
 
     @classmethod
@@ -289,8 +291,8 @@ class BinStatisticContainer:
         len_aa = 0
         n_aa = 0
         for _, seq_stat in self.seq_stats(min_contig_len):
-            len_aa += seq_stat.len_aa
-            n_aa += seq_stat.n_aa
+            len_aa += seq_stat.len_cds
+            n_aa += seq_stat.n_cds
 
         return len_aa, n_aa
 
@@ -302,9 +304,9 @@ class BinStatisticContainer:
             pickle_filename = Path(filename)
         pickle_filename.parent.mkdir(parents=True, exist_ok=True)
         with open(pickle_filename, "wb") as po:
-            dump(self, po)
+            pickle.dump(self, po)
 
     @classmethod
     def load(cls, filename: PathLike) -> "BinStatisticContainer":
         with open(filename, "rb") as pi:
-            return load(pi)
+            return pickle.load(pi)

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-18 11:13:20
+ * @LastEditTime: 2024-12-25 11:03:12
  * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
@@ -65,6 +65,20 @@ def test_genome_bin_statistic():
         "5000,0.5744143866969582,0.04682288888739633,8957831.0,2862522.0,285.0,52361.0,0.0,5000.0,0.0,0.0\n"
         "10000,0.5777346851059988,0.04906833937103942,8229293.0,2862522.0,187.0,54972.0,0.0,10000.0,0.0,0.0\n"
     )
+    gff = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
+    bsc = BinStatisticContainer.read_gff(gff)
+    assert bsc.statistic()._asdict() == {
+        "gc": 0.58939474252508,
+        "gc_std": 0.023501846757011037,
+        "bp_size": 101874,
+        "max_contig_len": 31552,
+        "contigs_num": 10,
+        "contig_n50": 21642,
+        "ambiguous_bases_num": 0,
+        "contig_cutoff": 0,
+        "coding_density": 0.8605630484716414,
+        "genes_num": 105,
+    }
 
 
 def test_genome_stat_speed(report=False):
