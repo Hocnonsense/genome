@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-11-14 19:41:53
+ * @LastEditTime: 2024-12-25 22:56:17
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -14,7 +14,8 @@ from typing import Callable, Generator, Iterable, TextIO, override
 
 import gffutils
 import gffutils.feature
-from Bio import SeqFeature, SeqIO, SeqRecord
+from Bio import SeqFeature, SeqIO
+from Bio.SeqRecord import SeqRecord
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line
@@ -43,7 +44,7 @@ def as_text_io(data: GeneralInput) -> TextIO:
 
 
 def write(
-    recs: Iterable[SeqRecord.SeqRecord],
+    recs: Iterable[SeqRecord],
     out_handle: PathLike | TextIO,
     include_fasta=False,
 ):
@@ -105,7 +106,7 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
     def parse_seq(self):
         with self.open_function(self.data) as fh:
             fh.seek(self.fasta_start_pointer)
-            rec: SeqRecord.SeqRecord
+            rec: SeqRecord
             for rec in SeqIO.parse(fh, "fasta"):
                 yield rec
 
@@ -238,7 +239,7 @@ class Parse:
 
     def __call__(
         self, limit_info: str | None = None
-    ) -> Generator[SeqRecord.SeqRecord, None, None]:
+    ) -> Generator[SeqRecord, None, None]:
         """
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
         Add type hints to this function.
@@ -258,61 +259,79 @@ class Parse:
         min_aa_length=33,
         auto_fix=True,
     ):
-        """
-        `min_aa_length=33` acturally refers to
-          - at least 32 aa complete protein with a complete terminal codon.
-          - or at least 33 aa complete protein without terminal codon.
-        """
-        min_gene_length = int(min_aa_length) * 3
-        # if fet_type != "CDS":
-        #    assert not translate
+        return extract(
+            self(),
+            fet_type=fet_type,
+            call_gene_id=call_gene_id,
+            translate=translate,
+            min_aa_length=min_aa_length,
+            auto_fix=auto_fix,
+        )
 
-        if isinstance(call_gene_id, str):
-            call_gene_id = globals()[call_gene_id]
 
-        rec: SeqRecord.SeqRecord
-        for rec in self():
-            len_rec = len(rec)
-            fet: SeqFeature.SeqFeature
-            for fet in rec.features:
-                if fet.type != fet_type or fet.location is None:
+def extract(
+    seq_record: Iterable[SeqRecord],
+    fet_type="CDS",
+    call_gene_id: Callable[[str, str], str] | str = infer_prodigal_gene_id,
+    translate=True,
+    min_aa_length=33,
+    auto_fix=True,
+):
+    """
+    `min_aa_length=33` acturally refers to
+      - at least 32 aa complete protein with a complete terminal codon.
+      - or at least 33 aa complete protein without terminal codon.
+    """
+    min_gene_length = int(min_aa_length) * 3
+    # if fet_type != "CDS":
+    #    assert not translate
+
+    if isinstance(call_gene_id, str):
+        call_gene_id = globals()[call_gene_id]
+
+    rec: SeqRecord
+    for rec in seq_record:
+        len_rec = len(rec)
+        fet: SeqFeature.SeqFeature
+        for fet in rec.features:
+            if fet.type != fet_type or fet.location is None:
+                continue
+            # region extract seq
+            if fet.location.end >= len_rec:
+                # circular genome without overlap
+                seq: SeqRecord = fet.extract(rec + rec)
+            else:
+                seq = fet.extract(rec)
+            # endregion extract seq
+            if fet_type == "CDS":
+                if len(seq) < min_gene_length:
                     continue
-                # region extract seq
-                if fet.location.end >= len_rec:
-                    # circular genome without overlap
-                    seq: SeqRecord.SeqRecord = fet.extract(rec + rec)
-                else:
-                    seq = fet.extract(rec)
-                # endregion extract seq
-                if fet_type == "CDS":
-                    if len(seq) < min_gene_length:
-                        continue
-                    if translate:
-                        seq = seq.translate(
-                            table=fet.qualifiers.get("transl_table", "Standard")[0]
-                        )
-                        if (
-                            auto_fix
-                            and fet.qualifiers.get("partial", "00")[0] == "0"
-                            and seq.seq[0] != "M"
-                        ):
-                            seq.seq = "M" + seq.seq[1:]
-                seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
-                seq.description = " # ".join(
-                    (
-                        str(i).strip()
-                        for i in (
-                            "",
-                            fet.location.start + 1,
-                            fet.location.end,
-                            fet.location.strand,
-                            ";".join(
-                                f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
-                            ),
-                        )
+                if translate:
+                    seq = seq.translate(
+                        table=fet.qualifiers.get("transl_table", ["Standard"])[0]
+                    )
+                    if (
+                        auto_fix
+                        and fet.qualifiers.get("partial", "00")[0] == "0"
+                        and seq.seq[0] != "M"
+                    ):
+                        seq.seq = "M" + seq.seq[1:]
+            seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
+            seq.description = " # ".join(
+                (
+                    str(i).strip()
+                    for i in (
+                        "",
+                        fet.location.start + 1,
+                        fet.location.end,
+                        fet.location.strand,
+                        ";".join(
+                            f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
+                        ),
                     )
                 )
-                yield seq
+            )
+            yield seq
 
 
 def recover_qualifiers(description: str):
