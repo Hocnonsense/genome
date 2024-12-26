@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-25 11:08:15
+ * @LastEditTime: 2024-12-26 16:59:01
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -11,7 +11,7 @@
 import math
 import pickle
 from pathlib import Path
-from typing import Iterable, NamedTuple, Union
+from typing import TYPE_CHECKING, Callable, Iterable, NamedTuple, Union
 
 import numpy as np
 import pandas as pd
@@ -90,7 +90,7 @@ class SeqStat(NamedTuple):
     len_cds: int = 0
 
     @classmethod
-    def load_seq_stats(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
+    def parse(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
         _seq_stats: dict[str, SeqStat] = {}
         for seq in seq_iter:
             if len(seq.seq) < min_contig_len:
@@ -116,9 +116,7 @@ class SeqStat(NamedTuple):
         return _seq_stats
 
     @classmethod
-    def quick_load_seq_stats(
-        cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0
-    ):
+    def quick_parse(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
         """
         warning: Every statement except contig length are disabled
         """
@@ -132,53 +130,47 @@ class SeqStat(NamedTuple):
         return _seq_stats
 
 
-class BinStatisticContainer:
-    """
-    modified from checkm
-    """
-
+class _BinStatisticContainer:
     @classmethod
     def read_gff(
-        cls,
-        filename: PathLike,
-        refernce_file: PathLike | None = None,
-        min_contig_len=0,
+        cls, filename: PathLike, refernce_file: PathLike | None = None, min_contig_len=0
     ):
         parser = Parse(filename)
         if refernce_file:
             parser = parser.reset_reference(refernce_file)
-
-        return cls(SeqStat.load_seq_stats(parser()), filename, min_contig_len)
+        return cls(parser(), filename, min_contig_len)
 
     @classmethod
-    def read_gff_parser(
-        cls,
-        parser: Parse,
-        min_contig_len=0,
-    ):
-        return cls(SeqStat.load_seq_stats(parser()), parser.gff_file, min_contig_len)
+    def read_gff_parser(cls, parser: Parse, min_contig_len=0):
+        return cls(parser(), parser.gff_file, min_contig_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):
-        return cls(
-            SeqStat.load_seq_stats(SeqIO.parse(filename, format)),
-            filename,
-            min_contig_len,
-        )
+        return cls(SeqIO.parse(filename, format), filename, min_contig_len)
 
+    def __init__(
+        self,
+        seqiter: Iterable[SeqRecord.SeqRecord],
+        source_file,
+        min_contig_len=0,
+        loader: Callable[
+            [Iterable[SeqRecord.SeqRecord], int], dict[str, SeqStat]
+        ] = SeqStat.parse,
+    ):
+        self._seq_stats = loader(seqiter, min_contig_len)
+        self.source_file = source_file
+        self.min_contig_len = min_contig_len
+
+
+class BinStatisticContainer(_BinStatisticContainer):
     @classmethod
     def quick_read_contig(cls, filename, format="fasta", min_contig_len=0):
         return cls(
-            SeqStat.quick_load_seq_stats(SeqIO.parse(filename, format)),
+            SeqIO.parse(filename, format),
             filename,
             min_contig_len,
+            SeqStat.quick_parse,
         )
-
-    @classmethod
-    def read_seqiter(
-        cls, seqiter: Iterable[SeqRecord.SeqRecord], filename, min_contig_len=0
-    ):
-        return cls(SeqStat.load_seq_stats(seqiter), filename, min_contig_len)
 
     def seq_stats(self, min_contig_len=0):
         _min_contig_len = max(min_contig_len, self.min_contig_len)
@@ -187,16 +179,6 @@ class BinStatisticContainer:
             for seq_id, seq_stat in self._seq_stats.items()
             if seq_stat.len >= _min_contig_len
         )
-
-    def __init__(
-        self,
-        seq_stats: dict[str, SeqStat],
-        source_file,
-        min_contig_len=0,
-    ):
-        self._seq_stats = seq_stats
-        self.source_file = source_file
-        self.min_contig_len = min_contig_len
 
     class BinStatistic(NamedTuple):
         gc: float

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 20:53:34
+ * @LastEditTime: 2024-12-26 20:59:31
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -19,6 +19,13 @@ changelog for genome
     - `gff.parse` may make things clearer
       - seperate `extract`
       - seperate `translate` (as well as alias `_translate`)
+    - `gene_statistic` that estimate feature of gene,
+      - i.e.:
+        - [scu](https://doi.org/10.1093/molbev/mss201)
+        - [gc_variability](https://www.nature.com/articles/s41564-017-0008-3)
+        - [N-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+        - [C-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+      - the values can be calculated for entire genome using `GeneStatisticContainer.statistic`
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes
