@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-25 22:56:17
+ * @LastEditTime: 2024-12-26 19:57:11
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -307,15 +307,13 @@ def extract(
                 if len(seq) < min_gene_length:
                     continue
                 if translate:
-                    seq = seq.translate(
-                        table=fet.qualifiers.get("transl_table", ["Standard"])[0]
+                    seq = _translate(seq, fet, auto_fix=auto_fix)
+                else:
+                    seq.annotations["transl_table"] = fet.qualifiers.get(
+                        "transl_table", ["Standard"]
                     )
-                    if (
-                        auto_fix
-                        and fet.qualifiers.get("partial", "00")[0] == "0"
-                        and seq.seq[0] != "M"
-                    ):
-                        seq.seq = "M" + seq.seq[1:]
+                seq.features.append(fet)
+                seq.annotations["partial"] = fet.qualifiers.get("partial", ["00"])
             seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
             seq.description = " # ".join(
                 (
@@ -332,6 +330,17 @@ def extract(
                 )
             )
             yield seq
+
+
+def translate(rec: SeqRecord, fet: SeqFeature.SeqFeature | None = None, auto_fix=True):
+    annotations = fet.qualifiers if fet is not None else rec.annotations
+    seq = rec.translate(table=annotations.get("transl_table", ["Standard"])[0])
+    if auto_fix and annotations.get("partial", ["00"])[0] == "0" and seq.seq[0] != "M":
+        seq.seq = "M" + seq.seq[1:]
+    return seq
+
+
+_translate = translate
 
 
 def recover_qualifiers(description: str):
