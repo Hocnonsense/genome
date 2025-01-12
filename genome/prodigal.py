@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-06 16:06:12
+ * @LastEditTime: 2025-01-12 14:46:34
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -26,7 +26,7 @@ prodigal_mode: Final = ["single", "meta", "gvmeta"]
 def check_genome_length_prodigal(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
 ):
-    """check if givem genome size is long enough to use prodigal single mode"""
+    """check if given genome size is long enough to use prodigal single mode"""
     if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
     else:
@@ -43,7 +43,7 @@ def prodigal_gff_onethread(
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("without gff output, inital filename must be provided")
+            raise ValueError("without gff output, initial filename must be provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("without gff output, genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prodigal_{mode}.gff")

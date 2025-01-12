@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:09:22
+ * @LastEditTime: 2025-01-12 14:46:23
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -284,7 +284,7 @@ def extract(
     auto_fix=True,
 ):
     """
-    `min_aa_length=33` acturally refers to
+    `min_aa_length=33` actually refers to
       - at least 32 aa complete protein with a complete terminal codon.
       - or at least 33 aa complete protein without terminal codon.
     """

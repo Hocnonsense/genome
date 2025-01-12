@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:38:43
+ * @LastEditTime: 2025-01-12 14:53:09
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -199,7 +199,7 @@ class Binput(NamedTuple):
 
 
 def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
-    return Contig2Bin(contig2bin_tsv, contigs).output(outdir)
+    return Contig2Bin(contig2bin_tsv, contigs)(outdir)
 
 
 def calculateN50(seqLens: list[int]):

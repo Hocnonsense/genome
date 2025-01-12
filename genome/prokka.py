@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-11 13:49:35
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:27:08
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-01-12 14:53:30
  * @FilePath: /genome/genome/prokka.py
  * @Description:
 """
@@ -30,7 +30,7 @@ def prokka_gff_onethread(
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("inital filename must provided")
+            raise ValueError("initial filename must provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prokka_{kingdom}.gff")

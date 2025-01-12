@@ -3,12 +3,12 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 21:28:37
+ * @LastEditTime: 2025-01-12 14:45:36
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
 This module holds dictionaries that contain codon and amino acid tables, and functions that
- caculate GC, N-ARSC, C-ARSC and Nc.
+ calculate GC, N-ARSC, C-ARSC and Nc.
 
 Code is modified from https://github.com/faylward/pangenomics/blob/7dbc8269f1618492dd4ebf5752c8c4d3deca0e43/get_ARSC.py
 
@@ -201,7 +201,7 @@ class CodonTable:
             """
             pcf = CodonTable.get(self.table).pcf
             return sum(
-                sum(len(i) for i in aas) * self.wighted_F(i) for i, aas in pcf.items()
+                sum(len(i) for i in aa_s) * self.wighted_F(i) for i, aa_s in pcf.items()
             )
 
         @classmethod
@@ -291,7 +291,7 @@ class ARSC(NamedTuple):
             seq_aa_no_stop, seq_type="protein"
         )
 
-        # caculate ARSC and Molecular Weight
+        # calculate ARSC and Molecular Weight
         arsc_c = sum(aa_dict[x].C for x in seq_aa_no_stop)
         arsc_n = sum(aa_dict[x].N for x in seq_aa_no_stop)
         arsc_s = sum(aa_dict[x].S for x in seq_aa_no_stop)

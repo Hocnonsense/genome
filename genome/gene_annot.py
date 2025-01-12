@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-04-15 13:56:44
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-10-20 14:54:20
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-01-12 14:45:07
  * @FilePath: /genome/genome/gene_annot.py
  * @Description:
 """
@@ -165,7 +165,7 @@ class Gene2KO:
         ]
 
         if not any(ann_files):
-            raise FileNotFoundError(f"pattren(s) '{pattern}' donot match any file!")
+            raise FileNotFoundError(f"pattern(s) '{pattern}' do not match any file!")
 
         self.ann_files = ann_files
 

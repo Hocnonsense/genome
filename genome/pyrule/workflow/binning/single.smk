@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-30 10:27:41
+ * @LastEditTime: 2025-01-12 14:50:57
  * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
@@ -14,7 +14,7 @@ rule metabat2:
     output:
         ctg2mag="{any}-bins/single/metabat2_{maxP}_{minS}.tsv",
     params:
-        dout="metabat2_{maxP}_{minS}",
+        folder="metabat2_{maxP}_{minS}",
         extension="fa",
         maxP="{maxP}",
         minS="{minS}",
@@ -26,21 +26,21 @@ rule metabat2:
         "shallow"
     shell:
         """
-        rm -f {params.dout}
-        # mkdir -p $dout  # DONOT create the directory
+        rm -f {params.folder}
+        # mkdir -p $folder  # DONOT create the directory
 
         metabat2 \
             -i {input.contig} \
             -a {input.jgi} \
-            -o {params.dout}/{params.dout} \
+            -o {params.folder}/{params.folder} \
             -t {threads} \
             -v \
             --minContig {params.MIN_BIN_CONTIG_LEN} \
             --minS {params.minS} --maxP {params.maxP}
 
-        if [ -f {params.dout}/*.{params.extension} ]
+        if [ -f {params.folder}/*.{params.extension} ]
         then
-            for i in {params.dout}/*.{params.extension}
+            for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
@@ -60,7 +60,7 @@ rule maxbin2:
     output:
         ctg2mag="{any}-bins/single/maxbin2_{markerset}.tsv",
     params:
-        dout="maxbin2_{markerset}",
+        folder="maxbin2_{markerset}",
         extension="fasta",
         markerset="{markerset}",
         MIN_BIN_CONTIG_LEN=MIN_BIN_CONTIG_LEN,
@@ -74,19 +74,19 @@ rule maxbin2:
         "shallow"
     shell:
         """
-        rm -f {params.dout}
-        mkdir -p {params.dout}
+        rm -f {params.folder}
+        mkdir -p {params.folder}
 
         run_MaxBin.pl \
             -min_contig_length {params.MIN_BIN_CONTIG_LEN} \
             -contig {input.contig} \
             -abund {input.jgi} \
-            -out {params.dout}/{params.dout} \
+            -out {params.folder}/{params.folder} \
             -markerset {wildcards.markerset} -thread {threads}
 
-        if [ -f {params.dout}/*.{params.extension} ]
+        if [ -f {params.folder}/*.{params.extension} ]
         then
-            for i in {params.dout}/*.{params.extension}
+            for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
@@ -106,7 +106,7 @@ rule concoct:
     output:
         ctg2mag="{any}-bins/single/concoct.tsv",
     params:
-        dout="concoct",
+        folder="concoct",
     threads: 8
     conda:
         "../../envs/concoct.yaml"
@@ -114,26 +114,26 @@ rule concoct:
         "shallow"
     shell:
         """
-        rm -f {params.dout}
-        mkdir -p {params.dout}
+        rm -f {params.folder}
+        mkdir -p {params.folder}
 
         cut_up_fasta.py \
             {input.contig} -c 10000 -o 0 \
-            --merge_last -b {params.dout}.bed \
-            > {params.dout}.fasta
+            --merge_last -b {params.folder}.bed \
+            > {params.folder}.fasta
         concoct_coverage_table.py \
-            {params.dout}.bed `cat {input.lsbams}` \
-            > {params.dout}.tsv
-        concoct --coverage_file {params.dout}.tsv \
-            --composition_file {params.dout}.fasta \
-            -t {threads} -r 150 -b {params.dout}/ -s 599 --no_original_data
+            {params.folder}.bed `cat {input.lsbams}` \
+            > {params.folder}.tsv
+        concoct --coverage_file {params.folder}.tsv \
+            --composition_file {params.folder}.fasta \
+            -t {threads} -r 150 -b {params.folder}/ -s 599 --no_original_data
         merge_cutup_clustering.py \
-            {params.dout}/clustering_gt1000.csv \
-            > {params.dout}/clustering_gt1000_merge.csv
+            {params.folder}/clustering_gt1000.csv \
+            > {params.folder}/clustering_gt1000_merge.csv
 
         awk -v FS="," -v OFS="\t" \
-            '{{if (NR==1) {{next}}; {{print $1,"{params.dout}_"$2}}}}' \
-            {params.dout}/clustering_gt1000_merge.csv \
+            '{{if (NR==1) {{next}}; {{print $1,"{params.folder}_"$2}}}}' \
+            {params.folder}/clustering_gt1000_merge.csv \
         | sort | awk '{{print $2,$1}}' \
         | sort | awk -v OFS="\t" '{{print $2,$1}}' \
         > {output.ctg2mag}
@@ -147,7 +147,7 @@ rule metadecoder:
     output:
         ctg2mag="{any}-bins/single/metadecoder.tsv",
     params:
-        dout="metadecoder",
+        folder="metadecoder",
         extension="fasta",
     threads: 8  # for maxbin
     conda:
@@ -156,35 +156,35 @@ rule metadecoder:
         "shallow"
     shell:
         """
-        rm -f {params.dout}
-        mkdir -p {params.dout}
+        rm -f {params.folder}
+        mkdir -p {params.folder}
 
         sams=""
         for i in `cat {input.lsbams}`
         do
-            sam={params.dout}/`basename $i`.sam
+            sam={params.folder}/`basename $i`.sam
             samtools view -h $i -@ 1 -o $sam
             sams="$sams $sam"
         done
 
         metadecoder coverage \
             -s $sams \
-            -o {params.dout}/metadecoder.coverage.tsv
+            -o {params.folder}/metadecoder.coverage.tsv
 
         metadecoder seed \
             --threads {threads} \
             -f {input.contig} \
-            -o {params.dout}/metadecoder.seed
+            -o {params.folder}/metadecoder.seed
 
         metadecoder cluster \
             -f {input.contig} \
-            -c {params.dout}/metadecoder.coverage.tsv \
-            -s {params.dout}/metadecoder.seed \
-            -o {params.dout}/{params.dout}
+            -c {params.folder}/metadecoder.coverage.tsv \
+            -s {params.folder}/metadecoder.seed \
+            -o {params.folder}/{params.folder}
 
-        if [ -f {params.dout}/*.{params.extension} ]
+        if [ -f {params.folder}/*.{params.extension} ]
         then
-            for i in {params.dout}/*.{params.extension}
+            for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
@@ -204,7 +204,7 @@ rule vamb:
     output:
         ctg2mag="{any}-bins/single/vamb.tsv",
     params:
-        dout="vamb",
+        folder="vamb",
         extension="fna",
     threads: 1
     conda:
@@ -213,11 +213,11 @@ rule vamb:
         "shallow"
     shell:
         """
-        rm -f {params.dout} {output.ctg2mag}.fail
-        # mkdir -p {params.dout}
+        rm -f {params.folder} {output.ctg2mag}.fail
+        # mkdir -p {params.folder}
 
         vamb \
-            --outdir {params.dout} \
+            --outdir {params.folder} \
             --fasta {input.contig} \
             --jgi {input.jgi} \
             --minfasta 200000 \
@@ -226,10 +226,10 @@ rule vamb:
         if [ ! -f {output.ctg2mag}.fail ]
         then
             rename \
-                {params.dout}/bins/ {params.dout}/{params.dout}- \
-                {params.dout}/bins/*.{params.extension}
+                {params.folder}/bins/ {params.folder}/{params.folder}- \
+                {params.folder}/bins/*.{params.extension}
 
-            for i in {params.dout}/*.{params.extension}
+            for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"

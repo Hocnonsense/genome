@@ -1,12 +1,10 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-18 11:11:39
+ * @LastEditTime: 2025-01-12 14:47:05
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
-
-useage:
 
 """
 
