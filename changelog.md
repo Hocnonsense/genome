@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 20:59:31
+ * @LastEditTime: 2025-01-12 14:20:26
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -26,6 +26,11 @@ changelog for genome
         - [N-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
         - [C-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
       - the values can be calculated for entire genome using `GeneStatisticContainer.statistic`
+    - update `bin_statistic.contig2bin` to `Contig2Bin` and `Binput`
+      - `bin_statistic.contig2bin` will be replaced by `bin_statistic.Contig2Bin(contig2bin_tsv, contigs).output(outdir)`
+      - `bin_statistic_ext.format_bin_input` will be replaced by `bin_statistic.Binput.parse`
+    - update `call_gene_id` usage in `gff.Parse.extract`
+      - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes

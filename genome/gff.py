@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 19:57:11
+ * @LastEditTime: 2025-01-12 14:09:22
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -10,12 +10,13 @@
 import gzip
 import warnings
 from pathlib import Path
-from typing import Callable, Generator, Iterable, TextIO, override
+from typing import Callable, Generator, Iterable, TextIO
 
 import gffutils
 import gffutils.feature
-from Bio import SeqFeature, SeqIO
+from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
+from Bio.SeqFeature import SeqFeature, SimpleLocation
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line
@@ -24,10 +25,9 @@ from matplotlib.pylab import overload
 from . import GFFOutput
 
 PathLike = str | Path
-GeneralInput = PathLike | TextIO
 
 
-def as_text_io(data: GeneralInput) -> TextIO:
+def as_text_io(data: PathLike | TextIO) -> TextIO:
     """Allowed input:
     - TextIO
         - anything apply "read" method
@@ -52,14 +52,16 @@ def write(
     High level interface to write GFF files into SeqRecords and SeqFeatures.
     Add type hints to this function.
     """
-    if str(out_handle).endswith(".gz"):
-        out_handle = gzip.open(out_handle, "r")  # type: ignore  # I'm sure this will return a TextIO
+    if not hasattr(out_handle, "write"):
+        if str(out_handle).endswith(".gz"):
+            out_handle = gzip.open(out_handle, "w")  # type: ignore[assignment]
+        else:
+            out_handle = open(out_handle, "w")
     return GFFOutput.write(recs, out_handle, include_fasta)
 
 
 class _FastaGffFileIterator(_GffutilsFileIterator):
-    def open_function(self, data: GeneralInput):
-        return as_text_io(data)
+    open_function = staticmethod(as_text_io)
 
     def _custom_iter(self):
         self.fasta_start_pointer = -1
@@ -123,24 +125,20 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
     fasta_start_pointer = property(__get_fasta_start_pointer, __set_fasta_start_pointer)
 
 
-def infer_prodigal_gene_id(rec_id: str, fet_id: str):
-    return rec_id + "_" + str(int(fet_id.rsplit("_", 1)[1]))
+def infer_prodigal_gene_id(rec_id: str | None, fet: SeqFeature):
+    return f"{rec_id}_" + str(int(fet.id.rsplit("_", 1)[1]))
 
 
-def infer_refseq_gene_id(rec_id: str, fet_id: str):
-    return fet_id.rsplit("-", 1)[1]
+def infer_refseq_gene_id(rec_id: str | None, fet: SeqFeature):
+    return fet.id.rsplit("-", 1)[1]
 
 
-def infer_trnascan_rna_id(rec_id: str, fet_id: str):
-    # assert fet_id.startswith(rec_id)
-    return fet_id
+def infer_trnascan_rna_id(rec_id: str | None, fet: SeqFeature):
+    # assert fet.id.startswith(rec_id)
+    return fet.id
 
 
-_biopython_strand = {
-    "+": 1,
-    "-": -1,
-    ".": 0,
-}
+_biopython_strand = {"+": 1, "-": -1, ".": 0}
 
 
 def to_seqfeature(feature: gffutils.feature.Feature):
@@ -164,12 +162,10 @@ def to_seqfeature(feature: gffutils.feature.Feature):
     }
     qualifiers.update(feature.attributes)
     start, stop = sorted((feature.start, feature.end))
-    return SeqFeature.SeqFeature(
+    return SeqFeature(
         # Convert from GFF 1-based to standard Python 0-based indexing used by
         # BioPython
-        SeqFeature.SimpleLocation(
-            start - 1, stop, strand=_biopython_strand[feature.strand]
-        ),
+        SimpleLocation(start - 1, stop, strand=_biopython_strand[feature.strand]),
         id=feature.id,
         type=feature.featuretype,
         qualifiers=qualifiers,
@@ -244,7 +240,13 @@ class Parse:
         High level interface to parse GFF files into SeqRecords and SeqFeatures.
         Add type hints to this function.
         """
-        for rec in self.fa.parse_seq():
+        if self.fa.fasta_start_pointer == -1:
+            if self.db is None:
+                return
+            seqs = (SeqRecord(None, id=rec_id) for rec_id in self.db.seqids())
+        else:
+            seqs = self.fa.parse_seq()
+        for rec in seqs:
             if self.db:
                 rec.features.extend(
                     (to_seqfeature(fet) for fet in self.db.region(seqid=rec.id))
@@ -254,7 +256,9 @@ class Parse:
     def extract(
         self,
         fet_type="CDS",
-        call_gene_id: Callable[[str, str], str] | str = infer_prodigal_gene_id,
+        call_gene_id: (
+            Callable[[str | None, SeqFeature], str] | str
+        ) = infer_prodigal_gene_id,
         translate=True,
         min_aa_length=33,
         auto_fix=True,
@@ -272,7 +276,9 @@ class Parse:
 def extract(
     seq_record: Iterable[SeqRecord],
     fet_type="CDS",
-    call_gene_id: Callable[[str, str], str] | str = infer_prodigal_gene_id,
+    call_gene_id: (
+        Callable[[str | None, SeqFeature], str] | str
+    ) = infer_prodigal_gene_id,
     translate=True,
     min_aa_length=33,
     auto_fix=True,
@@ -285,14 +291,14 @@ def extract(
     min_gene_length = int(min_aa_length) * 3
     # if fet_type != "CDS":
     #    assert not translate
-
-    if isinstance(call_gene_id, str):
-        call_gene_id = globals()[call_gene_id]
+    call_gene_id = (
+        globals()[call_gene_id] if isinstance(call_gene_id, str) else call_gene_id
+    )
 
     rec: SeqRecord
     for rec in seq_record:
         len_rec = len(rec)
-        fet: SeqFeature.SeqFeature
+        fet: SeqFeature
         for fet in rec.features:
             if fet.type != fet_type or fet.location is None:
                 continue
@@ -314,7 +320,7 @@ def extract(
                     )
                 seq.features.append(fet)
                 seq.annotations["partial"] = fet.qualifiers.get("partial", ["00"])
-            seq.id = call_gene_id(rec.id, fet.id)  # type: ignore
+            seq.id = call_gene_id(rec.id, fet)
             seq.description = " # ".join(
                 (
                     str(i).strip()
@@ -332,7 +338,7 @@ def extract(
             yield seq
 
 
-def translate(rec: SeqRecord, fet: SeqFeature.SeqFeature | None = None, auto_fix=True):
+def translate(rec: SeqRecord, fet: SeqFeature | None = None, auto_fix=True):
     annotations = fet.qualifiers if fet is not None else rec.annotations
     seq = rec.translate(table=annotations.get("transl_table", ["Standard"])[0])
     if auto_fix and annotations.get("partial", ["00"])[0] == "0" and seq.seq[0] != "M":

@@ -2,16 +2,18 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 16:59:01
+ * @LastEditTime: 2025-01-06 15:55:51
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
 
 
+from functools import cached_property
 import math
 import pickle
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable, Iterable, NamedTuple, Union
+import shutil
+from typing import Callable, Iterable, NamedTuple, Union, Final, overload
 
 import numpy as np
 import pandas as pd
@@ -23,8 +25,10 @@ from .gff import Parse
 PathLike = Union[str, Path]
 
 
-def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+class Contig2Bin:
     """
+    Useage: Contig2Bin(contig2bin_tsv, contigs).output(outdir)
+
     will read a table such without head such as:
         (format: contig\tbin)
         ```
@@ -34,9 +38,21 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
         k141_172306\tconcoct_0
         k141_18944\tconcoct_0
         ```
+    """
 
-    fix: will also support vamb-format table:
-        (format: contig\tbin)
+    columns: Final = ["contig", "bin"]
+
+    def __init__(self, contig2bin_tsv, contigs, outdir=None):
+        self.contig2bin_tsv = self.parse_contig2bin(contig2bin_tsv)
+        self._contigs = self.parse_contigs(contigs)
+        self._outdir = None
+        if outdir:
+            self.outdir = outdir
+
+    @classmethod
+    def parse_contig2bin(cls, contig2bin_tsv: PathLike | pd.DataFrame | pd.Series):
+        """
+        also support vamb-format table (format: contig\tbin):
         ```
         k141_135186 flag=1 multi=23.0000 len=8785\tvamb-1012                                                                                                         metabat2_90_90  metadecoder  vamb
         k141_420558 flag=0 multi=35.2019 len=10561\tvamb-1012
@@ -44,26 +60,146 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
         k141_746716 flag=1 multi=21.0002 len=9798\tvamb-1012
         k141_91422 flag=1 multi=50.0000 len=2703\tvamb-1012
         ```
-    """
-    contig2bin_ = (
-        pd.read_csv(contig2bin_tsv, sep="\t", names=["contig", "bin"])
-        .assign(contig_id=lambda df: df["contig"].apply(lambda x: x.strip().split()[0]))
-        .set_index("contig_id")[["bin"]]
-    )
+        """
+        if isinstance(contig2bin_tsv, pd.Series):
+            pd_raw = contig2bin_tsv.reset_index()
+            pd_raw.columns = cls.columns
+        elif isinstance(contig2bin_tsv, pd.DataFrame):
+            if set(contig2bin_tsv.columns) >= set(cls.columns):
+                pd_raw = contig2bin_tsv[cls.columns]
+            elif len(contig2bin_tsv.columns) == 1:
+                pd_raw = contig2bin_tsv.reset_index()
+                pd_raw.columns = cls.columns
+            else:
+                raise ValueError(f"columns of table should be {cls.columns}")
+        else:
+            pd_raw = pd.read_csv(contig2bin_tsv, sep="\t", names=cls.columns)
+        return pd_raw.assign(
+            contig_id=lambda df: df["contig"].apply(lambda x: x.strip().split()[0]),
+            bin=lambda df: df["bin"].apply(lambda x: str(x).strip()),
+        ).set_index("contig_id")[["bin"]]
 
-    td = Path(outdir)
-    td.mkdir(parents=True, exist_ok=True)
+    @cached_property
+    def bin2seqs(self):
+        bin2seqs: dict[str, dict[str, SeqRecord.SeqRecord]] = {
+            b: {} for b in self.contig2bin_tsv["bin"].unique()
+        }
+        for i in self.contigs:
+            if i.name in self.contig2bin_tsv.index:
+                bin2seqs[self.contig2bin_tsv.loc[i.name, "bin"]][i.name] = i
+        return bin2seqs
 
-    bin2seqs: dict[str, set[str]] = {b: set() for b in contig2bin_["bin"].unique()}
-    for i in Parse(contigs)():
-        if i.name in contig2bin_.index:
-            bin2seqs[contig2bin_.loc[i.name, "bin"]].add(i.format("fasta-2line"))
-    for b, seqs in bin2seqs.items():
-        with open(td / f"{b}.fa", "w") as po:
-            for seq in seqs:
-                print(seq, file=po)
+    def parse_contigs(self, contigs: PathLike | Iterable[SeqRecord.SeqRecord]):
+        if isinstance(contigs, str) or isinstance(contigs, Path):
+            try:
+                return lambda: SeqIO.parse(contigs, "fasta")
+            except ValueError as e:
+                return Parse(contigs)
+        elif isinstance(contigs, Iterable):
+            return lambda: list(contigs)
+        else:
+            raise ValueError("contigs should be a path or a iterable of SeqRecord")
 
-    return td, list(bin2seqs)
+    @property
+    def contigs(self) -> Iterable[SeqRecord.SeqRecord]:
+        return self._contigs()
+
+    @property
+    def outdir(self):
+        if self._outdir is None:
+            raise ValueError(".outdir not set")
+        return self._outdir
+
+    @outdir.setter
+    def outdir(self, outdir: Path):
+        td = Path(outdir)
+        td.mkdir(parents=True, exist_ok=True)
+        self._outdir = outdir
+        return td
+
+    def __call__(self, outdir: PathLike):
+        self.outdir = Path(outdir)
+        bin2seqs = self.bin2seqs
+        for b, seqs in bin2seqs.items():
+            SeqIO.write(seqs.values(), self.outdir / f"{b}.fa", "fasta-2line")
+        return self.output
+
+    @property
+    def output(self):
+        return Binput(self.outdir, list(self.bin2seqs), ".fa")
+
+    @overload
+    def extract(self, bin_name: str | int) -> Path: ...
+
+    @overload
+    def extract(self, bin_name: str | int, *bin_names: str | int) -> Iterable[Path]: ...
+
+    def extract(self, bin_name: str | int, *bin_names: str | int):
+        if isinstance(bin_name, int):
+            b = self.contig2bin_tsv["bin"].unique()[bin_name]
+        else:
+            b = bin_name
+        bout = self.outdir / f"{b}.fa"
+        SeqIO.write(self.bin2seqs[b].values(), bout, "fasta-2line")
+        if not bin_names:
+            return bout
+        else:
+            return (*(bout,), *(self.extract(b) for b in bin_names))
+
+
+class Binput(NamedTuple):
+    bin_input: Path
+    binids: list[str]
+    suffix: str
+
+    @classmethod
+    def parse(
+        cls,
+        bin_output: PathLike,
+        bin_input: PathLike,
+        support: Union[PathLike, str],
+        keep_if_avail=True,
+    ):
+        """
+        if {param kept_if_avail}:
+            Only if bin_input is a dir and required genomes endswith "fa",
+            bin_output will be kept as bin_input.
+
+        This is designed to support snakemake to handle and keep intermediate files
+        """
+        bin_input = Path(bin_input)
+        (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
+        if bin_input.is_dir():
+            assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
+            if str(support).endswith(".fa") and keep_if_avail:
+                binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
+                suffix = str(support)
+                bin_input_dir = bin_input
+            else:
+                suffix = ".fa"
+                bin_input_dir = bin_output_
+                support_str_len = len(str(support))
+                binids = []
+                for bin_file in bin_input.glob(f"*{support}"):
+                    binids.append(
+                        bin_name := bin_file.name[:-support_str_len].rstrip(".")
+                    )
+                    shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
+        else:
+            assert bin_input.is_file() and Path(support).is_file()
+            bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
+            suffix = ".fa"
+        return cls(bin_input_dir, binids, suffix)
+
+    def fas(self):
+        return (self.bin_input / f"{i}{self.suffix}" for i in self.binids)
+
+    def fas_with(self, suffix: str):
+        return Binput(self.bin_input, self.binids, suffix).fas()
+
+
+def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+    return Contig2Bin(contig2bin_tsv, contigs).output(outdir)
 
 
 def calculateN50(seqLens: list[int]):

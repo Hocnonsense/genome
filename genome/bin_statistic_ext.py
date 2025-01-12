@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-11-24 16:23:50
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:14:47
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-01-06 15:26:50
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -15,7 +15,7 @@ from typing import Optional, Union, overload
 
 import pandas as pd
 
-from .bin_statistic import contig2bin
+from .bin_statistic import contig2bin, Binput
 from .prodigal import prodigal_multithread
 from .pyrule import smk, smk_workflow, smk_conda_env
 
@@ -80,34 +80,7 @@ def format_bin_input(
     support: Union[PathLike, str],
     keep_if_avail=True,
 ):
-    """
-    if {param kept_if_avail}:
-        Only if bin_input is a dir and required genomes endswith "fa",
-        bin_output will be kept as bin_input.
-
-    This is designed to support snakemake to handle and keep intermediate files
-    """
-    bin_input = Path(bin_input)
-    (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
-    if bin_input.is_dir():
-        assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-        if str(support).endswith(".fa") and keep_if_avail:
-            binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
-            suffix = str(support)
-            bin_input_dir = bin_input
-        else:
-            suffix = ".fa"
-            bin_input_dir = bin_output_
-            support_str_len = len(str(support))
-            binids = []
-            for bin_file in bin_input.glob(f"*{support}"):
-                binids.append(bin_name := bin_file.name[:-support_str_len].rstrip("."))
-                shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
-    else:
-        assert bin_input.is_file() and Path(support).is_file()
-        bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
-        suffix = ".fa"
-    return bin_input_dir, binids, suffix
+    Binput.parse(bin_output, bin_input, support, keep_if_avail)
 
 
 def checkm(

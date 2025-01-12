@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-17 14:48:16
+ * @LastEditTime: 2025-01-06 16:06:12
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -38,7 +38,8 @@ def prodigal_gff_onethread(
     genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
     mode: Literal["single", "meta", "gvmeta"] = "single",
     gff_out: PathLike = "",
-) -> Optional[Path]:
+    trans_table=11,
+) -> Path:
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
@@ -62,9 +63,9 @@ def prodigal_gff_onethread(
         if mode == "meta":
             gf = pyrodigal.GeneFinder(meta=True, mask=True)
         elif mode == "single":
+            gf = pyrodigal.GeneFinder(meta=False, mask=True, closed=True)
             seqs = list(seqs)
-            gf = pyrodigal.GeneFinder(meta=False, mask=True)
-            gf.train(*(bytes(i.seq) for i in seqs))
+            gf.train(*(bytes(i.seq) for i in seqs), translation_table=trans_table)
 
     with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
         tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal_{mode}.gff")
