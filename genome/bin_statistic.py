@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:53:09
+ * @LastEditTime: 2025-01-12 15:08:20
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -185,11 +185,10 @@ class Binput(NamedTuple):
                         bin_name := bin_file.name[:-support_str_len].rstrip(".")
                     )
                     shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
+            return cls(bin_input_dir, binids, suffix)
         else:
             assert bin_input.is_file() and Path(support).is_file()
-            bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
-            suffix = ".fa"
-        return cls(bin_input_dir, binids, suffix)
+            return Contig2Bin(bin_input, support)(bin_output_)
 
     def fas(self):
         return (self.bin_input / f"{i}{self.suffix}" for i in self.binids)
