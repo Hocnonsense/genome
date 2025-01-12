@@ -8,11 +8,11 @@
 """
 # """
 
-from . import general_register, smk_workflow
+from . import general_register, rules_dir
 from .. import binning
 
 
-target_smk_file = smk_workflow / "binning" / "__init__.smk"
+target_smk_file = rules_dir / "binning" / "__init__.smk"
 
 register = general_register(
     snakefile=target_smk_file,

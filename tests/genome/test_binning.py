@@ -22,7 +22,7 @@ from genome.binning import (
     bin_union,
     check_bams,
     default_bin_methods,
-    smk_workflow,
+    rules_dir,
 )
 
 
@@ -103,7 +103,7 @@ def test_smk_filter__rename_filtered_ls_tsv(test_temp: Path):
     assert not os.system(
         f"cd {test_temp} && "
         "python -m snakemake "
-        f"-s {Path(smk_workflow).resolve() / "binning" / "filter.smk"} "
+        f"-s {Path(rules_dir).resolve() / "binning" / "filter.smk"} "
         f"{o_prefix}.ls "
         "-p -c 1 "
         "> dryrun.log"

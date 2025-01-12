@@ -7,13 +7,13 @@
  * @Description:
 """
 
-from . import general_register, _wf, smk_workflow
+from . import general_register, _wf, rules_dir
 
 
 DEFAULT_GUNC_DB_PATH = "data/database/gunc_db"
 
 
-target_smk_file = smk_workflow / "gunc.smk"
+target_smk_file = rules_dir / "gunc.smk"
 
 register = general_register(
     snakefile=target_smk_file,

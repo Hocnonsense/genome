@@ -10,13 +10,13 @@
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 
 def create_conda_env(*envs: str):
     with TemporaryDirectory() as tmpd:
         rule_files = [f"{tmpd}/create_conda_env-{env}-finished" for env in envs]
-        target_smk_file = smk_workflow / "create_conda_env.smk"
+        target_smk_file = rules_dir / "create_conda_env.smk"
         smk_params = (
             f"-s {target_smk_file} "
             f"{' '.join(rule_files)} "

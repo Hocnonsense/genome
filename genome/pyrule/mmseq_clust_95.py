@@ -7,11 +7,11 @@
  * @Description:
 """
 
-from . import general_register, smk_workflow
+from . import general_register, rules_dir
 
 
 register = general_register(
-    snakefile=smk_workflow / "gene_clust.smk",
+    snakefile=rules_dir / "gene_clust.smk",
     module_name=__name__.replace(".", "_DOT_"),
     default_config=dict(),
     # "test include 'rules.smk'",

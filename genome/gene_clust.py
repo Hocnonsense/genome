@@ -17,7 +17,7 @@ from typing import Collection, Iterable, Literal, NamedTuple
 import pandas as pd
 from Bio import SeqIO, SeqRecord
 
-from .pyrule import smk, smk_conda_env, smk_workflow
+from .pyrule import smk, smk_conda_env, rules_dir
 
 PathLike = str | Path
 
@@ -115,7 +115,7 @@ class UniRefClu(NamedTuple):
                                 tmpf.write(block)
                             tmpf.flush()
 
-            target_smk_file = smk_workflow / "gene_clust.smk"
+            target_smk_file = rules_dir / "gene_clust.smk"
             smk_params = (
                 f"-s {target_smk_file} "
                 f"{tpmf_out_str} "
@@ -254,7 +254,7 @@ def mmseq_clust(
                             tmpf.write(block)
                         tmpf.flush()
 
-        target_smk_file = smk_workflow / "gene_clust.smk"
+        target_smk_file = rules_dir / "gene_clust.smk"
         smk_params = (
             f"-s {target_smk_file} "
             f"{tpmf_out_str} "

@@ -15,7 +15,7 @@ from typing import Iterable, Literal, Union
 
 from Bio import SeqIO, SeqRecord
 
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 
 PathLike = Union[str, Path]
@@ -112,7 +112,7 @@ def prokka_gff_multithread(
     else:
         genome_files.extend(_genome_files)
 
-    target_smk_file = smk_workflow / "genome.smk"
+    target_smk_file = rules_dir / "genome.smk"
     tpmf_outs = [f"{str(genome)[:-3]}-prokka_{kingdom}.gff" for genome in genome_files]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (

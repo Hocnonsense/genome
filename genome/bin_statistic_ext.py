@@ -17,7 +17,7 @@ import pandas as pd
 
 from .bin_statistic import contig2bin, Binput
 from .prodigal import prodigal_multithread
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 PathLike = Union[str, Path]
 
@@ -161,7 +161,7 @@ def gunc(
         # gunc_out_tsv = f"{_td}/out-gunc.tsv"
         # gunc_out_dir = f"{_td}/out-gunc-dir"
 
-        target_smk_file = smk_workflow.parent / "gunc.smk"
+        target_smk_file = rules_dir.parent / "gunc.smk"
         tpmf_outs = f"{_td}/out-bins-gunc.tsv"
         smk_params = (
             f"-s {target_smk_file} "

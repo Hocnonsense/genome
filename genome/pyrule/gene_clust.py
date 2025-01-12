@@ -7,9 +7,9 @@
  * @Description:
 """
 
-from . import general_register, smk_workflow
+from . import general_register, rules_dir
 
-target_smk_file = smk_workflow / "gene_clust.smk"
+target_smk_file = rules_dir / "gene_clust.smk"
 
 register = general_register(
     snakefile=target_smk_file,

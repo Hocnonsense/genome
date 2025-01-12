@@ -16,7 +16,7 @@ from typing import Final, Iterable, Literal, Union, Optional
 from Bio import SeqIO, SeqRecord
 import pyrodigal
 
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 
 PathLike = Union[str, Path]
@@ -136,7 +136,7 @@ def prodigal_multithread(
     else:
         genome_files.extend(_genome_files)
 
-    target_smk_file = smk_workflow / "genome.smk"
+    target_smk_file = rules_dir / "genome.smk"
 
     # region quick fix suffix
     if suffix in ["faa", "fna"]:
