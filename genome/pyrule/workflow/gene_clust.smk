@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:47:05
+ * @LastEditTime: 2025-01-12 17:43:11
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -57,7 +57,7 @@ rule mmseq_clust_95:
         """
 
 
-urc = UniRefClu(mmseq_clust_95_input_prefix)
+urc = UniRefClu.from_prefix(mmseq_clust_95_input_prefix)
 
 
 rule mmseq_uniref_cluster:
