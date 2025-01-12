@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:20:26
+ * @LastEditTime: 2025-01-12 14:37:52
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -17,8 +17,8 @@ changelog for genome
   - feat:
     - `rename_filtered_ls_tsv` to rename bin name after filtering
     - `gff.parse` may make things clearer
-      - seperate `extract`
-      - seperate `translate` (as well as alias `_translate`)
+      - separate `extract`
+      - separate `translate` (as well as alias `_translate`)
     - `gene_statistic` that estimate feature of gene,
       - i.e.:
         - [scu](https://doi.org/10.1093/molbev/mss201)
@@ -55,7 +55,7 @@ changelog for genome
       - `-`: indicate the software
       - `_`: indicate the param select in given software
       - `.`: indicate a format, and is preferred than `-`
-    - `_version` for report version when installing this reposity
+    - `_version` for report version when installing this repository
     - MmseqOut
       - allow `MmseqOut.from_aout` to auto recognize prefix from output
       - allow `MmseqOut.load_rep2all` to output "Rep100" if needed
@@ -95,7 +95,7 @@ changelog for genome
 - 0.1.4:
   - remove `genome.pyrule.gene`.
   - feat
-    - update `genome.binning`. Now it no longer accept old api, and related workflow can be refered directly in snakemake module style!
+    - update `genome.binning`. Now it no longer accept old api, and related workflow can be referred directly in snakemake module style!
 - 0.1.3:
   - feat
     - add `infer_prodigal_gene_id` and `infer_refseq_gene_id` for gff parser

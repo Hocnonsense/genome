@@ -1,4 +1,4 @@
-name: Python Package using Conda
+name: pytest
 
 on: [push]
 
@@ -37,7 +37,7 @@ jobs:
           #PYTHONTRACEMALLOC: 10
         shell: bash -el {0}
         run: |
-          pytest -v -x --show-capture=stderr \
+          python -m pytest -v -x --show-capture=stderr \
             tests
 
       - name: List directory structure

@@ -23,7 +23,7 @@ jobs:
       - name: Codespell
         uses: codespell-project/actions-codespell@v2
         with:
-          ignore_words_list: Crate,crate
+          ignore_words_list: Crate,crate,fo
 
   formatting:
     permissions:
@@ -40,4 +40,5 @@ jobs:
           cache-environment: false
 
       - name: Check formatting
-        run: black --check --diff cobra.py tests.py
+        shell: bash -el {0}
+        run: black --check --diff .

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-28 20:08:38
+ * @LastEditTime: 2025-01-12 14:42:17
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -12,7 +12,7 @@ genome
 
 ---
 ## introduction
-- mantains some snakemake modules, and can also import python functions to handle the output.
+- maintains some snakemake modules, and can also import python functions to handle the output.
 
 ## installation
 ### create environment
@@ -42,7 +42,7 @@ checkm data setRoot $CHECKM_DATA_PATH
 ```
 
 ### update
-it is recommanded to create a new conda environment
+it is recommended to create a new conda environment
 
 ### create other conda environment
 ```python

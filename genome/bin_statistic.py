@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-06 15:55:51
+ * @LastEditTime: 2025-01-12 14:38:43
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -27,7 +27,7 @@ PathLike = Union[str, Path]
 
 class Contig2Bin:
     """
-    Useage: Contig2Bin(contig2bin_tsv, contigs).output(outdir)
+    Usage: Contig2Bin(contig2bin_tsv, contigs).output(outdir)
 
     will read a table such without head such as:
         (format: contig\tbin)

@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-25 11:03:12
+ * @LastEditTime: 2025-01-12 14:38:27
  * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
@@ -102,4 +102,4 @@ def test_genome_stat_speed(report=False):
             number=20,
         )
         print(f"if only calculate seq length, will spend {quick_time:.4f} seconds")
-        print(f"if calculate more featuers, will spend {normal_time:.4f} seconds")
+        print(f"if calculate more features, will spend {normal_time:.4f} seconds")

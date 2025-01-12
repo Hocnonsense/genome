@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-06 15:26:50
+ * @LastEditTime: 2025-01-12 14:38:54
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -127,7 +127,7 @@ def gunc(
         should not be a existing directory
 
     include 3 steps:
-    1.  extrat genome with "contig2bin"
+    1.  extract genome with "contig2bin"
     2.  annot gene with "prodigal_gff_multithread"
     3.  gunc
 
