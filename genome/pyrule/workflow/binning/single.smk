@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:50:57
+ * @LastEditTime: 2025-01-12 14:58:16
  * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
@@ -27,7 +27,7 @@ rule metabat2:
     shell:
         """
         rm -f {params.folder}
-        # mkdir -p $folder  # DONOT create the directory
+        # mkdir -p $folder  # DO NOT create the directory
 
         metabat2 \
             -i {input.contig} \

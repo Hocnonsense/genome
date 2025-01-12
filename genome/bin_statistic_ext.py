@@ -2,7 +2,7 @@
 """
  * @Date: 2022-11-24 16:23:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:38:54
+ * @LastEditTime: 2025-01-12 14:59:26
  * @FilePath: /genome/genome/bin_statistic_ext.py
  * @Description:
 """
@@ -80,7 +80,7 @@ def format_bin_input(
     support: Union[PathLike, str],
     keep_if_avail=True,
 ):
-    Binput.parse(bin_output, bin_input, support, keep_if_avail)
+    return Binput.parse(bin_output, bin_input, support, keep_if_avail)
 
 
 def checkm(
