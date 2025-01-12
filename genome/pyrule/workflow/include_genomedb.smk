@@ -1,12 +1,30 @@
 """
  * @Date: 2025-01-12 16:40:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 17:01:07
+ * @LastEditTime: 2025-01-12 17:26:00
  * @FilePath: /genome/genome/pyrule/workflow/include_genomedb.smk
  * @Description:
 
  include rules in genome package, intended to be used easily by outer snakemake workflow
-"""
+
+ Usage:
+
+'''
+import genome.pyrule
+
+
+include: genome.pyrule.rules_dir / "include_genomedb.smk"
+
+
+bin_ls = "files/stage2/02_magdb/g__Comamonas/subdb/Comamonas-bins.ls"
+
+
+rule expected:
+    input:
+        "files/stage2/02_magdb/g__Comamonas/subdb/Comamonas-bins/pan.id2prefix.tsv",
+        "files/stage2/02_magdb/g__Comamonas/subdb/Comamonas-bins/pan-prodigal_single.concat.statistic.tsv",
+        "files/stage2/02_magdb/g__Comamonas/subdb/Comamonas-bins/pan-prodigal_single-ge33.concat.genomeko.csv",
+'''"""
 
 try:
     import genome

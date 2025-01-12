@@ -1,8 +1,8 @@
 """
  * @Date: 2024-01-11 20:38:07
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-20 14:08:21
- * @FilePath: /meer-omics/meer_omics/rules/genome_pan_concat.smk
+ * @LastEditTime: 2025-01-12 17:25:19
+ * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
 
@@ -208,12 +208,12 @@ rule collect_all_genome2gene:
                 gff_file = params.f_string.format(
                     genome_prefix=genome_prefix, **wildcards
                 )
-                aas = sorted(
+                peps = sorted(
                     gff.Parse(gff_file).extract(),
                     key=lambda x: x.id,
                 )
-                for aa in aas:
-                    fo.write(f"{i}\t{aa.id}\n")
+                for pep in peps:
+                    fo.write(f"{i}\t{pep.id}\n")
 
 
 # region fetchMG

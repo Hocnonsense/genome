@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:54:52
+ * @LastEditTime: 2025-01-12 17:32:12
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -32,6 +32,9 @@ changelog for genome
       - old APIs will be removed in next few versions
     - update `call_gene_id` usage in `gff.Parse.extract`
       - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
+    - rename `smk_workflow` to `rules_dir`,
+    - add `rules_dir / "pan_concat.smk"` from meer_omics
+    - add `rules_dir / "include_genomedb.smk"` to handle all methods other than binning methods for quick usage
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes
