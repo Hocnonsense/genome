@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 17:32:56
+ * @LastEditTime: 2025-01-13 18:06:09
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -247,14 +247,21 @@ class Parse:
         dbfn=":memory:",
         verbose=True,
         expect_fa=True,
+        merge_strategy="create_unique",
         **kwargs,
     ):
         if gff is not None:
-            self.db = gffutils.create_db(gff, dbfn=dbfn, verbose=verbose, **kwargs)
+            self.db = gffutils.create_db(
+                gff, dbfn=dbfn, verbose=verbose, merge_strategy=merge_strategy, **kwargs
+            )
         else:
             try:
                 self.db = gffutils.create_db(
-                    gff or self.fa, dbfn=dbfn, verbose=verbose, **kwargs
+                    gff or self.fa,
+                    dbfn=dbfn,
+                    verbose=verbose,
+                    merge_strategy=merge_strategy,
+                    **kwargs,
                 )
                 if expect_fa and self.fa.fasta_start_pointer == -1:
                     warnings.warn(
