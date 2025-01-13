@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 20:02:05
+ * @LastEditTime: 2025-01-13 20:44:42
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -148,9 +148,10 @@ rule mmseq_family:
         "../envs/gene_clust.yaml"
     shell:
         """
+        rm -f smk-mmseq
         mkdir smk-mmseq
         mmseqs easy-linclust --threads {threads} \
-            --kmer-per-seq 1000 -c 1.0 \
+            --kmer-per-seq 100 -c 1.0 \
             --cov-mode 1 --cluster-mode 2 \
             --min-seq-id {params.precluster_min_seq_id} \
             {input.protein} smk-mmseq/precluster smk-mmseq/tmp
