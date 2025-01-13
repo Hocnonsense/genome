@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 16:20:00
+ * @LastEditTime: 2025-01-13 20:02:05
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -141,7 +141,7 @@ rule mmseq_family:
         max_eval=config.get("max_eval", 1e-3),
         min_aln_cov=config.get("min_aln_cov", 0.0),
         cluster_min_seq_id=config.get("cluster_min_seq_id", 0.0),
-    threads: 16
+    threads: 64
     shadow:
         "minimal"
     conda:
@@ -150,7 +150,7 @@ rule mmseq_family:
         """
         mkdir smk-mmseq
         mmseqs easy-linclust --threads {threads} \
-            --kmer-per-seq 100 -c 1.0 \
+            --kmer-per-seq 1000 -c 1.0 \
             --cov-mode 1 --cluster-mode 2 \
             --min-seq-id {params.precluster_min_seq_id} \
             {input.protein} smk-mmseq/precluster smk-mmseq/tmp
@@ -165,6 +165,50 @@ rule mmseq_family:
             --min-seq-id {params.cluster_min_seq_id} --cluster-reassign 1 \
             smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust_tmp
         # Create tsv file
+        mmseqs createtsv --threads {threads} \
+            smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
+        mv smk-mmseq/clust.tsv {output.tsv_family}
+        """
+
+
+rule cdhit_est:
+    input:
+        fna="{any}.fna",
+    output:
+        cluster="{any}-cdhit95.clstr",
+        fna="{any}-cdhit95.fna",
+    threads: 64
+    shell:
+        """
+        cd-hit-est -T {threads} \
+            -i {input.fna} -o {output.fna} \
+            -c 0.95 -M 0 -G 0 -aS 0.9 -g 1 -r 0 -d 0
+        """
+
+
+rule mmseq_cdhit_est:
+    input:
+        fna="{any}.fna",
+    output:
+        cluster="{any}-cdhit95.clstr",
+    threads: 64
+    shadow:
+        "minimal"
+    shell:
+        """
+        # https://github.com/soedinglab/MMseqs2/issues/836
+        rm -f smk-mmseq
+        mkdir smk-mmseq
+
+        mmseqs createdb {input.fna} smk-mmseq/seqdb --dbtype 2 --shuffle 0
+
+        mmseqs cluster --threads {threads} \
+            smk-mmseq/seqdb smk-mmseq/clustdb tmp \
+            `# -s 4 --cluster-reassign 1 not have any effect` \
+            --alignment-mode 3 --cluster-mode 2 `# optional` \
+            --kmer-per-seq-scale 0 --kmer-per-seq 1000 --max-seq-len 80000 \
+            --min-seq-id 0.95 --cov-mode 1 -c 0.9 --spaced-kmer-mode 0
+
         mmseqs createtsv --threads {threads} \
             smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
         mv smk-mmseq/clust.tsv {output.tsv_family}
