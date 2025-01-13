@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:46:23
+ * @LastEditTime: 2025-01-13 17:32:56
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -15,8 +15,8 @@ from typing import Callable, Generator, Iterable, TextIO
 import gffutils
 import gffutils.feature
 from Bio import SeqIO
-from Bio.SeqRecord import SeqRecord
 from Bio.SeqFeature import SeqFeature, SimpleLocation
+from Bio.SeqRecord import SeqRecord
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line
@@ -125,17 +125,47 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
     fasta_start_pointer = property(__get_fasta_start_pointer, __set_fasta_start_pointer)
 
 
+# region InferGeneId
+class InferGeneId:
+    FUNC_TYPE = Callable[[str | None, SeqFeature], str]
+    funcs: dict[str, FUNC_TYPE] = {}
+
+    @classmethod
+    def rec(self, fn: FUNC_TYPE):
+        self.funcs[fn.__name__] = fn
+        return fn
+
+    @classmethod
+    def get(self, fn) -> FUNC_TYPE:
+        if isinstance(fn, str):
+            return self.funcs[fn]
+        return fn
+
+
+@InferGeneId.rec
+def infer_gene_id(rec_id: str | None, fet: SeqFeature):
+    if fet.qualifiers and (name := fet.qualifiers.get("Name")) and name[0]:
+        return name[0]
+    return f"{rec_id}_" + str(int(fet.id.rsplit("_", 1)[1]))
+
+
+@InferGeneId.rec
 def infer_prodigal_gene_id(rec_id: str | None, fet: SeqFeature):
     return f"{rec_id}_" + str(int(fet.id.rsplit("_", 1)[1]))
 
 
+@InferGeneId.rec
 def infer_refseq_gene_id(rec_id: str | None, fet: SeqFeature):
     return fet.id.rsplit("-", 1)[1]
 
 
+@InferGeneId.rec
 def infer_trnascan_rna_id(rec_id: str | None, fet: SeqFeature):
     # assert fet.id.startswith(rec_id)
     return fet.id
+
+
+# endregion InferGeneId
 
 
 _biopython_strand = {"+": 1, "-": -1, ".": 0}
@@ -256,9 +286,7 @@ class Parse:
     def extract(
         self,
         fet_type="CDS",
-        call_gene_id: (
-            Callable[[str | None, SeqFeature], str] | str
-        ) = infer_prodigal_gene_id,
+        call_gene_id: InferGeneId.FUNC_TYPE | str = infer_gene_id,
         translate=True,
         min_aa_length=33,
         auto_fix=True,
@@ -276,9 +304,7 @@ class Parse:
 def extract(
     seq_record: Iterable[SeqRecord],
     fet_type="CDS",
-    call_gene_id: (
-        Callable[[str | None, SeqFeature], str] | str
-    ) = infer_prodigal_gene_id,
+    call_gene_id: InferGeneId.FUNC_TYPE | str = infer_gene_id,
     translate=True,
     min_aa_length=33,
     auto_fix=True,
@@ -291,9 +317,7 @@ def extract(
     min_gene_length = int(min_aa_length) * 3
     # if fet_type != "CDS":
     #    assert not translate
-    call_gene_id = (
-        globals()[call_gene_id] if isinstance(call_gene_id, str) else call_gene_id
-    )
+    call_gene_id = InferGeneId.get(call_gene_id)
 
     rec: SeqRecord
     for rec in seq_record:

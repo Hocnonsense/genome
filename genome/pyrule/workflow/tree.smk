@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 11:48:01
+ * @LastEditTime: 2025-01-13 13:51:00
  * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -272,6 +272,8 @@ rule phylophlan_clade_database:
         db=str(phylophlan_db_folder / "{clade}"),
     params:
         clade="{clade}",
+    conda:
+        "../envs/tree.yaml"
     shell:
         """
         phylophlan_setup_database \

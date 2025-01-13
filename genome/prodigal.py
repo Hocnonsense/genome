@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:46:34
+ * @LastEditTime: 2025-01-13 16:39:12
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -11,7 +11,7 @@
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Final, Iterable, Literal, Union, Optional
+from typing import Final, Iterable, Literal
 
 from Bio import SeqIO, SeqRecord
 import pyrodigal
@@ -19,13 +19,11 @@ import pyrodigal
 from .pyrule import smk, rules_dir, smk_conda_env
 
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 prodigal_mode: Final = ["single", "meta", "gvmeta"]
 
 
-def check_genome_length_prodigal(
-    genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
-):
+def check_genome_length_prodigal(genome: PathLike | Iterable[SeqRecord.SeqRecord]):
     """check if given genome size is long enough to use prodigal single mode"""
     if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
@@ -35,7 +33,7 @@ def check_genome_length_prodigal(
 
 
 def prodigal_gff_onethread(
-    genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
+    genome: PathLike | Iterable[SeqRecord.SeqRecord],
     mode: Literal["single", "meta", "gvmeta"] = "single",
     gff_out: PathLike = "",
     trans_table=11,

@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 17:43:11
+ * @LastEditTime: 2025-01-13 16:20:00
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -127,3 +127,45 @@ rule mmseq_uniref_cluster_extract:
             output.uniref_clu,
             "fasta-2line",
         )
+
+
+rule mmseq_family:
+    input:
+        protein="{ID}.faa",
+    output:
+        tsv_pre="{ID}-mf100.tsv",
+        tsv_family="{ID}-mfamily.tsv",
+    params:
+        precluster_min_seq_id=config.get("precluster_min_seq_id", 0.99),
+        sensitivity=config.get("sensitivity", 7.5),
+        max_eval=config.get("max_eval", 1e-3),
+        min_aln_cov=config.get("min_aln_cov", 0.0),
+        cluster_min_seq_id=config.get("cluster_min_seq_id", 0.0),
+    threads: 16
+    shadow:
+        "minimal"
+    conda:
+        "../envs/gene_clust.yaml"
+    shell:
+        """
+        mkdir smk-mmseq
+        mmseqs easy-linclust --threads {threads} \
+            --kmer-per-seq 100 -c 1.0 \
+            --cov-mode 1 --cluster-mode 2 \
+            --min-seq-id {params.precluster_min_seq_id} \
+            {input.protein} smk-mmseq/precluster smk-mmseq/tmp
+        mv smk-mmseq/precluster_cluster.tsv {output.tsv_pre}
+
+        # Create sequence database
+        mmseqs createdb smk-mmseq/precluster_rep_seq.faa smk-mmseq/seqdb
+        # Cluster sequences
+        mmseqs cluster --threads {threads} \
+            -s {params.sensitivity} -e {params.max_eval} -c {params.min_aln_cov} \
+            --cov-mode 0 --cluster-mode 0 \
+            --min-seq-id {params.cluster_min_seq_id} --cluster-reassign 1 \
+            smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust_tmp
+        # Create tsv file
+        mmseqs createtsv --threads {threads} \
+            smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
+        mv smk-mmseq/clust.tsv {output.tsv_family}
+        """

@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 17:32:12
+ * @LastEditTime: 2025-01-13 17:33:43
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -35,6 +35,9 @@ changelog for genome
     - rename `smk_workflow` to `rules_dir`,
     - add `rules_dir / "pan_concat.smk"` from meer_omics
     - add `rules_dir / "include_genomedb.smk"` to handle all methods other than binning methods for quick usage
+    - add `mmseq_family` to cluster genes
+    - `gff_2_fa_label` to extract gene with genome label from gff
+    - add `InferGeneId` in gff to better handle gene id inference
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes
