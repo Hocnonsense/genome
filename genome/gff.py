@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 18:06:09
+ * @LastEditTime: 2025-01-13 21:07:59
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -371,8 +371,12 @@ def extract(
 
 def translate(rec: SeqRecord, fet: SeqFeature | None = None, auto_fix=True):
     annotations = fet.qualifiers if fet is not None else rec.annotations
-    seq = rec.translate(table=annotations.get("transl_table", ["Standard"])[0])
-    if auto_fix and annotations.get("partial", ["00"])[0] == "0" and seq.seq[0] != "M":
+    frame_str = annotations.get("frame", [0])[0]
+    frame = int(frame_str) % 3 if frame_str and frame_str != "." else 0
+    seq = rec[frame:].translate(table=annotations.get("transl_table", ["Standard"])[0])
+    if auto_fix and annotations.get("partial", [frame])[0] == "0" and seq.seq[0] != "M":
+        # here, if partial is "true" in refseq database, will not fix
+        # elif frame is not 0, will not fix
         seq.seq = "M" + seq.seq[1:]
     return seq
 

@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 20:44:42
+ * @LastEditTime: 2025-01-13 21:33:31
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -158,7 +158,7 @@ rule mmseq_family:
         mv smk-mmseq/precluster_cluster.tsv {output.tsv_pre}
 
         # Create sequence database
-        mmseqs createdb smk-mmseq/precluster_rep_seq.faa smk-mmseq/seqdb
+        mmseqs createdb smk-mmseq/precluster_rep_seq.fasta smk-mmseq/seqdb
         # Cluster sequences
         mmseqs cluster --threads {threads} \
             -s {params.sensitivity} -e {params.max_eval} -c {params.min_aln_cov} \

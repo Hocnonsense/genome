@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-13 17:27:32
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 20:49:07
+ * @LastEditTime: 2025-01-13 21:21:03
  * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
@@ -32,7 +32,7 @@ rule gff_2_fa_label:
                 translate=params.suffix == "faa",
                 min_aa_length=int(params.min_aa_len),
             ):
-                if faa.seq.starswith("*"):
+                if faa.seq.startswith("*"):
                     continue
                     # faa.id = f"{faa.id}_partial"
                 faa.id = f"{params.chr}{faa.id}"
