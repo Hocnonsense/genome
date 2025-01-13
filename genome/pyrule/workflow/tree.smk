@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 11:38:23
+ * @LastEditTime: 2025-01-13 11:48:01
  * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -244,18 +244,22 @@ rule phylophlan_write_config_file:
         """
 
 
+phylophlan_db_folder = Path(
+    config.get("phylophlan_databases", "data/database/phylophlan_databases")
+)
+
+
 rule phylophlan_download_db:
     output:
-        db=directory(
-            config.get("phylophlan_databases", "data/database/phylophlan_databases")
-        ),
+        db=directory(str(phylophlan_db_folder / "phylophlan")),
     params:
         url_tar="http://cmprod1.cibio.unitn.it/databases/PhyloPhlAn/phylophlan.tar",
         url_md5="http://cmprod1.cibio.unitn.it/databases/PhyloPhlAn/phylophlan.md5",
+        db_folder=str(phylophlan_db_folder),
     shell:
         """
-        mkdir {output.db}
-        cd    {output.db}
+        mkdir {db_folder.db}
+        cd    {db_folder.db}
             wget {params.url_tar}
             wget {params.url_md5}
             tar -xvf `basename {params.url_tar}`
@@ -265,15 +269,7 @@ rule phylophlan_download_db:
 
 rule phylophlan_clade_database:
     output:
-        db=str(
-            Path(
-                config.get(
-                    "phylophlan_clade_database",
-                            "data/database/phylophlan_clade_database",
-                        )
-                    )
-            / "{clade}"
-        ),
+        db=str(phylophlan_db_folder / "{clade}"),
     params:
         clade="{clade}",
     shell:
@@ -289,7 +285,7 @@ rule phylophlan:
     input:
         binsfaa="{any}-binsfaa",
         cfg="{any}-phylophlan_{marker}.cfg",
-        db=config.get("phylophlan_databases", "data/database/phylophlan_databases"),
+        db=str(phylophlan_db_folder / "phylophlan"),
     output:
         aln="{any}-phylophlan_{marker}_{speed}.aln",
         tre="{any}-phylophlan_{marker}_{speed}.tre",
@@ -311,8 +307,8 @@ rule phylophlan:
         cp {input.binsfaa}/* smk-phylophlan/{params.basename}
 
         phylophlan \
-            -d phylophlan \
-            --databases_folder {input.db} \
+            -d `basename {input.db}` \
+            --databases_folder `dirname {input.db}` \
             \
             --diversity high --{params.speed} \
             -f {input.cfg} \
