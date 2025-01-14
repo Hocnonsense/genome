@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-14 17:52:56
+ * @LastEditTime: 2025-01-14 17:57:30
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -232,6 +232,8 @@ rule mmseq_species:
         mmseqs createtsv --threads {threads} \
             smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
         mv smk-mmseq/clust.tsv {output.tsv_family}
+        # reference
+        # https://www.nature.com/articles/s41559-024-02357-0
         """
 
 
