@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 21:33:31
+ * @LastEditTime: 2025-01-14 17:36:04
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -129,18 +129,13 @@ rule mmseq_uniref_cluster_extract:
         )
 
 
-rule mmseq_family:
+rule mmseq_f100:
     input:
         protein="{ID}.faa",
     output:
         tsv_pre="{ID}-mf100.tsv",
-        tsv_family="{ID}-mfamily.tsv",
     params:
         precluster_min_seq_id=config.get("precluster_min_seq_id", 0.99),
-        sensitivity=config.get("sensitivity", 7.5),
-        max_eval=config.get("max_eval", 1e-3),
-        min_aln_cov=config.get("min_aln_cov", 0.0),
-        cluster_min_seq_id=config.get("cluster_min_seq_id", 0.0),
     threads: 64
     shadow:
         "minimal"
@@ -156,6 +151,37 @@ rule mmseq_family:
             --min-seq-id {params.precluster_min_seq_id} \
             {input.protein} smk-mmseq/precluster smk-mmseq/tmp
         mv smk-mmseq/precluster_cluster.tsv {output.tsv_pre}
+        # reference
+        # https://github.com/apcamargo/bioinformatics-snakemake-pipelines/tree/main/protein-clustering/protein-clustering-mmseqs2.smk
+        """
+
+
+rule mmseq_family:
+    input:
+        protein="{ID}.faa",
+        tsv_pre="{ID}-mf100.tsv",
+    output:
+        tsv_family="{ID}-mfamily.tsv",
+    params:
+        sensitivity=config.get("sensitivity", 7.5),
+        max_eval=config.get("max_eval", 1e-3),
+        min_aln_cov=config.get("min_aln_cov", 0.0),
+        cluster_min_seq_id=config.get("cluster_min_seq_id", 0.0),
+    threads: 64
+    shadow:
+        "minimal"
+    conda:
+        "../envs/gene_clust.yaml"
+    shell:
+        """
+        rm -f smk-mmseq
+        mkdir smk-mmseq
+
+        awk '{{print $1"}}' {input.tsv_pre} \
+        | uniq \
+        > smk-mmseq/precluster_rep_seq.list
+        seqtk subseq {input.protein} smk-mmseq/precluster_rep_seq.list \
+        > smk-mmseq/precluster_rep_seq.fasta
 
         # Create sequence database
         mmseqs createdb smk-mmseq/precluster_rep_seq.fasta smk-mmseq/seqdb
@@ -164,6 +190,43 @@ rule mmseq_family:
             -s {params.sensitivity} -e {params.max_eval} -c {params.min_aln_cov} \
             --cov-mode 0 --cluster-mode 0 \
             --min-seq-id {params.cluster_min_seq_id} --cluster-reassign 1 \
+            smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust_tmp
+        # Create tsv file
+        mmseqs createtsv --threads {threads} \
+            smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
+        mv smk-mmseq/clust.tsv {output.tsv_family}
+        # reference
+        # https://github.com/apcamargo/bioinformatics-snakemake-pipelines/tree/main/protein-clustering/protein-clustering-mmseqs2.smk
+        """
+
+
+rule mmseq_species:
+    input:
+        protein="{ID}.faa",
+        tsv_pre="{ID}-mf100.tsv",
+    output:
+        tsv_family="{ID}-mspecies.tsv",
+    threads: 64
+    shadow:
+        "minimal"
+    conda:
+        "../envs/gene_clust.yaml"
+    shell:
+        """
+        rm -f smk-mmseq
+        mkdir smk-mmseq
+
+        awk '{{print $1"}}' {input.tsv_pre} \
+        | uniq \
+        > smk-mmseq/precluster_rep_seq.list
+        seqtk subseq {input.protein} smk-mmseq/precluster_rep_seq.list \
+        > smk-mmseq/precluster_rep_seq.fasta
+
+        # Create sequence database
+        mmseqs createdb smk-mmseq/precluster_rep_seq.fasta smk-mmseq/seqdb
+        # Cluster sequences
+        mmseqs cluster --threads {threads} \
+            --cluster-mode 0 -c 0.9 --min-seq-id 0.8
             smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust_tmp
         # Create tsv file
         mmseqs createtsv --threads {threads} \
