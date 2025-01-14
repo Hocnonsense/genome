@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 15:30:31
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-14 17:36:04
+ * @LastEditTime: 2025-01-14 17:46:31
  * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
  * @Description:
     use mmseq to cluster genes
@@ -216,7 +216,7 @@ rule mmseq_species:
         rm -f smk-mmseq
         mkdir smk-mmseq
 
-        awk '{{print $1"}}' {input.tsv_pre} \
+        awk '{{print $1}}' {input.tsv_pre} \
         | uniq \
         > smk-mmseq/precluster_rep_seq.list
         seqtk subseq {input.protein} smk-mmseq/precluster_rep_seq.list \
