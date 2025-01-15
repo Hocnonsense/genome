@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 21:29:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-14 21:57:45
+ * @LastEditTime: 2025-01-15 16:04:40
  * @FilePath: /genome/genome/gene_clust.py
  * @Description:
 """
@@ -27,31 +27,34 @@ GENE_CLUST_SMK = rules_dir / "gene_clust.smk"
 class _CluBase:
     @classmethod
     def in_faa(cls, prefix: PathLike = "{prefix}"):
-        return f"{prefix}.faa"
+        return Path(f"{prefix}.faa")
 
     @classmethod
     def from_in_faa(cls, faa: PathLike):
         "create UniRefClu from input faa file"
-        assert str(faa).endswith(".faa")
+        assert f"{faa}".endswith(".faa")
         return cls.from_prefix(str(faa)[:-4])
 
     @classmethod
     def from_prefix(cls, prefix: PathLike):
         "create UniRefClu from prefix of output files"
-        return cls(*(i.format(prefix=prefix) for i in cls()))
+        return cls(*(Path(f"{i}".format(prefix=prefix)) for i in cls()))
 
     @classmethod
     def from_aout(cls, aout: PathLike):
         "auto recognize prefix from output"
         aout_ = str(aout)
-        for suffix in (i.format(prefix="") for i in cls()):
+        for suffix in (i.name.format(prefix="") for i in cls()):
             if aout_.endswith(suffix):
                 return cls.from_prefix(aout_[: -len(suffix)])
         raise KeyError("Cannot determine suffix, please check file name")
 
     def _modify(self, *modify: PathLike | None):
         return self.__class__(
-            *(modify if modify else default for default, modify in zip(self, modify))
+            *(
+                Path(modify) if modify else default
+                for default, modify in zip(self, modify)
+            )
         )
 
     TSV_COLS: tuple[str, ...] = ("All",)
@@ -133,9 +136,9 @@ class _CluBase:
 
 
 class _UniRefClu(NamedTuple):
-    u100: str = "{prefix}-uniref100.tsv"
-    u90: str = "{prefix}-uniref90.tsv"
-    u50: str = "{prefix}-uniref50.tsv"
+    u100: Path = Path("{prefix}-uniref100.tsv")
+    u90: Path = Path("{prefix}-uniref90.tsv")
+    u50: Path = Path("{prefix}-uniref50.tsv")
 
 
 class UniRefClu(_UniRefClu, _CluBase):
@@ -185,16 +188,12 @@ def extract(
 
 
 class _MmseqOut(NamedTuple):
-    all_100: Path = Path("gene-clu_100.tsv")
-    all_clu: Path = Path("gene-clu.tsv")
-    all_clu_faa: Path = Path("gene-clu_rep.faa")
+    all_100: Path = Path("{prefix}-clu_100.tsv")
+    all_clu: Path = Path("{prefix}-clu.tsv")
+    all_clu_faa: Path = Path("{prefix}-clu_rep.faa")
 
 
 class MmseqOut(_MmseqOut, _CluBase):
-    all_100: Path = Path("gene-clu_100.tsv")
-    all_clu: Path = Path("gene-clu.tsv")
-    all_clu_faa: Path = Path("gene-clu_rep.faa")
-
     @classmethod
     def from_prefix_modify(
         cls,
@@ -240,8 +239,8 @@ def mmseq_clust(
 
 
 class _MmFamily(NamedTuple):
-    mf100: str = "{prefix}-mf100.tsv"
-    mfamily: str = "{prefix}-mfamily.tsv"
+    mf100: Path = Path("{prefix}-mf100.tsv")
+    mfamily: Path = Path("{prefix}-mfamily.tsv")
 
 
 class MmFamily(_MmFamily, _CluBase):
@@ -280,8 +279,8 @@ class _MmSpecies(NamedTuple):
         The rest of the parameters were left as default.
     """
 
-    mf100: str = "{prefix}-mf100.tsv"
-    mspecies: str = "{prefix}-mspecies.tsv"
+    mf100: Path = Path("{prefix}-mf100.tsv")
+    mspecies: Path = Path("{prefix}-mspecies.tsv")
 
 
 class MmSpecies(_MmSpecies, _CluBase):

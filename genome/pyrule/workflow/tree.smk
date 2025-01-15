@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 13:51:00
+ * @LastEditTime: 2025-01-15 15:37:54
  * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -305,8 +305,8 @@ rule phylophlan:
     shell:
         """
         rm -f smk-phylophlan smk-phylophlan-input
-        mkdir -p smk-phylophlan-input/{params.basename}
-        cp {input.binsfaa}/* smk-phylophlan/{params.basename}
+        mkdir -p smk-phylophlan-input/{params.basename} smk-phylophlan
+        cp {input.binsfaa}/* smk-phylophlan-input/{params.basename}
 
         phylophlan \
             -d `basename {input.db}` \
@@ -316,7 +316,7 @@ rule phylophlan:
             -f {input.cfg} \
             --min_num_markers 1 \
             \
-            -i smk-phylophlan/{params.basename} \
+            -i smk-phylophlan-input/{params.basename} \
             -o smk-phylophlan/phylophlan \
             --nproc {threads}
 
