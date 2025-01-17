@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:45:36
+ * @LastEditTime: 2025-01-17 21:58:37
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -379,7 +379,6 @@ class GeneStat(NamedTuple):
 
 
 class GeneStatisticContainer(_BinStatisticContainer):
-
     def __init__(
         self,
         seqiter: Iterable[SeqRecord],
@@ -388,9 +387,9 @@ class GeneStatisticContainer(_BinStatisticContainer):
         loader: Callable[
             [Iterable[SeqRecord], int, int], dict[tuple[str, str], GeneStat]
         ] = GeneStat.parse,
-        min_aa_length=33,
+        min_aa_len=33,
     ):
-        self._aa_stats = loader(seqiter, min_contig_len, min_aa_length)
+        self._aa_stats = loader(seqiter, min_contig_len, min_aa_len)
         self.source_file = source_file
 
     def statistic(self):
