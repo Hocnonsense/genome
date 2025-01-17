@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-13 17:27:32
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 21:21:03
+ * @LastEditTime: 2025-01-17 22:07:31
  * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
@@ -37,3 +37,19 @@ rule gff_2_fa_label:
                     # faa.id = f"{faa.id}_partial"
                 faa.id = f"{params.chr}{faa.id}"
                 SeqIO.write(faa, f, "fasta-2line")
+
+
+rule fa_label2genome:
+    input:
+        faa="{any}{predictor}-chr{marker}ge{min_aa_len}.{suffix}",
+    output:
+        gff="{any}{predictor}-chr{marker}ge{min_aa_len}-prot2genome.tsv",
+    params:
+        marker="{marker}",
+    run:
+        with open(output.gff, "w") as f:
+            for line in open(input.faa):
+                if line.startswith(">"):
+                    gene = line[1:].split()[0]
+                    genome = gene.split(params.marker)[0]
+                    print(gene, genome, sep="\t", file=f)

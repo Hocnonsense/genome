@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-12 16:40:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-13 17:27:56
+ * @LastEditTime: 2025-01-17 22:08:47
  * @FilePath: /genome/genome/pyrule/workflow/include_genomedb.smk
  * @Description:
 
@@ -61,3 +61,4 @@ if config.get("mantis_config"):
 
 include: "pan_concat.smk"
 include: "genomedb.smk"
+include: "aai.smk"
