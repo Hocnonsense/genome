@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-14 22:00:01
+ * @LastEditTime: 2025-01-17 21:51:14
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -39,6 +39,7 @@ changelog for genome
     - `gff_2_fa_label` to extract gene with genome label from gff
     - add `InferGeneId` in gff to better handle gene id inference
     - add `mmseq_species` to cluster genes and related functions in `gene_clust`
+    - `BinStatisticContainer` encoding filter using `min_aa_len=33`
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes

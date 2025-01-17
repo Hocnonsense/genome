@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-15 17:05:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 15:08:20
+ * @LastEditTime: 2025-01-17 18:04:08
  * @FilePath: /genome/genome/bin_statistic.py
  * @Description:
 """
@@ -225,8 +225,11 @@ class SeqStat(NamedTuple):
     len_cds: int = 0
 
     @classmethod
-    def parse(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
+    def parse(
+        cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0, min_aa_len=33
+    ):
         _seq_stats: dict[str, SeqStat] = {}
+        min_gene_len = int(min_aa_len) * 3
         for seq in seq_iter:
             if len(seq.seq) < min_contig_len:
                 continue
@@ -242,6 +245,8 @@ class SeqStat(NamedTuple):
             n_cds = 0
             for fet in seq.features:
                 if fet.type == "CDS" and fet.location is not None:
+                    if len(fet) < min_gene_len:
+                        continue
                     cds_mask[fet.location.start : fet.location.end] = 1
                     n_cds += 1
             assert seq.id
@@ -268,16 +273,20 @@ class SeqStat(NamedTuple):
 class _BinStatisticContainer:
     @classmethod
     def read_gff(
-        cls, filename: PathLike, refernce_file: PathLike | None = None, min_contig_len=0
+        cls,
+        filename: PathLike,
+        refernce_file: PathLike | None = None,
+        min_contig_len=0,
+        min_aa_len=33,
     ):
         parser = Parse(filename)
         if refernce_file:
             parser = parser.reset_reference(refernce_file)
-        return cls(parser(), filename, min_contig_len)
+        return cls(parser(), filename, min_contig_len, min_aa_len=min_aa_len)
 
     @classmethod
-    def read_gff_parser(cls, parser: Parse, min_contig_len=0):
-        return cls(parser(), parser.gff_file, min_contig_len)
+    def read_gff_parser(cls, parser: Parse, min_contig_len=0, min_aa_len=33):
+        return cls(parser(), parser.gff_file, min_contig_len, min_aa_len=min_aa_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):
@@ -291,8 +300,9 @@ class _BinStatisticContainer:
         loader: Callable[
             [Iterable[SeqRecord.SeqRecord], int], dict[str, SeqStat]
         ] = SeqStat.parse,
+        **parse_kwargs,
     ):
-        self._seq_stats = loader(seqiter, min_contig_len)
+        self._seq_stats = loader(seqiter, min_contig_len, **parse_kwargs)
         self.source_file = source_file
         self.min_contig_len = min_contig_len
 

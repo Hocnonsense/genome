@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:38:27
+ * @LastEditTime: 2025-01-17 18:04:27
  * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
@@ -28,7 +28,7 @@ def test_contig2bin(test_temp: Path):
 
 def test_prokka_gff_bin_statistic():
     gff = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
-    bsc = BinStatisticContainer.read_gff(gff)
+    bsc = BinStatisticContainer.read_gff(gff, min_aa_len=0)
     bs = bsc.statistic()
     bsc.calculate_gc_std()
     assert int(bs.gc * 100) == 58
@@ -76,8 +76,8 @@ def test_genome_bin_statistic():
         "contig_n50": 21642,
         "ambiguous_bases_num": 0,
         "contig_cutoff": 0,
-        "coding_density": 0.8605630484716414,
-        "genes_num": 105,
+        "coding_density": 0.8597581325951665,
+        "genes_num": 104,
     }
 
 

@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-11 20:38:07
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 17:25:19
+ * @LastEditTime: 2025-01-16 22:30:38
  * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
@@ -280,7 +280,6 @@ rule get_drep_gmodule:
     output:
         genomeko="{any}.genomeko.csv",
         gmodule="{any}.gmodule.csv",
-    localrule: True
     run:
         import pandas as pd
         from kegg_manual import load
