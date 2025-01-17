@@ -2,7 +2,7 @@
  * @Date: 2025-01-08 17:39:43
  * @Authors: Antonio Camargo antoniop.camargo@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 23:21:27
+ * @LastEditTime: 2025-01-17 23:51:23
  * @FilePath: /genome/genome/pyrule/workflow/aai.smk
  * @Description:
 
@@ -29,7 +29,10 @@ rule diamond:
         dmd="{ID}-diamond_e{max_eval}i{min_seq_id}.tsv",
     params:
         max_eval="1e-{max_eval}",
-        min_seq_id=lambda _: 100 * int(f"0.{_.min_seq_id}"),
+        min_seq_id=lambda _: 100 * float(f"0.{_.min_seq_id}"),
+    wildcard_constraints:
+        max_eval=r"\d+",
+        min_seq_id=r"\d+",
     threads: config.get("diamond_threads", 8)
     conda:
         "../envs/tree.yaml"
@@ -52,7 +55,11 @@ rule filter_diamond:
         dmd="{ID}-diamond_e{max_eval}i{min_seq_id}c{min_cov}.tsv",
         rbh="{ID}-diamond_e{max_eval}i{min_seq_id}c{min_cov}_rbh.tsv",
     params:
-        min_cov=lambda _: 100 * int(f"0.{_.min_cov}"),
+        min_cov=lambda _: 100 * float(f"0.{_.min_cov}"),
+    wildcard_constraints:
+        max_eval=r"\d+",
+        min_seq_id=r"\d+",
+        min_cov=r"\d+",
     run:
         current_qseqid = None
         prot2genome = {}
@@ -87,12 +94,12 @@ rule filter_diamond:
 rule aaicalc:
     input:
         p2g="{ID}-prot2genome.tsv",
-        rbh="{ID}-diamond_{label}.tsv",
+        rbh="{ID}-diamond_{label}_rbh.tsv",
     output:
-        aai="{ID}-diamond_{label}-ani_s{min_n_shared_genes}f{min_frac_shared_genes}.tsv",
+        aai="{ID}-diamond_{label}_rbh-ani_s{min_n_shared_genes}f{min_frac_shared_genes}.tsv",
     params:
-        min_cov=lambda _: 100 * int(f"0.{_.min_frac_shared_genes}"),
-        min_n_shared_genes=0,
+        min_cov=lambda _: float(f"0.{_.min_frac_shared_genes}"),
+        min_n_shared_genes="{min_n_shared_genes}",
     run:
         gene_count: dict[str, int] = {}
         prot2genome: dict[str, str] = {}
@@ -131,7 +138,7 @@ rule aaicalc:
                 min_n_genes = min(gene_count[genome_1], gene_count[genome_2])
                 n_shared_genes = len(gene_pairs)
                 if (params["min_n_shared_genes"] <= n_shared_genes) and (
-                    params["min_frac_shared_genes"] <= n_shared_genes / min_n_genes
+                    params["min_cov"] <= n_shared_genes / min_n_genes
                 ):
                     pair_aai = 0.0
                     pair_total_length = 0.0

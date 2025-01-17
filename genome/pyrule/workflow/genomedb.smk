@@ -41,7 +41,7 @@ rule gff_2_fa_label:
 
 rule fa_label2genome:
     input:
-        faa="{any}{predictor}-chr{marker}ge{min_aa_len}.{suffix}",
+        faa="{any}{predictor}-chr{marker}ge{min_aa_len}.faa",
     output:
         gff="{any}{predictor}-chr{marker}ge{min_aa_len}-prot2genome.tsv",
     params:
