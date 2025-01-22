@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-15 15:37:54
+ * @LastEditTime: 2025-01-22 16:13:18
  * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -156,12 +156,30 @@ rule faa_mafft:
         marker="{any}.afa",
     conda:
         "../envs/tree.yaml"
+    threads: 8
     shell:
         """
-        mafft \
+        mafft --thread {threads} \
             --maxiterate 1000 --localpair \
             {input.marker} \
         >   {output.marker}
+        """
+
+
+rule fna_muscle:
+    input:
+        marker="{any}.fna",
+    output:
+        marker="{any}-muscle.afa",
+    conda:
+        "../envs/tree.yaml"
+    threads: 8
+    shell:
+        """
+        muscle \
+            -threads {threads} \
+            -align {input.marker} \
+            -output {output.marker}
         """
 
 

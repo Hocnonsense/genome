@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-11 20:38:07
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-16 22:30:38
+ * @LastEditTime: 2025-01-21 16:16:23
  * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
@@ -253,7 +253,6 @@ rule collect_mantis_ko:
         genomes=expand_genomes("{genome}"),
     run:
         import pandas as pd
-        from genome.gene_clust import MmseqOut
         from genome.gene_annot import Gene2KO
 
         g2m = {}

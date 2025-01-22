@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-13 17:27:32
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 22:07:31
+ * @LastEditTime: 2025-01-22 16:16:24
  * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
@@ -53,3 +53,48 @@ rule fa_label2genome:
                     gene = line[1:].split()[0]
                     genome = gene.split(params.marker)[0]
                     print(gene, genome, sep="\t", file=f)
+
+
+rule extract_fna_ko:
+    input:
+        db_gffs=rules.genome_pan_transporter.params.expand_genomes(
+            "{genome_prefix}{predicter}.gff"
+        ),
+        db_mant_s=rules.genome_pan_transporter.params.expand_genomes(
+            "{genome_prefix}{predicter}-chr{marker}ge{min_aa_len}-mantis.tsv"
+        ),
+    output:
+        select_f_a="{any}{bins_seperator}bins/union/pan{predicter}-chr{marker}ge{min_aa_len}-{db}={identifier}.{f_a}",
+    params:
+        genomes=rules.genome_pan_transporter.params.expand_genomes("{genome}"),
+        translate=lambda _: {"fna": False, "faa": True}[_.f_a],
+        marker="{marker}",
+        identifier="{identifier}",
+    wildcard_constraints:
+        f_a="fna|faa",
+        db="ko",
+    localrule: True
+    run:
+        from pathlib import Path
+        import pandas as pd
+        from genome.gene_annot import Gene2KO
+        from genome import gff
+        import tqdm
+
+        with open(output.select_f_a, "w") as fi:
+            for g, gf, mts in zip(params.genomes, input.db_gffs, input.db_mant_s):
+                select_gene = frozenset(
+                    {
+                        i.split(params.marker, 1)[1]
+                        for i in Gene2KO(Path(mts))
+                        .get_gene_annots()
+                        .pipe(lambda s: s[s == "K03040"])
+                        .index
+                    }
+                )
+                if len(select_gene) == 0:
+                    continue
+                for seq in gff.parse(gf).extract(translate=params.translate):
+                    if seq.id in select_gene:
+                        seq.id = f"{g}{params.marker}{seq.id}"
+                        print(seq.format("fasta-2line"), file=fi)

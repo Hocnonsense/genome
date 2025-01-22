@@ -2,7 +2,7 @@
  * @Date: 2025-01-08 17:39:43
  * @Authors: Antonio Camargo antoniop.camargo@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 23:51:23
+ * @LastEditTime: 2025-01-18 10:55:39
  * @FilePath: /genome/genome/pyrule/workflow/aai.smk
  * @Description:
 
@@ -15,14 +15,14 @@ rule default_aai_ln:
     input:
         faa="{ID}.faa",
         p2g="{ID}-prot2genome.tsv",
-        aai="{ID}-diamond_e3i0c0_rbh-ani_s0f30.tsv",
+        aai="{ID}-diamond_e10i0c5_rbh-aai_s5f50.tsv",
     output:
         aai="{ID}-aai_default.tsv",
     shell:
         "ln {input.aai} {output.aai}"
 
 
-rule diamond:
+rule diamond_ei:
     input:
         faa="{ID}.faa",
     output:
@@ -33,7 +33,7 @@ rule diamond:
     wildcard_constraints:
         max_eval=r"\d+",
         min_seq_id=r"\d+",
-    threads: config.get("diamond_threads", 8)
+    threads: 64
     conda:
         "../envs/tree.yaml"
     shell:
@@ -47,19 +47,21 @@ rule diamond:
         """
 
 
-rule filter_diamond:
+rule filter_diamond_ei_c_rbh:
     input:
         dmd="{ID}-diamond_e{max_eval}i{min_seq_id}.tsv",
         tsv="{ID}-prot2genome.tsv",
     output:
-        dmd="{ID}-diamond_e{max_eval}i{min_seq_id}c{min_cov}.tsv",
         rbh="{ID}-diamond_e{max_eval}i{min_seq_id}c{min_cov}_rbh.tsv",
     params:
+        dmd="{ID}-diamond_e{max_eval}i{min_seq_id}c{min_cov}.tsv",
         min_cov=lambda _: 100 * float(f"0.{_.min_cov}"),
     wildcard_constraints:
         max_eval=r"\d+",
         min_seq_id=r"\d+",
         min_cov=r"\d+",
+    shadow:
+        "minimal"
     run:
         current_qseqid = None
         prot2genome = {}
@@ -68,7 +70,7 @@ rule filter_diamond:
                 protein, genome = line.strip().split()
                 prot2genome[protein] = genome
         best_hits = {}
-        with open(input.dmd) as fin, open(output.dmd, "w") as fout:
+        with open(input.dmd) as fin, open(params.dmd, "w") as fout:
             for line in fin:
                 qseqid, sseqid, _, qcovhsp, scovhsp, _ = line.strip().split()[:6]
                 qseqgen, sseqgen = prot2genome[qseqid], prot2genome[sseqid]
@@ -83,7 +85,7 @@ rule filter_diamond:
                         current_qseqid_matches.add(sseqgen)
                         fout.write(line)
                         best_hits.setdefault(qseqid, {})[sseqgen] = sseqid
-        with open(output.dmd) as fin, open(output.rbh, "w") as fout:
+        with open(params.dmd) as fin, open(output.rbh, "w") as fout:
             for line in fin:
                 qseqid, sseqid, _, qcovhsp, scovhsp, _ = line.strip().split()[:6]
                 qseqgen, sseqgen = prot2genome[qseqid], prot2genome[sseqid]
@@ -96,7 +98,7 @@ rule aaicalc:
         p2g="{ID}-prot2genome.tsv",
         rbh="{ID}-diamond_{label}_rbh.tsv",
     output:
-        aai="{ID}-diamond_{label}_rbh-ani_s{min_n_shared_genes}f{min_frac_shared_genes}.tsv",
+        aai="{ID}-diamond_{label}_rbh-aai_s{min_n_shared_genes}f{min_frac_shared_genes}.tsv",
     params:
         min_cov=lambda _: float(f"0.{_.min_frac_shared_genes}"),
         min_n_shared_genes="{min_n_shared_genes}",
