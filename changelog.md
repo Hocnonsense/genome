@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 22:08:30
+ * @LastEditTime: 2025-01-23 11:25:53
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -41,6 +41,9 @@ changelog for genome
     - add `mmseq_species` to cluster genes and related functions in `gene_clust`
     - `BinStatisticContainer` encoding filter using `min_aa_len=33`
     - `aai.smk` to calculate AAI
+    - muscle in `tree.smk`
+    - extract_fna_ko in `genomedb.smk`
+    - drep methods
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes

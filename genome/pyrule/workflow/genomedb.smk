@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-13 17:27:32
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-22 16:16:24
+ * @LastEditTime: 2025-01-22 16:23:37
  * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
@@ -88,7 +88,7 @@ rule extract_fna_ko:
                         i.split(params.marker, 1)[1]
                         for i in Gene2KO(Path(mts))
                         .get_gene_annots()
-                        .pipe(lambda s: s[s == "K03040"])
+                        .pipe(lambda s: s[s == params.identifier])
                         .index
                     }
                 )

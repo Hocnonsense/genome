@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-22 16:13:18
+ * @LastEditTime: 2025-01-23 11:24:03
  * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -174,12 +174,17 @@ rule fna_muscle:
     conda:
         "../envs/tree.yaml"
     threads: 8
+    shadow:
+        "minimal"
     shell:
         """
+        mkdir smk-muscle
+        cp {input.marker} smk-muscle/input.fna
         muscle \
             -threads {threads} \
-            -align {input.marker} \
-            -output {output.marker}
+            -align smk-muscle/input.fna \
+            -output smk-muscle/output.afa
+        mv smk-muscle/output.afa {output.marker}
         """
 
 
