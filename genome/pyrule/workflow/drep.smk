@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-04 21:15:46
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-23 11:21:01
+ * @LastEditTime: 2025-01-23 14:09:21
  * @FilePath: /genome/genome/pyrule/workflow/drep.smk
  * @Description:
 """
@@ -173,9 +173,9 @@ rule fastani:
         "../envs/drep.yaml"
     shell:
         """
-        fastANI --threads {threads} \\
+        fastANI -t {threads} \\
             --ql {input.binls} \\
             --rl {input.binls} \\
             --minFraction 0 \\
-            --out {output.fastani}
+            -o {output.fastani}
         """
