@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 16:54:27
+ * @LastEditTime: 2025-02-07 21:38:37
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -189,25 +189,21 @@ class CodonTable:
 
         def getCFs(self, m: int):
             code_table = CodonTable.get(self.table)
-            j_n_fcf: list[self.PseudoCodonFamily] = []
             for aa in code_table.pcf[m]:
                 for cs in code_table.pcf[m][aa]:
                     codon_n = [self.codon_used[codon] for codon in cs]
                     codon_sum = sum(codon_n)
-                    j_n_fcf.append(
-                        self.PseudoCodonFamily(
-                            sum(codon_n),
-                            sum(((i + 1) / (codon_sum + m)) ** 2 for i in codon_n),
-                            frozenset(cs),
-                            aa,
-                        )
+                    yield self.PseudoCodonFamily(
+                        sum(codon_n),
+                        sum(((i + 1) / (codon_sum + m)) ** 2 for i in codon_n),
+                        frozenset(cs),
+                        aa,
                     )
-            return j_n_fcf
 
         def wighted_F(self, m: int):
             if m == 1:
                 return 1
-            cfs = self.getCFs(m)
+            cfs = list(self.getCFs(m))
             sum_n = sum(cf.n for cf in cfs)
             if sum_n == 0:
                 return m
@@ -400,7 +396,7 @@ class GeneStat(NamedTuple):
                         arsc = ARSC.parse(aa)
                     except ValueError:
                         continue
-                elif "N" in cds.seq:
+                elif "N" in cds.seq or "X" in aa:
                     continue
                 else:
                     csf = CodonTable.get_parse(cds)

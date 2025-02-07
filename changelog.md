@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 11:46:16
+ * @LastEditTime: 2025-02-07 21:43:25
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -45,6 +45,7 @@ changelog for genome
     - extract_fna_ko in `genomedb.smk`
     - drep methods
     - update `gff` and `gene_statistic`  to handle transl_execpt case such as `Sec`
+    - ignore sequence with illegal char in `gene_statistic`
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes
