@@ -2,7 +2,7 @@
 """
  * @Date: 2024-12-26 10:26:38
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 11:43:17
+ * @LastEditTime: 2025-02-07 23:58:59
  * @FilePath: /genome/tests/genome/test_gene_statistic.py
  * @Description:
 """
@@ -45,6 +45,8 @@ def test_gene_stat():
     in GCA_019978365.1.gff, there is a transl_except of Sec. use this case to test gene_statistic
     """
     gff = parse(test_files / "GCA_019978365.1.gff", test_files / "GCA_019978365.1.fa")
+    # (recds,) = [i for i in gff.extract(translate=False) if i.id == "BCX53216.1"]
+    # (recaa,) = [i for i in gff.extract() if i.id == "BCX53216.1"]
     gsc = GeneStatisticContainer.read_gff_parser(gff)
     gs = gsc.statistic()
     assert gs.table == "11"
@@ -53,7 +55,7 @@ def test_gene_stat():
     assert round(gs.gc_variability, 4) == 0.2562
     assert round(gs.C_ARSC, 4) == 2.8389
     assert round(gs.N_ARSC, 4) == 0.3635
-    assert round(gs.S_ARSC, 4) == 0.0367
-    assert round(gs.avg_protein_mw, 4) == 34986.5891
+    assert round(gs.S_ARSC, 4) == 0.0369
+    assert round(gs.avg_protein_mw, 4) == 34988.338
     assert round(gs.avg_protien_len, 4) == 321.4912
     assert round(gs.genes_num, 4) == 4996
