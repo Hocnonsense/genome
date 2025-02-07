@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-08 00:17:23
+ * @LastEditTime: 2025-02-08 00:28:23
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -257,7 +257,7 @@ class TranslExcept:
     def to_str(cls, transl_except: str, location: SimpleLocation, partial=False):
         return ";".join(
             (
-                f"{i+partial}@{a}"
+                f"{i-partial}@{a}"
                 for ia in transl_except
                 for i, a in (cls(ia).index(location),)
             )
