@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 11:39:46
+ * @LastEditTime: 2025-02-07 16:54:27
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -181,15 +181,21 @@ class CodonTable:
             )
             return gc_variability
 
+        class PseudoCodonFamily(NamedTuple):
+            n: int
+            F: float
+            codons: frozenset[Seq]
+            aa: Seq
+
         def getCFs(self, m: int):
             code_table = CodonTable.get(self.table)
-            j_n_fcf: list[CodonTable.PseudoCodonFamily] = []
+            j_n_fcf: list[self.PseudoCodonFamily] = []
             for aa in code_table.pcf[m]:
                 for cs in code_table.pcf[m][aa]:
                     codon_n = [self.codon_used[codon] for codon in cs]
                     codon_sum = sum(codon_n)
                     j_n_fcf.append(
-                        CodonTable.PseudoCodonFamily(
+                        self.PseudoCodonFamily(
                             sum(codon_n),
                             sum(((i + 1) / (codon_sum + m)) ** 2 for i in codon_n),
                             frozenset(cs),
@@ -249,12 +255,6 @@ class CodonTable:
                 var_gc_aanum,
                 var_gc_sumrank,
             )
-
-    class PseudoCodonFamily(NamedTuple):
-        n: int
-        F: float
-        codons: frozenset[Seq]
-        aa: Seq
 
 
 class ARSC(NamedTuple):
@@ -391,8 +391,20 @@ class GeneStat(NamedTuple):
                 min_aa_length=min_aa_length,
             ):
                 assert cds.id
-                csf = CodonTable.get_parse(cds)
-                arsc = ARSC.parse(_translate(cds).seq)
+                aa = _translate(cds).seq
+                if cds.features and cds.features[-1].qualifiers.get("pseudo") == [
+                    "true"
+                ]:
+                    try:
+                        csf = CodonTable.get_parse(cds)
+                        arsc = ARSC.parse(aa)
+                    except ValueError:
+                        continue
+                elif "N" in cds.seq:
+                    continue
+                else:
+                    csf = CodonTable.get_parse(cds)
+                    arsc = ARSC.parse(aa)
                 seqaa2stat[seq.id, cds.id] = cls(csf, arsc, 1)
         return seqaa2stat
 
