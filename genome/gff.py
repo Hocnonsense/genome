@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 11:38:05
+ * @LastEditTime: 2025-02-07 23:03:30
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -254,9 +254,13 @@ class TranslExcept:
         raise NotImplementedError
 
     @classmethod
-    def to_str(cls, location: SimpleLocation, *transl_except: str):
+    def to_str(cls, transl_except: str, location: SimpleLocation, partial=False):
         return ";".join(
-            ("{0}@{1}".format(*cls(i).index(location)) for i in transl_except)
+            (
+                f"{i+partial}@{a}"
+                for ia in transl_except
+                for i, a in (cls(ia).index(location),)
+            )
         )
 
     @classmethod
@@ -437,11 +441,8 @@ def extract(
                     )[0]
                     seq.annotations["frame"] = check_frame(fet.qualifiers)
                     if "transl_except" in fet.qualifiers:
-                        assert isinstance(fet.location, SimpleLocation)
-                        seq.annotations["transl_except"] = TranslExcept.to_str(
-                            fet.location, *fet.qualifiers["transl_except"]
-                        )
-                seq.annotations["partial"] = fet.qualifiers.get("partial", ["00"])
+                        seq.annotations["transl_except"] = check_transl_except(fet)
+                seq.annotations["partial"] = fet.qualifiers.get("partial", ["00"])[0]
             seq.id = call_gene_id(rec.id, fet)
             seq.description = " # ".join(
                 (
@@ -466,6 +467,18 @@ def check_frame(annot: dict):
     return int(frame_str) % 3 if frame_str and frame_str != "." else 0
 
 
+def check_transl_except(fet: SeqFeature):
+    frame = check_frame(fet.qualifiers)
+    if "transl_except" in fet.qualifiers:
+        assert isinstance(fet.location, SimpleLocation)
+        return TranslExcept.to_str(
+            fet.qualifiers["transl_except"],
+            fet.location,
+            partial=fet.qualifiers.get("partial", [frame])[0] in {0, "00"},
+        )
+    return ""
+
+
 def translate(rec: SeqRecord, fet: SeqFeature | None = None, auto_fix=True):
     if fet is None:
         annotations = rec.annotations
@@ -473,18 +486,16 @@ def translate(rec: SeqRecord, fet: SeqFeature | None = None, auto_fix=True):
         annotations = {
             k: fet.qualifiers[k][0]
             for k in ("transl_table", "frame", "partial")
-            if k in rec.annotations
+            if k in fet.qualifiers
         }
-        if "transl_except" in fet.qualifiers:
-            assert isinstance(fet.location, SimpleLocation)
-            annotations["transl_except"] = TranslExcept.to_str(
-                fet.location, *fet.qualifiers["transl_except"]
-            )
     frame = check_frame(annotations)
+    partial = annotations.get("partial", frame) in {0, "00"}
+    if fet is not None and (transl_except := check_transl_except(fet)):
+        annotations["transl_except"] = transl_except
     seq = rec[frame:].translate(table=str(annotations.get("transl_table", "Standard")))
     seq.annotations.update(annotations)
     if auto_fix:
-        if annotations.get("partial", str(frame)) == "0" and seq.seq[0] != "M":
+        if partial and seq.seq[0] != "M":
             # here, if partial is "true" in refseq database, will not fix
             # elif frame is not 0, will not fix
             seq.seq = "M" + seq.seq[1:]
