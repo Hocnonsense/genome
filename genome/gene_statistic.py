@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 22:07:33
+ * @LastEditTime: 2025-02-07 22:20:09
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -110,9 +110,10 @@ class CodonTable:
                 continue
             elif "N" in current_codon:
                 err_str = "N present"
-            elif current_codon not in codon_used:
+            elif current_codon not in self.codon_table:
                 # err_str = "unknown codon"
-                codon_used[current_codon] = 0
+                codon_used[current_codon] = codon_used.get(current_codon, 0) + 1
+                continue
             if err_str:
                 print(id, current_codon, i, err_str, sep="\t", file=errorfile_handle)
                 raise ValueError(f"Error in {id} at {i}({current_codon}): {err_str}")
