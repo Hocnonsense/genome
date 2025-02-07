@@ -2,7 +2,7 @@
 """
  * @Date: 2024-12-26 10:26:38
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-12-26 21:30:48
+ * @LastEditTime: 2025-02-07 11:43:17
  * @FilePath: /genome/tests/genome/test_gene_statistic.py
  * @Description:
 """
@@ -10,6 +10,7 @@
 
 
 from genome.gene_statistic import aa_mw, ARSC, CodonTable, GeneStatisticContainer
+from genome.gff import parse
 
 from Bio.Seq import Seq
 
@@ -40,14 +41,19 @@ def test_scu():
 
 
 def test_gene_stat():
-    gff = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
-    gsc = GeneStatisticContainer.read_gff(gff)
+    """
+    in GCA_019978365.1.gff, there is a transl_except of Sec. use this case to test gene_statistic
+    """
+    gff = parse(test_files / "GCA_019978365.1.gff", test_files / "GCA_019978365.1.fa")
+    gsc = GeneStatisticContainer.read_gff_parser(gff)
     gs = gsc.statistic()
-    assert round(gs.scu, 4) == 41.1858
-    assert round(gs.gc_variability, 4) == 0.2791
-    assert round(gs.C_ARSC, 4) == 2.8870
-    assert round(gs.N_ARSC, 4) == 0.3130
-    assert round(gs.S_ARSC, 4) == 0.0496
-    assert round(gs.avg_protein_mw, 4) == 30774.3951
-    assert round(gs.avg_protien_len, 4) == 280.1923
-    assert round(gs.genes_num, 4) == 104
+    assert gs.table == "11"
+    print(gs)
+    assert round(gs.scu, 4) == 41.7683
+    assert round(gs.gc_variability, 4) == 0.2562
+    assert round(gs.C_ARSC, 4) == 2.8389
+    assert round(gs.N_ARSC, 4) == 0.3635
+    assert round(gs.S_ARSC, 4) == 0.0367
+    assert round(gs.avg_protein_mw, 4) == 34986.5891
+    assert round(gs.avg_protien_len, 4) == 321.4912
+    assert round(gs.genes_num, 4) == 4996

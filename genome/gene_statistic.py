@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 21:58:37
+ * @LastEditTime: 2025-02-07 11:39:46
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -41,7 +41,7 @@ class CodonTable:
         for c, a in _table.items():
             aa2codon.setdefault(a, set()).add(c)
         _table2: dict[Seq, tuple[Seq, int, float]] = {}
-        stop_codons = set()
+        stop_codons: set[Seq] = set()
         sf_aa_codon: dict[int, dict[Seq, list[set[Seq]]]] = {}
         for a, cs in aa2codon.items():
             if a == "*":
@@ -80,7 +80,13 @@ class CodonTable:
             _table_cache[table] = cls(table)
         return _table_cache[table]
 
-    def parse(self, seq_cds: Seq, errorfile_handle=sys.stderr, id="*"):
+    def parse(
+        self,
+        seq_cds: Seq,
+        transl_except: set[int] = set(),
+        errorfile_handle=sys.stderr,
+        id="*",
+    ):
         codon_used = {c: 0 for c in self.codon_table}
         gene_codon_length = 0
         var_gc_aanum = 0
@@ -95,8 +101,12 @@ class CodonTable:
             # identify possible codons that will cause problems
             if err_str:
                 pass
-            elif current_codon in ["TAA", "TAG", "TGA"]:
-                err_str = "internal stop codon"
+            elif current_codon in self.stop_codons:
+                if (i // 3) not in transl_except:
+                    err_str = f"after stop codon {current_codon}"
+                continue
+            elif len(current_codon) < 3:
+                err_str = f"incomplete codon {current_codon}"
                 continue
             elif "N" in current_codon:
                 err_str = "N present"
@@ -121,16 +131,23 @@ class CodonTable:
         cls, *_seq_cds: Seq | SeqRecord, errorfile_handle=sys.stderr, table=None
     ):
         id2seqs: dict[str | int, Seq] = {}
+        id2except: dict[str | int, set[int]] = {}
         code_tables = set()
         id: str | int
         for id, seq_cds in enumerate(_seq_cds):
             if isinstance(seq_cds, SeqRecord):
                 id = seq_cds.id or id
-                seq = seq_cds.seq
-                code_tables.add(seq_cds.annotations.get("transl_table", table)[0])
+                seq = seq_cds.seq[check_frame(seq_cds.annotations) :]
+                code_tables.add(seq_cds.annotations.get("transl_table", table))
+                id2except[id] = {
+                    int(i.split("@")[0])
+                    for i in seq_cds.annotations.get("transl_except", "").split(";")
+                    if i
+                }
             else:
                 seq = seq_cds
                 code_tables.add(table)
+                id2except[id] = {}
             id2seqs[id] = seq
         code_tables -= {None}
         if len(code_tables) > 1:
@@ -141,7 +158,7 @@ class CodonTable:
             code_table = cls.get(list(code_tables)[0])
         return cls._CodonUsage.concat(
             (
-                code_table.parse(seq, errorfile_handle, id)
+                code_table.parse(seq, id2except[id], errorfile_handle, id)
                 for id, seq in id2seqs.items()
             ),
             table=code_table.table,
@@ -274,6 +291,8 @@ class ARSC(NamedTuple):
             "J": ARSC(C=4, N=0, S=0),
             "B": ARSC(C=2, N=0.5, S=0),
             "Z": ARSC(C=3, N=0.5, S=0),
+            "U": ARSC(C=1, N=0, S=0),
+            "O": ARSC(C=10, N=2, S=0),
         }
 
     @classmethod
@@ -343,7 +362,7 @@ def aa_mw(seq_aa: Seq):
 
 
 from .bin_statistic import _BinStatisticContainer
-from .gff import extract, _translate
+from .gff import extract, _translate, check_frame
 
 
 class GeneStat(NamedTuple):
@@ -357,7 +376,7 @@ class GeneStat(NamedTuple):
         seq_iter: Iterable[SeqRecord],
         min_contig_len=0,
         min_aa_length=33,
-        call_gene_id="infer_prodigal_gene_id",
+        call_gene_id="infer_gene_id",
     ):
         seqaa2stat: dict[tuple[str, str], GeneStat] = {}
         for seq in seq_iter:
@@ -372,9 +391,9 @@ class GeneStat(NamedTuple):
                 min_aa_length=min_aa_length,
             ):
                 assert cds.id
-                aa = _translate(cds).seq
                 csf = CodonTable.get_parse(cds)
-                seqaa2stat[seq.id, cds.id] = cls(csf, ARSC.parse(aa), 1)
+                arsc = ARSC.parse(_translate(cds).seq)
+                seqaa2stat[seq.id, cds.id] = cls(csf, arsc, 1)
         return seqaa2stat
 
 
