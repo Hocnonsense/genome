@@ -24,6 +24,7 @@ jobs:
         uses: codespell-project/actions-codespell@v2
         with:
           ignore_words_list: Crate,crate,fo,tre
+          skip: "./tests/file"
 
   formatting:
     permissions:
@@ -36,7 +37,7 @@ jobs:
       - uses: mamba-org/setup-micromamba@v1
         with:
           environment-name: black
-          create-args: black
+          create-args: -c bioconda -c conda-forge black snakefmt
           cache-environment: false
 
       - name: Check formatting
