@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:32:50
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 23:56:29
+ * @LastEditTime: 2025-02-08 00:17:23
  * @FilePath: /genome/genome/gff.py
  * @Description:
 """
@@ -472,9 +472,7 @@ def check_transl_except(fet: SeqFeature):
         frame = check_frame(fet.qualifiers)
         assert isinstance(fet.location, SimpleLocation)
         return TranslExcept.to_str(
-            fet.qualifiers["transl_except"],
-            fet.location,
-            partial=fet.qualifiers.get("partial", [frame])[0] not in {0, "00"},
+            fet.qualifiers["transl_except"], fet.location, partial=frame > 0
         )
     return ""
 
