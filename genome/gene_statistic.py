@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 22:20:09
+ * @LastEditTime: 2025-02-16 11:21:38
  * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -143,13 +143,15 @@ class CodonTable:
                 code_tables.add(seq_cds.annotations.get("transl_table", table))
                 id2except[id] = {
                     int(i.split("@")[0])
-                    for i in seq_cds.annotations.get("transl_except", "").split(";")
+                    for i in str(seq_cds.annotations.get("transl_except", "")).split(
+                        ";"
+                    )
                     if i
                 }
             else:
                 seq = seq_cds
                 code_tables.add(table)
-                id2except[id] = {}
+                id2except[id] = set()
             id2seqs[id] = seq
         code_tables -= {None}
         if len(code_tables) > 1:
@@ -183,19 +185,13 @@ class CodonTable:
             )
             return gc_variability
 
-        class PseudoCodonFamily(NamedTuple):
-            n: int
-            F: float
-            codons: frozenset[Seq]
-            aa: Seq
-
         def getCFs(self, m: int):
             code_table = CodonTable.get(self.table)
             for aa in code_table.pcf[m]:
                 for cs in code_table.pcf[m][aa]:
                     codon_n = [self.codon_used[codon] for codon in cs]
                     codon_sum = sum(codon_n)
-                    yield self.PseudoCodonFamily(
+                    yield CodonTable.PseudoCodonFamily(
                         sum(codon_n),
                         sum(((i + 1) / (codon_sum + m)) ** 2 for i in codon_n),
                         frozenset(cs),
@@ -253,6 +249,12 @@ class CodonTable:
                 var_gc_aanum,
                 var_gc_sumrank,
             )
+
+    class PseudoCodonFamily(NamedTuple):
+        n: int
+        F: float
+        codons: frozenset[Seq]
+        aa: Seq
 
 
 class ARSC(NamedTuple):

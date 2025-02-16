@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-10 16:05:33
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:38:22
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-02-16 11:29:24
  * @FilePath: /genome/genome/pyrule/workflow/checkm2.smk
  * @Description:
 """
@@ -23,11 +23,11 @@ rule checkm2_download_db:
 rule ctg2faa_checkm2:
     input:
         checkm2_db=rules.checkm2_download_db.output.checkm2_db,
-        ctg2faa="{any}-bins/union/{union_method}{marker}-binsfaa.tsv",
+        ctg2faa="{any}-binsfaa.tsv",
     output:
-        mag2checkm="{any}-bins/filter/{union_method}{marker}-checkm2.tsv",
+        mag2checkm="{any}-checkm2.tsv",
     params:
-        ctg2faa="{any}-bins/union/{union_method}{marker}-binsfaa",
+        ctg2faa="{any}-binsfaa",
     conda:
         "../envs/checkm2.yaml"
     shadow:

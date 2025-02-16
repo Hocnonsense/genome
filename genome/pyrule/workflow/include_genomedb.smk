@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-12 16:40:11
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-23 11:52:16
+ * @LastEditTime: 2025-02-16 11:24:32
  * @FilePath: /genome/genome/pyrule/workflow/include_genomedb.smk
  * @Description:
 
@@ -40,7 +40,7 @@ except ImportError:
     import genome
 
 
-if config.get("genome_db_path"):
+if config.get("checkm2_db_path"):
 
     include: "checkm2.smk"
 

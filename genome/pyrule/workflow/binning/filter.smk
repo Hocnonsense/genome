@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-07-02 23:24:01
+ * @LastEditTime: 2025-02-16 11:29:12
  * @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
@@ -133,7 +133,7 @@ rule filter_fa_via_checkm2:
     input:
         contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
         ctg2mag="{any}-bins/union/{method}{marker}.tsv",
-        mag2checkm="{any}-bins/filter/{method}{marker}-checkm2.tsv",
+        mag2checkm="{any}-bins/union/{method}{marker}-checkm2.tsv",
     output:
         lsmags="{any}-bins/filter/{method}{marker}-checkm2_bins.ls",
         mags_tsv="{any}-bins/filter/{method}{marker}-checkm2_bins.tsv",
@@ -181,7 +181,7 @@ rule rename_filtered_ls_tsv:
         mags_tsv="{any}-bins/filter/{method}{marker}-{check}_bins-rename/{prefix}_bins.tsv",
     params:
         mags="{any}-bins/filter/{method}{marker}-{check}_bins-rename/{prefix}_bins",
-        new_bin_name=lambda _: (lambda binid: f"{_.prefix}-{binid:>04}", ),
+        new_bin_name=lambda _: (lambda binid: f"{_.prefix}-{binid:>04}",),
     run:
         import os
         import pandas as pd
@@ -216,7 +216,9 @@ rule rename_filtered_ls_tsv:
                 lambda x: Path(params.mags) / x / (x + ".fa")
             )
         )
-        bin_ls_new.apply(lambda s: readonly_and_ln_to(Path(s["Path"]), s["New_path"]), axis=1)
+        bin_ls_new.apply(
+            lambda s: readonly_and_ln_to(Path(s["Path"]), s["New_path"]), axis=1
+        )
         bin_ls_new[["New_path"]].to_csv(output.lsmags, index=False, header=False)
         checkm_sort.set_index("genome").reset_index().drop(columns=["Bin Id"]).rename(
             columns={"genome": "Bin Id"}
