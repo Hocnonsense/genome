@@ -2,9 +2,9 @@
 """
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-16 11:21:38
- * @FilePath: /genome/genome/gene_statistic.py
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-13 14:40:35
+* @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
 This module holds dictionaries that contain codon and amino acid tables, and functions that
@@ -438,7 +438,7 @@ class GeneStatisticContainer(_BinStatisticContainer):
             N_ARSC=arsc_scale.N,
             S_ARSC=arsc_scale.S,
             avg_protein_mw=arsc.mw / genes_num,
-            avg_protien_len=arsc.len / genes_num,
+            avg_protein_len=arsc.len / genes_num,
             genes_num=genes_num,
         )
 
@@ -450,5 +450,5 @@ class GeneStatisticContainer(_BinStatisticContainer):
         N_ARSC: float
         S_ARSC: float
         avg_protein_mw: float
-        avg_protien_len: float
+        avg_protein_len: float
         genes_num: int

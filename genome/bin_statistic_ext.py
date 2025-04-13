@@ -24,7 +24,10 @@ PathLike = Union[str, Path]
 
 @dataclass
 class CheckMFakeOptions:
-    from checkm.defaultValues import DefaultValues
+    try:
+        from checkm.defaultValues import DefaultValues
+    except ImportError:
+        DefaultValues = type('DefaultValues', (), {'E_VAL': 1e-10, 'LENGTH': 0.7})
 
     subparser_name = "lineage_wf"
     output_dir: str = "./"
