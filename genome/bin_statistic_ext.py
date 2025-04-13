@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-11-24 16:23:50
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:59:26
- * @FilePath: /genome/genome/bin_statistic_ext.py
- * @Description:
+* @Date: 2022-11-24 16:23:50
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-13 14:53:04
+* @FilePath: /genome/genome/bin_statistic_ext.py
+* @Description:
 """
 import os
 import shutil
@@ -27,7 +27,7 @@ class CheckMFakeOptions:
     try:
         from checkm.defaultValues import DefaultValues
     except ImportError:
-        DefaultValues = type('DefaultValues', (), {'E_VAL': 1e-10, 'LENGTH': 0.7})
+        DefaultValues = type("DefaultValues", (), {"E_VAL": 1e-10, "LENGTH": 0.7})
 
     subparser_name = "lineage_wf"
     output_dir: str = "./"
