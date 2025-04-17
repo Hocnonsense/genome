@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-12 19:32:50
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-08 00:28:23
- * @FilePath: /genome/genome/gff.py
- * @Description:
+* @Date: 2022-10-12 19:32:50
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-17 19:37:42
+* @FilePath: /genome/genome/gff.py
+* @Description:
 """
 
 import gzip
@@ -144,11 +144,16 @@ class InferGeneId:
         return fn
 
 
+PRODIGAL_ID_PATERN = re.compile(r"^\d+_(\d+)$")
+
+
 @InferGeneId.rec
 def infer_gene_id(rec_id: str | None, fet: SeqFeature):
     if fet.qualifiers and (name := fet.qualifiers.get("Name")) and name[0]:
         return name[0]
-    return f"{rec_id}_" + str(int(fet.id.rsplit("_", 1)[-1]))
+    if (group := fet.qualifiers.get("gene_group")) and group[0]:
+        return f"{rec_id}_{group[0]}"
+    return fet.id
 
 
 @InferGeneId.rec
@@ -224,6 +229,13 @@ class TranslExcept:
         self.end = int(_region[1])
         self.aa: str = _region[2]
 
+    def __repr__(self):
+        if self.strand == 1:
+            return f"(pos:{self.start}..{self.end},aa:{self.aa})"
+        elif self.strand == -1:
+            return f"(pos:complement({self.start}..{self.end}),aa:{self.aa})"
+        raise NotImplementedError(f"Unknown strand {self.strand}")
+
     @classmethod
     def parse_transl_except(cls, text: str):
         """
@@ -239,7 +251,7 @@ class TranslExcept:
             return matches[0][:3], 1
         raise NotImplementedError(f"{matches[0][:3]} {matches[0][3:]}")
 
-    def index(self, position: SimpleLocation):
+    def index(self, position: SimpleLocation, partial: bool):
         """
         >>> TranslExcept("(pos:3092589..3092591,aa:Sec)").index(SimpleLocation(3092001, 3095066, 1))
         (196, 'Sec')
@@ -248,19 +260,16 @@ class TranslExcept:
         """
         assert self.strand == position.strand
         if self.strand == 1:
-            return (self.start - position.start) // 3, self.aa
+            return (self.start - 1 - position.start - partial) // 3, self.aa
         elif self.strand == -1:
-            return (position.end - self.end) // 3, self.aa
+            return (position.end - partial - self.end) // 3, self.aa
         raise NotImplementedError
 
     @classmethod
     def to_str(cls, transl_except: str, location: SimpleLocation, partial=False):
         return ";".join(
-            (
-                f"{i-partial}@{a}"
-                for ia in transl_except
-                for i, a in (cls(ia).index(location),)
-            )
+            "@".join(str(i) for i in cls(ia).index(location, partial))
+            for ia in transl_except
         )
 
     @classmethod
