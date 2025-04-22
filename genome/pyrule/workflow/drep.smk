@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-04 21:15:46
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-22 11:38:14
+* @LastEditTime: 2025-04-22 11:55:31
 * @FilePath: /genome/genome/pyrule/workflow/drep.smk
  * @Description:
 """
@@ -184,7 +184,7 @@ rule fastani:
 rule fastani2af:
     input:
         fastani="{any}bins-fastani.tsv",
-        id2prefix="{andy}bins/pan.id2prefix.tsv",
+        id2prefix="{any}bins/pan.id2prefix.tsv",
     output:
         fastani_af="{any}bins-fastani_af.tsv",
     run:
@@ -198,14 +198,14 @@ rule fastani2af:
             reference=lambda df: df["reference"].apply(fa2id),
             query=lambda df: df["query"].apply(fa2id),
         )
-        ani_long.to_csv(fastani_af, sep="\t", index=False)
+        ani_long.to_csv(output.fastani_af, sep="\t", index=False)
 
 
 rule fastani2cut:
     input:
         fastani_af="{any}bins-fastani_af.tsv",
     output:
-        fastani_cut="{andy}bins-fastani_af-{cuts}.tsv",
+        fastani_cut="{any}bins-fastani_af-{cuts}.tsv",
     params:
         cuts="{cuts}",
     run:
@@ -215,10 +215,10 @@ rule fastani2cut:
         ani_long = pd.read_csv(input.fastani_af, sep="\t")
         af, ani = 0.5, 0.95
         output_df = None
-        for cut in params.cuts.split(","):
+        for cut in params.cuts.split("-"):
             if "a" in cut:
                 ani = float("0." + cut.split("a")[1])
-                cut = cut.saplit("a")[0]
+                cut = cut.split("a")[0]
             if "c" in cut:
                 af = float("0." + cut.split("c")[1])
             name = f"{af}ani{ani}".replace("ani0.", "fani")
