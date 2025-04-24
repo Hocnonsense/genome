@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
  * @Date: 2022-10-12 19:53:55
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 18:04:27
- * @FilePath: /genome/tests/genome/test_bin_statistic.py
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-24 13:25:29
+* @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
@@ -46,12 +46,12 @@ def test_genome_bin_statistic():
     genome = test_files / "binny_contigs_4bins.fa"
     bsc = BinStatisticContainer.read_contig(genome, "fasta")
     test_contig_cutoffs = (0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 10000)
-    df = pd.DataFrame(
+    df = BinStatisticContainer.to_data_frame(
         {
-            min_contig_len: bsc.statistic(min_contig_len)._asdict()
+            min_contig_len: bsc.statistic(min_contig_len)
             for min_contig_len in test_contig_cutoffs
         }
-    ).T
+    )
     assert df.to_csv() == (
         ",gc,gc_std,bp_size,max_contig_len,contigs_num,contig_n50,ambiguous_bases_num,contig_cutoff,coding_density,genes_num\n"
         "0,0.5729274134675137,0.04675647608437309,9281832.0,2862522.0,412.0,50324.0,0.0,0.0,0.0,0.0\n"

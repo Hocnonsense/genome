@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-15 17:05:11
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-17 18:04:08
- * @FilePath: /genome/genome/bin_statistic.py
- * @Description:
+* @Date: 2022-10-15 17:05:11
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-24 13:24:39
+* @FilePath: /genome/genome/bin_statistic.py
+* @Description:
 """
 
 
@@ -305,6 +305,17 @@ class _BinStatisticContainer:
         self._seq_stats = loader(seqiter, min_contig_len, **parse_kwargs)
         self.source_file = source_file
         self.min_contig_len = min_contig_len
+
+    @classmethod
+    def to_data_frame(cls, states: dict):
+        all_fields = sorted({i._fields for i in states.values()})
+        field_order = [i for j in all_fields for i in j]
+        fields = sorted({i for j in all_fields for i in j}, key=field_order.index)
+
+        bs = pd.DataFrame(
+            {i: v._asdict() for i, v in states.items()},
+        ).T
+        return bs[fields]
 
 
 class BinStatisticContainer(_BinStatisticContainer):

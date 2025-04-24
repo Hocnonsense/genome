@@ -1,8 +1,8 @@
 """
  * @Date: 2024-01-11 20:38:07
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-21 16:16:23
- * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-24 13:17:00
+* @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
 
@@ -161,30 +161,46 @@ rule collect_all_bin_statistic:
         ls="{any}{bins_seperator}bins/pan.id2prefix.tsv",
         f_string=lambda _: "{genome_prefix}{predicter}.gff",
     run:
-        import pandas as pd
         from genome.bin_statistic import BinStatisticContainer
 
         with open(params.ls) as fi:
             genomes = {k: v for k, v in (i.strip().split() for i in fi)}
 
-        bs = pd.DataFrame(
+        BinStatisticContainer.to_data_frame(
             {
                 i: BinStatisticContainer.read_gff(
                     params.f_string.format(genome_prefix=genome_prefix, **wildcards)
                 )
                 .statistic()
-                ._asdict()
                 for i, genome_prefix in genomes.items()
             },
-        ).T
+        ).to_csv(output.bin_statistic, sep="\t")
 
-        bs[
-            [
-                *("gc", "gc_std", "bp_size"),
-                *("max_contig_len", "contigs_num", "contig_n50"),
-                *("coding_density", "genes_num"),
-            ]
-        ].to_csv(output.bin_statistic, sep="\t")
+
+rule collect_all_bin_gene_statistic:
+    input:
+        db_gffs=expand_genomes("{genome_prefix}{predicter}.gff"),
+    output:
+        bin_statistic="{any}{bins_seperator}bins/pan{predicter}.concat.gene.statistic.tsv",
+    params:
+        ls="{any}{bins_seperator}bins/pan.id2prefix.tsv",
+        f_string=lambda _: "{{genome_prefix}}{predicter}.gff".format(**_),
+    run:
+        import pandas as pd
+        from genome.gene_statistic import GeneStatisticContainer
+
+        with open(params.ls) as fi:
+            genomes = {k: v for k, v in (i.strip().split() for i in fi)}
+
+        GeneStatisticContainer.to_data_frame(
+            {
+                i: GeneStatisticContainer.read_gff(
+                    params.f_string.format(genome_prefix=genome_prefix)
+                )
+                .statistic()
+                for i, genome_prefix in genomes.items()
+            },
+        ).to_csv(output.bin_statistic, sep="\t")
 
 
 rule collect_all_genome2gene:
