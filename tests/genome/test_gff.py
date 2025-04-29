@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-17 19:41:33
+* @LastEditTime: 2025-04-29 10:28:47
 * @FilePath: /genome/tests/genome/test_gff.py
  * @Description:
 __file__ = "tests/genome/test_prokka.py"
@@ -89,3 +89,14 @@ def test_transl_except():
         else:
             index = ((loc.end - shift) - (trans_except.end)) // 3
         print(f"{rec.id} {frame} {loc} {trans_except} {pep_raw.index('*')} {index}")
+
+
+def test_to_dict():
+    from Bio.Seq import Seq
+    from Bio.SeqRecord import SeqRecord
+
+    seqs = [SeqRecord(Seq(i), "1") for i in ("AAA", "AAAT", "AAAT")]
+    assert {k: v.seq for k, v in gff.to_dict(seqs).items()} == {
+        "1": Seq("AAA"),
+        "1-1": Seq("AAAT"),
+    }

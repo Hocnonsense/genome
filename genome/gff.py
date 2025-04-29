@@ -2,11 +2,12 @@
 """
 * @Date: 2022-10-12 19:32:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-17 19:37:42
+* @LastEditTime: 2025-04-29 10:22:01
 * @FilePath: /genome/genome/gff.py
 * @Description:
 """
 
+from functools import wraps
 import gzip
 import warnings
 from pathlib import Path
@@ -403,6 +404,25 @@ class Parse:
             min_aa_length=min_aa_length,
             auto_fix=auto_fix,
         )
+
+
+def to_dict(
+    seqs: Iterable[SeqRecord],
+):
+    seqd: dict[str, list[SeqRecord]] = {}
+    for seq in seqs:
+        if not isinstance(seq.id, str):
+            seq.id = str(seq.id)
+        seql = seqd.setdefault(seq.id, [])
+        if not any(i for i in seql if i.seq == seq.seq):
+            seql.append(seq)
+    seqd1 = {}
+    for seql in seqd.values():
+        seqd1[seql[0].id] = seql[0]
+        for i, seq in enumerate(seql[1:], 1):
+            seq.id = f"{seq.id}-{i}"
+            seqd1[seq.id] = seq
+    return seqd1
 
 
 def extract(

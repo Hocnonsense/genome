@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-10 16:48:56
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:25:40
- * @FilePath: /genome/genome/pyrule/workflow/genome.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-29 10:32:27
+* @FilePath: /genome/genome/pyrule/workflow/genome.smk
  * @Description:
 """
 
@@ -32,10 +32,12 @@ rule gff_2_fa:
 
         SeqIO.write(
             sorted(
-                gff.Parse(input.gff).extract(
-                    translate=params.suffix == "faa",
-                    min_aa_length=int(params.min_aa_len),
-                ),
+                gff.to_dict(
+                    gff.Parse(input.gff).extract(
+                        translate="faa" == params.suffix,
+                        min_aa_length=int(params.min_aa_len),
+                    )
+                ).values(),
                 key=lambda x: x.id,
             ),
             output.faa,
