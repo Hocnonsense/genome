@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-11 20:38:07
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-24 13:17:00
+* @LastEditTime: 2025-04-29 20:02:44
 * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
@@ -170,8 +170,7 @@ rule collect_all_bin_statistic:
             {
                 i: BinStatisticContainer.read_gff(
                     params.f_string.format(genome_prefix=genome_prefix, **wildcards)
-                )
-                .statistic()
+                ).statistic()
                 for i, genome_prefix in genomes.items()
             },
         ).to_csv(output.bin_statistic, sep="\t")
@@ -196,8 +195,7 @@ rule collect_all_bin_gene_statistic:
             {
                 i: GeneStatisticContainer.read_gff(
                     params.f_string.format(genome_prefix=genome_prefix)
-                )
-                .statistic()
+                ).statistic()
                 for i, genome_prefix in genomes.items()
             },
         ).to_csv(output.bin_statistic, sep="\t")
@@ -225,7 +223,7 @@ rule collect_all_genome2gene:
                     genome_prefix=genome_prefix, **wildcards
                 )
                 peps = sorted(
-                    gff.Parse(gff_file).extract(),
+                    gff.to_dict(gff.Parse(gff_file).extract()).values(),
                     key=lambda x: x.id,
                 )
                 for pep in peps:

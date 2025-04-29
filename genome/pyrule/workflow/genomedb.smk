@@ -1,8 +1,8 @@
 """
  * @Date: 2025-01-13 17:27:32
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-22 16:23:37
- * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-04-29 19:57:40
+* @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
 
@@ -28,10 +28,13 @@ rule gff_2_fa_label:
         from genome import gff
 
         with open(output.faa, "w") as f:
-            for faa in gff.Parse(input.gff).extract(
-                translate=params.suffix == "faa",
-                min_aa_length=int(params.min_aa_len),
-            ):
+            seqs = gff.to_dict(
+                gff.Parse(input.gff).extract(
+                    translate="faa" == params.suffix,
+                    min_aa_length=int(params.min_aa_len),
+                )
+            )
+            for faa in sorted(seqs.values(), key=lambda x: x.id):
                 if faa.seq.startswith("*"):
                     continue
                     # faa.id = f"{faa.id}_partial"
@@ -67,9 +70,10 @@ rule extract_fna_ko:
         select_f_a="{any}{bins_seperator}bins/union/pan{predicter}-chr{marker}ge{min_aa_len}-{db}={identifier}.{f_a}",
     params:
         genomes=rules.genome_pan_transporter.params.expand_genomes("{genome}"),
-        translate=lambda _: {"fna": False, "faa": True}[_.f_a],
+        suffix="{f_a}",
         marker="{marker}",
         identifier="{identifier}",
+        min_aa_len="{min_aa_len}",
     wildcard_constraints:
         f_a="fna|faa",
         db="ko",
@@ -94,7 +98,13 @@ rule extract_fna_ko:
                 )
                 if len(select_gene) == 0:
                     continue
-                for seq in gff.parse(gf).extract(translate=params.translate):
+                seqs = gff.to_dict(
+                    gff.Parse(gf).extract(
+                        translate="faa" == params.suffix,
+                        min_aa_length=int(params.min_aa_len),
+                    )
+                )
+                for seq in seqs.values():
                     if seq.id in select_gene:
                         seq.id = f"{g}{params.marker}{seq.id}"
                         print(seq.format("fasta-2line"), file=fi)
