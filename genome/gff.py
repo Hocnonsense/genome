@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-12 19:32:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-29 10:22:01
+* @LastEditTime: 2025-05-12 21:15:53
 * @FilePath: /genome/genome/gff.py
 * @Description:
 """
@@ -168,7 +168,7 @@ def infer_refseq_gene_id(rec_id: str | None, fet: SeqFeature):
 
 
 @InferGeneId.rec
-def infer_trnascan_rna_id(rec_id: str | None, fet: SeqFeature):
+def feat_id(rec_id: str | None, fet: SeqFeature):
     # assert fet.id.startswith(rec_id)
     return fet.id
 

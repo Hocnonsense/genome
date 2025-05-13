@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-04-15 13:56:44
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:45:07
- * @FilePath: /genome/genome/gene_annot.py
- * @Description:
+* @Date: 2022-04-15 13:56:44
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-05-13 22:20:59
+* @FilePath: /genome/genome/gene_annot.py
+* @Description:
 """
 
 import os
 import re
 from pathlib import Path
-from typing import Generator, NamedTuple, Optional, Union
+from typing import Generator, Iterable, NamedTuple, Optional, Union
 
 import pandas as pd
 
@@ -220,3 +220,78 @@ def main(
         all_gene_annots.to_csv(all_gene_annots_path)
 
     return all_gene_annots
+
+
+class MantisAnnot(NamedTuple):
+    query: str
+    ref_files: list[str]
+    annots: dict[str, list[str]]
+
+    @staticmethod
+    def parse_links(links: Iterable[tuple[str, str]]):
+        all_annots: dict[str, list[str]] = {}
+        for k, v in links:
+            all_annots.setdefault(k, []).append(v)
+        return all_annots
+
+    @classmethod
+    def from_links(cls, line: str):
+        (query, ref_files, ref_hits, consensus_hits, total_hits, _, links) = (
+            line.strip().split("\t", 6)
+        )
+        return cls(
+            query,
+            ref_files.split(";"),
+            cls.parse_links(i.split(":", 1) for i in links.split("\t")),  # type: ignore[misc]
+        )
+
+    @classmethod
+    def from_refs(cls, line: str):
+        (query, ref_files, ref_hits, consensus_hits, total_hits, _, links) = (
+            line.strip().split("\t", 6)
+        )
+        return cls(
+            query,
+            ref_files.split(";"),
+            cls.parse_links(zip(ref_files.split(";"), ref_hits.split(";"))),
+        )
+
+    @classmethod
+    def get_link_annots(cls, mantis_file: Path):
+        """
+        >>> mantis_file = Path("results/genes-mantis.tsv")
+        """
+        total_annots: dict[str, dict[str, list[str]]] = {}
+        with open(mantis_file) as fi:
+            next(fi)
+            for line in fi:
+                if not line:
+                    continue
+                m_a = cls.from_links(line)
+                query, annots = m_a.query, m_a.annots
+                total_annots[query] = {
+                    "KO": annots.pop("kegg_ko", []),
+                    "COG": annots.pop("cog", []),
+                    "arCOG": annots.pop("arcog", []),
+                    # "description": annots.pop("description", []),
+                    "PFAM": annots.pop("pfam", []),
+                    "EC": annots.pop("enzyme_ec", []),
+                    **annots,
+                }
+        return pd.DataFrame(total_annots).T
+
+    @classmethod
+    def get_ref_annots(cls, mantis_file: Path):
+        """
+        >>> mantis_file = Path("results/genes-mantis.tsv")
+        """
+        total_annots: dict[str, dict[str, list[str]]] = {}
+        with open(mantis_file) as fi:
+            next(fi)
+            for line in fi:
+                if not line:
+                    continue
+                m_a = cls.from_refs(line)
+                query, annots = m_a.query, m_a.annots
+                total_annots[query] = annots
+        return pd.DataFrame(total_annots).sort_index().T
