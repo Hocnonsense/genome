@@ -2,7 +2,7 @@
 """
 * @Date: 2022-04-15 13:56:44
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-05-13 22:20:59
+* @LastEditTime: 2025-05-13 22:29:55
 * @FilePath: /genome/genome/gene_annot.py
 * @Description:
 """
@@ -236,19 +236,19 @@ class MantisAnnot(NamedTuple):
 
     @classmethod
     def from_links(cls, line: str):
-        (query, ref_files, ref_hits, consensus_hits, total_hits, _, links) = (
-            line.strip().split("\t", 6)
+        (query, ref_files, ref_hits, consensus_hits, total_hits, _links) = (
+            line.strip().split("\t", 5)
         )
         return cls(
             query,
             ref_files.split(";"),
-            cls.parse_links(i.split(":", 1) for i in links.split("\t")),  # type: ignore[misc]
+            cls.parse_links(i.split(":", 1) for i in _links[2:].split("\t")),  # type: ignore[misc]
         )
 
     @classmethod
     def from_refs(cls, line: str):
-        (query, ref_files, ref_hits, consensus_hits, total_hits, _, links) = (
-            line.strip().split("\t", 6)
+        (query, ref_files, ref_hits, consensus_hits, total_hits, _links) = (
+            line.strip().split("\t", 5)
         )
         return cls(
             query,

@@ -2,7 +2,7 @@
 """
 * @Date: 2025-05-13 22:03:08
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-05-13 22:22:27
+* @LastEditTime: 2025-05-14 10:38:09
 * @FilePath: /genome/tests/genome/test_gene_annot.py
 * @Description:
 """
@@ -15,7 +15,7 @@ from tests import Path, temp_output, test_files, test_temp
 
 class TestMantisAnnot:
     @staticmethod
-    def make_file():
+    def make_file(test_temp: Path):
         lines = (
             "Query\tRef_Files\tRef_Hits\tConsensus_hits\tTotal_hits\t|\tLinks\n"
             "BCX55083.1\tNOGG_merged;Pfam-A\t688245.CtCNB1_4570;RHH_4\t2\t2\t|\tcog:COG4321\tdescription:Ribbon-helix-helix domain\teggnog:1MZP2\teggnog:2VU7X\teggnog:4AEFF\teggnog:COG4321\tpfam:PF13467\tpfam:RHH_4\n"
@@ -27,8 +27,9 @@ class TestMantisAnnot:
             print(lines.strip(), file=text)
         return Path(text.name)
 
-    def test_get_ref_annots(self):
-        file = self.make_file()
+    @temp_output
+    def test_get_ref_annots(self, test_temp: Path):
+        file = self.make_file(test_temp)
         annots = gene_annot.MantisAnnot.get_ref_annots(file)
         assert annots.to_csv() == (
             ",NOGG_merged,Pfam-A,kofam_merged\n"
@@ -38,8 +39,9 @@ class TestMantisAnnot:
             "BCX50661.1,['688245.CtCNB1_0252'],\"['HTH_1', 'LysR_substrate']\",['K09681']\n"
         )
 
-    def test_get_link_annots(self):
-        file = self.make_file()
+    @temp_output
+    def test_get_link_annots(self, test_temp: Path):
+        file = self.make_file(test_temp)
         annots = gene_annot.MantisAnnot.get_link_annots(file)
         assert annots.to_csv() == (
             """,KO,COG,arCOG,PFAM,EC,description,eggnog,go\n"""
