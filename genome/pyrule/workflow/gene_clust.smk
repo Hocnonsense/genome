@@ -1,19 +1,12 @@
 """
- * @Date: 2022-10-10 15:30:31
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-16 22:26:04
- * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
- * @Description:
+* @Date: 2022-10-10 15:30:31
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-05-21 22:28:39
+* @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
+* @Description:
     use mmseq to cluster genes
 
 """
-
-# from genome.pyrule import mmseq_clust_95
-#
-# mmseq_clust_95.register(workflow, name="gene_clust_workflow")(
-#    rules=["_py"], exclude_rules=[], name_modifier="mmseq_clust_95"
-# )
-
 
 from genome.gene_clust import MmseqOut, UniRefClu
 from genome.gene_clust import extract as gene_clust_extract
