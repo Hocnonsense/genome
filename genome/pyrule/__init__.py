@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2023-07-22 15:34:50
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 16:34:15
- * @FilePath: /genome/genome/pyrule/__init__.py
- * @Description:
+* @Date: 2023-07-22 15:34:50
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-05-21 22:25:34
+* @FilePath: /genome/genome/pyrule/__init__.py
+* @Description:
 """
 
 from pathlib import Path
@@ -18,9 +18,9 @@ except ImportError:
 
 import snakemake.workflow as _wf
 
-envs_dir = Path(importlib_resources.files("genome.pyrule") / "envs")
+envs_dir = Path(importlib_resources.files("genome.pyrule")) / "envs"  # type: ignore[reportArgumentType]
 smk_conda_env = Path(__file__).parent.parent.parent / ".snakemake" / "conda"
-rules_dir = Path(importlib_resources.files("genome.pyrule") / "workflow")
+rules_dir = Path(importlib_resources.files("genome.pyrule")) / "workflow"  # type: ignore[reportArgumentType]
 
 
 def general_register(
@@ -33,7 +33,7 @@ def general_register(
         workflow.module(
             name,
             snakefile=snakefile,
-            config=((default_config or {}) | (config or {})) or None,
+            config=(default_config or {}) | (config or {}),
         )
 
         def userule(
