@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-15 17:05:11
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-24 13:24:39
+* @LastEditTime: 2025-06-27 15:12:38
 * @FilePath: /genome/genome/bin_statistic.py
 * @Description:
 """
@@ -86,7 +86,7 @@ class Contig2Bin:
         }
         for i in self.contigs:
             if i.name in self.contig2bin_tsv.index:
-                bin2seqs[self.contig2bin_tsv.loc[i.name, "bin"]][i.name] = i
+                bin2seqs[str(self.contig2bin_tsv.loc[i.name, "bin"])][i.name] = i
         return bin2seqs
 
     def parse_contigs(self, contigs: PathLike | Iterable[SeqRecord.SeqRecord]):
@@ -132,9 +132,11 @@ class Contig2Bin:
     def extract(self, bin_name: str | int) -> Path: ...
 
     @overload
-    def extract(self, bin_name: str | int, *bin_names: str | int) -> Iterable[Path]: ...
+    def extract(
+        self, bin_name: str | int, bin_name2: str | int, /, *bin_names: str | int
+    ) -> Iterable[Path]: ...
 
-    def extract(self, bin_name: str | int, *bin_names: str | int):
+    def extract(self, bin_name: str | int, *bin_names: str | int):  # type: ignore[reportInconsistentOverload]
         if isinstance(bin_name, int):
             b = self.contig2bin_tsv["bin"].unique()[bin_name]
         else:
@@ -230,28 +232,37 @@ class SeqStat(NamedTuple):
     ):
         _seq_stats: dict[str, SeqStat] = {}
         min_gene_len = int(min_aa_len) * 3
-        for seq in seq_iter:
-            if len(seq.seq) < min_contig_len:
+        for rec_enum, rec in enumerate(seq_iter):
+            if len(rec.seq) < min_contig_len:
                 continue
-            upper_seq = seq.seq.upper()
-            a, c, g, t, u, n = (upper_seq.count(base) for base in "ACGTUN")
+            sequence_arr = np.frombuffer(bytes(rec.seq).upper(), dtype="S1")
+            base_count = {
+                b.decode(): int(n)
+                for b, n in zip(*np.unique(sequence_arr, return_counts=True))
+            }
+            at = sum(base_count.get(i, 0) for i in "ATWU")
+            gc = sum(base_count.get(i, 0) for i in "CGS")
 
-            at = a + u + t
-            gc = g + c
+            gc_content = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
 
-            gcContent = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
-
-            cds_mask = np.zeros(len(seq.seq))
+            cds_mask = np.zeros(len(rec.seq))
             n_cds = 0
-            for fet in seq.features:
+            for fet in rec.features:
                 if fet.type == "CDS" and fet.location is not None:
                     if len(fet) < min_gene_len:
                         continue
                     cds_mask[fet.location.start : fet.location.end] = 1
                     n_cds += 1
-            assert seq.id
-            _seq_stats[seq.id] = cls(
-                len(seq), gcContent, gc, at, n, n_cds, int(np.sum(cds_mask))
+            seq_n = sequence_arr == b"N"
+            cds_mask[seq_n] = 0
+            _seq_stats[rec.id or str(rec_enum)] = cls(
+                len(rec),
+                gc_content,
+                gc,
+                at,
+                int(sum(seq_n)),
+                n_cds,
+                int(np.sum(cds_mask)),
             )
         return _seq_stats
 
@@ -365,7 +376,7 @@ class BinStatisticContainer(_BinStatisticContainer):
             contig_n50=gss.n50,
             ambiguous_bases_num=gss.numN,
             contig_cutoff=min_contig_len,
-            coding_density=float(coding_len) / gss.sum,
+            coding_density=float(coding_len) / (gss.sum - gss.numN),
             genes_num=num_orfs,
         )
 
