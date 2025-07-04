@@ -2,14 +2,13 @@
 """
 * @Date: 2025-07-04 08:22:24
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 08:26:15
+* @LastEditTime: 2025-07-04 08:31:34
 * @FilePath: /genome/genome/translate.py
 * @Description:
 """
 # """
 
 import re
-from pathlib import Path
 
 from Bio.Data import IUPACData
 from Bio.SeqFeature import SeqFeature, SimpleLocation

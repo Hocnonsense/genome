@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-12 19:32:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 08:27:12
+* @LastEditTime: 2025-07-04 08:36:39
 * @FilePath: /genome/genome/gff.py
 * @Description:
 """
@@ -11,7 +11,7 @@ import gzip
 import re
 import warnings
 from pathlib import Path
-from typing import Callable, Generator, Iterable, TextIO
+from typing import Callable, Generator, Iterable, TextIO, overload
 
 import gffutils
 import gffutils.feature
@@ -21,10 +21,10 @@ from Bio.SeqRecord import SeqRecord
 from gffutils.exceptions import EmptyInputError
 from gffutils.iterators import _FileIterator as _GffutilsFileIterator
 from gffutils.iterators import feature_from_line
-from matplotlib.pylab import overload
 
 from . import GFFOutput
-from .translate import translate as _translate, update_cds_annotations
+from .translate import translate as _translate
+from .translate import update_cds_annotations
 
 PathLike = str | Path
 
@@ -355,7 +355,6 @@ def extract(
 
     rec: SeqRecord
     for rec in seq_record:
-        len_rec = len(rec)
         fet: SeqFeature
         for fet in rec.features:
             if fet.type != fet_type or fet.location is None:

@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-13 14:40:35
+* @LastEditTime: 2025-07-04 09:12:47
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -31,10 +31,10 @@ class CodonTable:
         gc_rank: float
         family: Seq
 
-    def __init__(self, table=11):
+    def __init__(self, table: int | str = 11):
         self.table = table
         _table = {
-            i: i.translate(table)
+            i: i.translate(table)  # type: ignore[reportArgumentType]
             for i in (Seq("".join(i)) for i in itertools.product("ACGT", repeat=3))
         }
         aa2codon: dict[Seq, set[Seq]] = {}
@@ -75,7 +75,7 @@ class CodonTable:
         self.pcf: Final = sf_aa_codon
 
     @classmethod
-    def get(cls, table=11, _table_cache={}) -> "CodonTable":
+    def get(cls, table: int | str = 11, _table_cache={}) -> "CodonTable":
         if table not in _table_cache:
             _table_cache[table] = cls(table)
         return _table_cache[table]
@@ -85,7 +85,7 @@ class CodonTable:
         seq_cds: Seq,
         transl_except: set[int] = set(),
         errorfile_handle=sys.stderr,
-        id="*",
+        id: int | str | None = "*",
     ):
         codon_used = {c: 0 for c in self.codon_table}
         gene_codon_length = 0
@@ -362,7 +362,8 @@ def aa_mw(seq_aa: Seq):
 
 
 from .bin_statistic import _BinStatisticContainer
-from .gff import extract, _translate, check_frame
+from .gff import extract, _translate
+from .translate import check_frame
 
 
 class GeneStat(NamedTuple):
@@ -433,7 +434,7 @@ class GeneStatisticContainer(_BinStatisticContainer):
         return self.GeneStatistic(
             scu=csf_all.SCU,
             gc_variability=csf_all.gc_variability,
-            table=csf_all.table,
+            table=int(csf_all.table),
             C_ARSC=arsc_scale.C,
             N_ARSC=arsc_scale.N,
             S_ARSC=arsc_scale.S,
