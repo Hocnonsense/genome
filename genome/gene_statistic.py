@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 09:12:47
+* @LastEditTime: 2025-07-04 09:28:45
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -434,7 +434,7 @@ class GeneStatisticContainer(_BinStatisticContainer):
         return self.GeneStatistic(
             scu=csf_all.SCU,
             gc_variability=csf_all.gc_variability,
-            table=int(csf_all.table),
+            table=csf_all.table,
             C_ARSC=arsc_scale.C,
             N_ARSC=arsc_scale.N,
             S_ARSC=arsc_scale.S,
@@ -446,7 +446,7 @@ class GeneStatisticContainer(_BinStatisticContainer):
     class GeneStatistic(NamedTuple):
         scu: float
         gc_variability: float
-        table: float
+        table: str | int
         C_ARSC: float
         N_ARSC: float
         S_ARSC: float
