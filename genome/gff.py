@@ -2,22 +2,20 @@
 """
 * @Date: 2022-10-12 19:32:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-05-12 21:15:53
+* @LastEditTime: 2025-07-04 08:27:12
 * @FilePath: /genome/genome/gff.py
 * @Description:
 """
 
-from functools import wraps
 import gzip
+import re
 import warnings
 from pathlib import Path
 from typing import Callable, Generator, Iterable, TextIO
-import re
 
 import gffutils
 import gffutils.feature
 from Bio import SeqIO
-from Bio.Data import IUPACData
 from Bio.SeqFeature import SeqFeature, SimpleLocation
 from Bio.SeqRecord import SeqRecord
 from gffutils.exceptions import EmptyInputError
@@ -26,6 +24,7 @@ from gffutils.iterators import feature_from_line
 from matplotlib.pylab import overload
 
 from . import GFFOutput
+from .translate import translate as _translate, update_cds_annotations
 
 PathLike = str | Path
 
@@ -59,12 +58,12 @@ def write(
         if str(out_handle).endswith(".gz"):
             out_handle = gzip.open(out_handle, "w")  # type: ignore[assignment]
         else:
-            out_handle = open(out_handle, "w")
+            out_handle = open(out_handle, "w")  # type: ignore[assignment]
     return GFFOutput.write(recs, out_handle, include_fasta)
 
 
 class _FastaGffFileIterator(_GffutilsFileIterator):
-    open_function = staticmethod(as_text_io)
+    open_function = staticmethod(as_text_io)  # type: ignore[reportAssignmentType]
 
     def _custom_iter(self):
         self.fasta_start_pointer = -1
@@ -76,7 +75,7 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
         if not fh.closed:
             i = 0
             while True:
-                line = fh.readline()
+                line: str | bytes = fh.readline()
                 if not line:
                     return
                 i += 1
@@ -86,6 +85,7 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
                 self.current_item = line
                 self.current_item_number = i
 
+                assert isinstance(line, str)
                 if line.startswith("##FASTA"):
                     self.fasta_start_pointer = fh.tell()
                     return
@@ -99,7 +99,7 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
                     self._directive_handler(line)
                     continue
 
-                if line.startswith(("#")) or len(line) == 0:
+                if line.startswith("#") or len(line) == 0:
                     continue
 
                 # (If we got here it should be a valid line)
@@ -134,14 +134,14 @@ class InferGeneId:
     funcs: dict[str, FUNC_TYPE] = {}
 
     @classmethod
-    def rec(self, fn: FUNC_TYPE):
-        self.funcs[fn.__name__] = fn
+    def rec(cls, fn: FUNC_TYPE):
+        cls.funcs[fn.__name__] = fn
         return fn
 
     @classmethod
-    def get(self, fn) -> FUNC_TYPE:
+    def get(cls, fn) -> FUNC_TYPE:
         if isinstance(fn, str):
-            return self.funcs[fn]
+            return cls.funcs[fn]
         return fn
 
 
@@ -199,105 +199,15 @@ def to_seqfeature(feature: gffutils.feature.Feature):
         "frame": [feature.frame],
     }
     qualifiers.update(feature.attributes)
-    start, stop = sorted((feature.start, feature.end))
+    start, stop = sorted((feature.start or 0, feature.end or 0))
     return SeqFeature(
         # Convert from GFF 1-based to standard Python 0-based indexing used by
         # BioPython
         SimpleLocation(start - 1, stop, strand=_biopython_strand[feature.strand]),
-        id=feature.id,
+        id=feature.id or "",
         type=feature.featuretype,
         qualifiers=qualifiers,
     )
-
-
-# region TranslExcept
-class TranslExcept:
-    PATTERN = re.compile(
-        r"\(pos:([0-9]+)\.\.([0-9]+),aa:([A-Za-z]+)\)|"
-        r"\(pos:complement\(([0-9]+)\.\.([0-9]+)\),aa:([A-Za-z]+)\)"
-    )
-
-    def __new__(cls, text: "str|TranslExcept"):
-        if isinstance(text, cls):
-            return text
-        return super().__new__(cls)
-
-    def __init__(self, text: str):
-        # GFF entry 是一行 GFF 文件的记录 (字符串)
-        self.text = text
-        _region, self.strand = self.parse_transl_except(text)
-        self.start = int(_region[0])
-        self.end = int(_region[1])
-        self.aa: str = _region[2]
-
-    def __repr__(self):
-        if self.strand == 1:
-            return f"(pos:{self.start}..{self.end},aa:{self.aa})"
-        elif self.strand == -1:
-            return f"(pos:complement({self.start}..{self.end}),aa:{self.aa})"
-        raise NotImplementedError(f"Unknown strand {self.strand}")
-
-    @classmethod
-    def parse_transl_except(cls, text: str):
-        """
-        AP024703.1	DDBJ	CDS	3092001	3095066	.	+	0	ID=cds-BCX53216.1;Note=codon on position 197 is selenocysteine opal codon.;transl_except=(pos:3092589..3092591,aa:Sec)
-        JACSQK010000001.1	Protein Homology	CDS	324590	327646	.	-	0	ID=cds-MBD7959139.1;transl_except=(pos:complement(327056..327058),aa:Sec)
-        """
-        matches = cls.PATTERN.findall(text)
-        if len(matches) != 1:
-            raise ValueError(f"Invalid transl_except: {text}=>{matches}")
-        if matches[0][:3] == ("", "", ""):
-            return matches[0][3:], -1
-        if matches[0][3:] == ("", "", ""):
-            return matches[0][:3], 1
-        raise NotImplementedError(f"{matches[0][:3]} {matches[0][3:]}")
-
-    def index(self, position: SimpleLocation, partial: bool):
-        """
-        >>> TranslExcept("(pos:3092589..3092591,aa:Sec)").index(SimpleLocation(3092001, 3095066, 1))
-        (196, 'Sec')
-        >>> TranslExcept("(pos:complement(327056..327058),aa:Sec)").index(SimpleLocation(324590, 327646, -1))
-        (196, 'Sec')
-        """
-        assert self.strand == position.strand
-        if self.strand == 1:
-            return (self.start - 1 - position.start - partial) // 3, self.aa
-        elif self.strand == -1:
-            return (position.end - partial - self.end) // 3, self.aa
-        raise NotImplementedError
-
-    @classmethod
-    def to_str(cls, transl_except: str, location: SimpleLocation, partial=False):
-        return ";".join(
-            "@".join(str(i) for i in cls(ia).index(location, partial))
-            for ia in transl_except
-        )
-
-    @classmethod
-    def un_str(cls, text: str | SeqRecord):
-        if isinstance(text, SeqRecord):
-            text = str(text.annotations.get("transl_except", ""))
-        if not text:
-            return
-        for i in text.split(";"):
-            i, a = i.split("@")
-            yield int(i), a
-
-    @classmethod
-    def modify(cls, aa, text: str, how="X"):
-        """
-        U = "Sec";  selenocysteine
-        O = "Pyl";  pyrrolysine
-        """
-        for j, ea in cls.un_str(text):
-            if ea in IUPACData.protein_letters_3to1_extended:
-                ea = IUPACData.protein_letters_3to1_extended[ea]
-            if len(ea) == 1:
-                aa = aa[:j] + ea + aa[j + 1 :]
-        return aa
-
-
-# endregion TranslExcept
 
 
 def parse(gff: PathLike, fa: PathLike | None = None):
@@ -316,7 +226,7 @@ class Parse:
 
     def __init__(self, gff_or_fa: PathLike, create_now: bool | PathLike = True):
         self.fa = _FastaGffFileIterator(gff_or_fa)
-        self.db: gffutils.FeatureDB = None
+        self.db: gffutils.FeatureDB = None  # type: ignore[assignment]
         if isinstance(create_now, (Path, str)):
             gff_file = create_now
             self.create(verbose=False, expect_fa=False)  # init pointer of fa
@@ -451,88 +361,47 @@ def extract(
             if fet.type != fet_type or fet.location is None:
                 continue
             # region extract seq
-            if fet.location.end >= len_rec:
-                # circular genome without overlap
-                seq: SeqRecord = fet.extract(rec + rec)
-            else:
-                seq = fet.extract(rec)
-            seq.features.clear()  # Drop features from `SeqFeature.extract`
-            seq.features.append(fet)
-            # endregion extract seq
             if fet_type == "CDS":
-                if len(seq) < min_gene_length:
+                if len(fet) < min_gene_length:
                     continue
-                if translate:
-                    seq = _translate(seq, fet, auto_fix=auto_fix)
-                else:
-                    seq.annotations["transl_table"] = fet.qualifiers.get(
-                        "transl_table", ["Standard"]
-                    )[0]
-                    seq.annotations["frame"] = check_frame(fet.qualifiers)
-                    if "transl_except" in fet.qualifiers:
-                        seq.annotations["transl_except"] = check_transl_except(fet)
-                seq.annotations["partial"] = fet.qualifiers.get("partial", ["00"])[0]
-            seq.id = call_gene_id(rec.id, fet)
-            seq.description = " # ".join(
-                (
-                    str(i).strip()
-                    for i in (
-                        "",
-                        fet.location.start + 1,
-                        fet.location.end,
-                        fet.location.strand,
-                        ";".join(
-                            f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()
-                        ),
-                    )
-                )
-            )
+            seq = extract1(rec, fet, call_gene_id)
+            if fet_type == "CDS" and translate:
+                seq = _translate(seq, fet, auto_fix=auto_fix)
             yield seq
 
 
-def check_frame(annot: dict):
-    frame_ = annot.get("frame", [0])
-    frame_str = frame_[0] if isinstance(frame_, list) else frame_
-    return int(frame_str) % 3 if frame_str and frame_str != "." else 0
-
-
-def check_transl_except(fet: SeqFeature):
-    if "transl_except" in fet.qualifiers:
-        frame = check_frame(fet.qualifiers)
-        assert isinstance(fet.location, SimpleLocation)
-        return TranslExcept.to_str(
-            fet.qualifiers["transl_except"], fet.location, partial=frame > 0
-        )
-    return ""
-
-
-def translate(rec: SeqRecord, fet: SeqFeature | None = None, auto_fix=True):
-    if fet is None:
-        annotations = rec.annotations
-        frame = check_frame(annotations)
+def extract1(
+    rec: SeqRecord,
+    fet: SeqFeature,
+    call_gene_id: InferGeneId.FUNC_TYPE = infer_gene_id,
+):
+    len_rec = len(rec)
+    assert fet.location is not None
+    start, end = int(fet.location.start), int(fet.location.end)  # type: ignore[reportArgumentType]
+    if end >= len_rec:
+        # circular genome without overlap
+        seq: SeqRecord = fet.extract(rec + rec)  # type: ignore[reportArgumentType]
     else:
-        annotations = {
-            k: fet.qualifiers[k][0]
-            for k in ("transl_table", "partial")
-            if k in fet.qualifiers
-        }
-        frame = annotations["frame"] = check_frame(fet.qualifiers)
-    partial = annotations.get("partial", frame) in {0, "00"}
-    if fet is not None and (transl_except := check_transl_except(fet)):
-        annotations["transl_except"] = transl_except
-    seq = rec[frame:].translate(table=str(annotations.get("transl_table", "Standard")))
-    seq.annotations.update(annotations)
-    if auto_fix:
-        if partial:
-            # here, if partial is "true" in refseq database, will not fix
-            # elif frame is not 0, will not fix
-            seq.seq = "M" + seq.seq[1:]
-        if "transl_except" in annotations:
-            seq.seq = TranslExcept.modify(seq.seq, str(annotations["transl_except"]))
+        seq = fet.extract(rec)  # type: ignore[reportArgumentType]
+    seq.features.clear()  # Drop features from `SeqFeature.extract`
+    seq.features.append(fet)
+    # endregion extract seq
+    seq.id = call_gene_id(rec.id, fet)
+    seq.description = " # ".join(
+        (
+            str(i).strip()
+            for i in (
+                "",
+                start + 1,
+                end,
+                fet.location.strand,
+                ";".join(f"{k}={','.join(v)}" for k, v in fet.qualifiers.items()),
+            )
+        )
+    )
+    if fet.type == "CDS":
+        seq.annotations |= update_cds_annotations(fet)
     return seq
-
-
-_translate = translate
 
 
 def recover_qualifiers(description: str):

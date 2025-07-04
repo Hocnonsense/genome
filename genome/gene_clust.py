@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-15 21:29:41
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-15 16:04:40
- * @FilePath: /genome/genome/gene_clust.py
- * @Description:
+* @Date: 2022-10-15 21:29:41
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-01 16:40:24
+* @FilePath: /genome/genome/gene_clust.py
+* @Description:
 """
 
 
@@ -12,12 +12,12 @@ import os
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Collection, Iterable, Literal, NamedTuple
+from typing import TYPE_CHECKING, Collection, Iterable, Literal, NamedTuple
 
 import pandas as pd
 from Bio import SeqIO, SeqRecord
 
-from .pyrule import smk, rules_dir
+from .pyrule import rules_dir, smk
 
 PathLike = str | Path
 
@@ -67,13 +67,16 @@ class _CluBase:
             rep2all = df if i == 0 else rep2all.merge(df)
         return rep2all
 
-    def load_rep2all(self, keep=True) -> pd.DataFrame: ...
+    def load_rep2all(self, keep: Literal[True] = True) -> pd.DataFrame: ...
 
     @property
     def rep2all(self):
         return self.load_rep2all(keep=True)
 
-    def __iter__(self): ...
+    if TYPE_CHECKING:
+
+        def __iter__(self):
+            yield Path()
 
     @classmethod
     def exec_rep2all(
