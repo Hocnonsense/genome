@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-11 20:38:07
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-29 20:02:44
+* @LastEditTime: 2025-07-09 17:31:04
 * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
@@ -238,7 +238,6 @@ rule collect_genome_fetchMG_align:
         marker="{any}{bins_seperator}bins/pan{predicter}/fetchMGs_{marker}.collect.faa",
     run:
         from Bio import SeqIO
-        from pathlib import Path
 
 
         def iter_genome_fetchMG(markers):

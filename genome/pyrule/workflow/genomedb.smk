@@ -1,7 +1,7 @@
 """
  * @Date: 2025-01-13 17:27:32
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-29 19:57:40
+* @LastEditTime: 2025-07-09 17:31:28
 * @FilePath: /genome/genome/pyrule/workflow/genomedb.smk
  * @Description:
 """
@@ -79,7 +79,6 @@ rule extract_fna_ko:
         db="ko",
     localrule: True
     run:
-        from pathlib import Path
         import pandas as pd
         from genome.gene_annot import Gene2KO
         from genome import gff

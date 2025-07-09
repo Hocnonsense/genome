@@ -1,14 +1,11 @@
 """
  * @Date: 2022-10-08 11:54:54
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:11:01
+* @LastEditTime: 2025-07-09 17:32:02
 * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
 """
-
-from pathlib import Path
-
 
 FETCHMG_40_AA = [
     *("COG0012", "COG0016", "COG0018", "COG0048", "COG0049", "COG0052"),

@@ -1,8 +1,8 @@
 """
  * @Date: 2025-01-12 16:40:11
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-16 11:24:32
- * @FilePath: /genome/genome/pyrule/workflow/include_genomedb.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 17:31:53
+* @FilePath: /genome/genome/pyrule/workflow/include_genomedb.smk
  * @Description:
 
  include rules in genome package, intended to be used easily by outer snakemake workflow
@@ -30,13 +30,12 @@ try:
     import genome
 except ImportError:
     import sys as __sys
-    from pathlib import Path as __Path
 
-    __current_file = __Path(workflow.snakefile)
+    __current_file = Path(workflow.snakefile)
     # workflow
     __search_path = __current_file.parents[3]
     __sys.path.append(str(__search_path))
-    del __sys, __Path
+    del __sys
     import genome
 
 

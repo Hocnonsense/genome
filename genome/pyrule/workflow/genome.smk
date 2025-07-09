@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-10 16:48:56
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-29 10:32:27
+* @LastEditTime: 2025-07-09 17:31:24
 * @FilePath: /genome/genome/pyrule/workflow/genome.smk
  * @Description:
 """
@@ -93,8 +93,6 @@ rule prokka_fix:
     output:
         filetype="{any}-prokka_{kingdom}.{suffix}",
     run:
-        from pathlib import Path
-
         rename_dict: dict[str, str] = {}
         i = 0
         with open(input.log) as log_in:

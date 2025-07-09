@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-21 21:28:10
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-16 11:29:12
- * @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 17:32:09
+* @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
 
@@ -185,7 +185,6 @@ rule rename_filtered_ls_tsv:
     run:
         import os
         import pandas as pd
-        from pathlib import Path
 
 
         def readonly_and_ln_to(file_source: Path, file_target: Path):

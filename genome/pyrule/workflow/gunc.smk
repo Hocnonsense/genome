@@ -1,12 +1,10 @@
 """
  * @Date: 2023-12-22 15:23:06
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-24 13:04:11
- * @FilePath: /genome/genome/pyrule/workflow/gunc.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 17:31:31
+* @FilePath: /genome/genome/pyrule/workflow/gunc.smk
  * @Description:
 """
-
-from pathlib import Path
 
 
 rule gunc_download_db:
