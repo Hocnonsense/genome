@@ -6,6 +6,9 @@
 !*.smk
 !*.yaml
 
+!.github
+!.github/workflows/*.yml
+
 !setup.py
 !MANIFEST.in
 *.egg-info

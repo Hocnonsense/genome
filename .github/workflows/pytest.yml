@@ -1,0 +1,43 @@
+name: pytest
+
+on: [push]
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Modify python version in test env
+        shell: bash -el {0}
+        run: |
+          cp genome/pyrule/envs/genome.yaml test-environment.yml
+
+      - name: Setup snakemake environment
+        uses: mamba-org/setup-micromamba@v1
+        with:
+          environment-file: test-environment.yml
+          environment-name: snakemake-g
+
+      - name: Install snakemake from source
+        shell: bash -el {0}
+        run: |
+          conda config --set channel_priority strict
+
+          pip install -e .
+
+      - name: Test local
+        env:
+          CI: true
+          #PYTHONTRACEMALLOC: 10
+        shell: bash -el {0}
+        run: |
+          python -m pytest -v --show-capture=stderr \
+            tests
+
+      - name: List directory structure
+        run: |
+          ls -R

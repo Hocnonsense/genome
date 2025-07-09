@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-11 13:49:35
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:27:08
- * @FilePath: /genome/genome/prokka.py
- * @Description:
+* @Date: 2022-10-11 13:49:35
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 15:31:47
+* @FilePath: /genome/genome/prokka.py
+* @Description:
 """
 
 import os
@@ -15,7 +15,7 @@ from typing import Iterable, Literal, Union
 
 from Bio import SeqIO, SeqRecord
 
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 
 PathLike = Union[str, Path]
@@ -30,7 +30,7 @@ def prokka_gff_onethread(
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("inital filename must provided")
+            raise ValueError("initial filename must be provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prokka_{kingdom}.gff")
@@ -112,7 +112,7 @@ def prokka_gff_multithread(
     else:
         genome_files.extend(_genome_files)
 
-    target_smk_file = smk_workflow / "genome.smk"
+    target_smk_file = rules_dir / "genome.smk"
     tpmf_outs = [f"{str(genome)[:-3]}-prokka_{kingdom}.gff" for genome in genome_files]
     tpmf_outs_str = " ".join(tpmf_outs)
     smk_params = (

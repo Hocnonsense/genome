@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-18 11:26:53
+ * @LastEditTime: 2025-02-07 21:43:25
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,6 +13,39 @@ changelog for genome
 
 ## changelog
 
+- 0.2.4+:
+  - feat:
+    - `rename_filtered_ls_tsv` to rename bin name after filtering
+    - `gff.parse` may make things clearer
+      - separate `extract`
+      - separate `translate` (as well as alias `_translate`)
+    - `gene_statistic` that estimate feature of gene,
+      - i.e.:
+        - [scu](https://doi.org/10.1093/molbev/mss201)
+        - [gc_variability](https://www.nature.com/articles/s41564-017-0008-3)
+        - [N-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+        - [C-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+      - the values can be calculated for entire genome using `GeneStatisticContainer.statistic`
+    - update `bin_statistic.contig2bin` to `Contig2Bin` and `Binput`
+      - `bin_statistic.contig2bin` alias to `bin_statistic.Contig2Bin(contig2bin_tsv, contigs)(outdir)`
+      - `bin_statistic_ext.format_bin_input` alias to `bin_statistic.Binput.parse`
+      - old APIs will be removed in next few versions
+    - update `call_gene_id` usage in `gff.Parse.extract`
+      - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
+    - rename `smk_workflow` to `rules_dir`,
+    - add `rules_dir / "pan_concat.smk"` from meer_omics
+    - add `rules_dir / "include_genomedb.smk"` to handle all methods other than binning methods for quick usage
+    - add `mmseq_family` to cluster genes
+    - `gff_2_fa_label` to extract gene with genome label from gff
+    - add `InferGeneId` in gff to better handle gene id inference
+    - add `mmseq_species` to cluster genes and related functions in `gene_clust`
+    - `BinStatisticContainer` encoding filter using `min_aa_len=33`
+    - `aai.smk` to calculate AAI
+    - muscle in `tree.smk`
+    - extract_fna_ko in `genomedb.smk`
+    - drep methods
+    - update `gff` and `gene_statistic`  to handle transl_execpt case such as `Sec`
+    - ignore sequence with illegal char in `gene_statistic`
 - 0.2.4:
   - feat:
     - `UniRefClu` method to cluster genes
@@ -37,7 +70,7 @@ changelog for genome
       - `-`: indicate the software
       - `_`: indicate the param select in given software
       - `.`: indicate a format, and is preferred than `-`
-    - `_version` for report version when installing this reposity
+    - `_version` for report version when installing this repository
     - MmseqOut
       - allow `MmseqOut.from_aout` to auto recognize prefix from output
       - allow `MmseqOut.load_rep2all` to output "Rep100" if needed
@@ -77,7 +110,7 @@ changelog for genome
 - 0.1.4:
   - remove `genome.pyrule.gene`.
   - feat
-    - update `genome.binning`. Now it no longer accept old api, and related workflow can be refered directly in snakemake module style!
+    - update `genome.binning`. Now it no longer accept old api, and related workflow can be referred directly in snakemake module style!
 - 0.1.3:
   - feat
     - add `infer_prodigal_gene_id` and `infer_refseq_gene_id` for gff parser

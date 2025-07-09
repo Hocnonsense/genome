@@ -2,8 +2,8 @@
 """
  * @Author: chapmanb https://github.com/chapmanb
  * @Date: 2023-02-15 commit 8a36af0
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2023-06-22 22:45:09
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-01-06 22:07:49
  * @FilePath: /genome/genome/GFFOutput.py
  * @Description:
     Output Biopython SeqRecords and SeqFeatures to GFF3 format.
@@ -87,12 +87,13 @@ class GFF3Writer:
         except TypeError:
             recs = [recs]
         for rec in recs:
+            seq_len = len(rec.seq) if rec.seq else 0
             self._write_rec(rec, out_handle)
-            self._write_annotations(rec.annotations, rec.id, len(rec.seq), out_handle)
+            self._write_annotations(rec.annotations, rec.id, seq_len, out_handle)
             for sf in rec.features:
                 sf = self._clean_feature(sf)
                 id_handler = self._write_feature(sf, rec.id, out_handle, id_handler)
-            if include_fasta and len(rec.seq) > 0:
+            if include_fasta and seq_len > 0:
                 fasta_recs.append(rec)
         if len(fasta_recs) > 0:
             self._write_fasta(fasta_recs, out_handle)
@@ -114,7 +115,7 @@ class GFF3Writer:
 
     def _write_rec(self, rec, out_handle):
         # if we have a SeqRecord, write out optional directive
-        if len(rec.seq) > 0:
+        if rec.seq and len(rec.seq) > 0:
             out_handle.write("##sequence-region %s 1 %s\n" % (rec.id, len(rec.seq)))
 
     def _get_phase(self, feature):
@@ -153,8 +154,8 @@ class GFF3Writer:
             str(rec_id),
             feature.qualifiers.get("source", ["feature"])[0],
             ftype,
-            str(feature.location.nofuzzy_start + 1),  # 1-based indexing
-            str(feature.location.nofuzzy_end),
+            str(feature.location.start + 1),  # 1-based indexing
+            str(feature.location.end),
             feature.qualifiers.get("score", ["."])[0],
             strand,
             self._get_phase(feature),

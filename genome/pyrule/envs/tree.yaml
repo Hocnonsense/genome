@@ -1,0 +1,20 @@
+name: tree
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - prodigal
+
+  - python
+  - click
+  - biopython
+  - pandas
+  - diamond
+
+  - seqtk
+  - mafft
+  - fasttree
+  - trimal
+  - iqtree
+  - phylophlan
