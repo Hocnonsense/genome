@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-07-09 20:23:24
+ * @LastEditTime: 2025-07-09 20:47:48
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -40,7 +40,7 @@ changelog for genome
       - `gff.parse` may make things clearer
         - separate `extract`
         - separate `translate` (as well as alias `_translate`)
-      - extract translate to a seperate module
+      - extract translate to a separate module
       - add `InferGeneId` in gff to better handle gene id inference
     - Provided new tools for genome bin renaming, statistics aggregation, and flexible Snakemake workflow inclusion.
       - `rename_filtered_ls_tsv` to rename bin name after filtering
