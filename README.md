@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-07-09 19:57:56
+ * @LastEditTime: 2025-07-09 21:24:13
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -26,7 +26,7 @@ pip install git+https://github.com/Hocnonsense/genome.git
 
 or with a specific version:
 ```bash
-version="0.2.4"
+version="0.2.5"
 mamba env create -p snakemake-g-$version -f https://raw.githubusercontent.com/Hocnonsense/genome/$version/genome/pyrule/envs/genome.yaml
 conda activate snakemake-g-$version
 pip install git+https://github.com/Hocnonsense/genome.git@$version

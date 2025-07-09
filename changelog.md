@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-07-09 21:08:07
+ * @LastEditTime: 2025-07-09 21:23:09
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,13 +13,9 @@ changelog for genome
 
 ## changelog
 
-- 0.2.4:
+- 0.2.5:
   - feat:
     - Added comprehensive workflows for genome dereplication, gene clustering (including MMseqs2 and CD-HIT), phylogenetic tree construction, and genome annotation (PGAP).
-      - `UniRefClu` method to cluster genes
-        - `gene_clust.UniRefClu` to cluster genes in the UniRef standard
-        - `mmseq_clust_95` will be removed in the next few versions
-        - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
       - Added `mmseq_family` for gene clustering
       - Added `mmseq_species` for gene clustering (plus related helpers in `gene_clust`)
       - add `rules_dir / "pan_concat.smk"` from meer_omics
@@ -47,20 +43,12 @@ changelog for genome
       - `gff_2_fa_label` to extract gene with genome label from gff
   - fix
     - Corrected typos and improved error messages across modules.
-      - update `pyrule/workflow/binning/single.smk`,
-        now it will just touch output and output.fail if nothing binned
     - Fixed file handling and improved robustness in sequence extraction and annotation parsing.
-      - update `prodigal.prodigal_gff_onethread`, now mask by default
-      - update `bin_statistic.contig2bin`,
-        previously it opened many files and could panic if there were more than 1024 bins.
       - Updated `gff` and `gene_statistic` to handle transl_except cases such as `Sec`
       - update `call_gene_id` usage in `gff.Parse.extract`
         - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
       - `BinStatisticContainer` encoding filter using `min_aa_len=33`
       - Ignored sequences with illegal characters in `gene_statistic`
-      - update `gff.Parse`
-        - a clearer `__init__` function, and silence at that time
-        - can extract feature across end of (a circular) genome
       - Added `MantisAnnot` class for parsing Mantis annotation files.
   - refactor
     - Unified and modularized clustering, binning, and annotation codebases for greater extensibility.
@@ -77,11 +65,27 @@ changelog for genome
   - tests
     - Added GitHub Actions workflows for codespell, formatting, and pytest checks.
     - Added extensive tests for new features, including gene statistics, clustering, annotation parsing, and translation exception handling.
-      - update tests imports
   - chores
     - Updated environment files and workflow configurations for improved reproducibility and integration.
-      - update `metadecoder` from `1.0.17` to `1.0.19`
     - Added and removed workflow and environment files as needed to support new features.
+- 0.2.4:
+  - feat:
+    - `UniRefClu` method to cluster genes
+      - `gene_clust.UniRefClu` to clust gene in UniRef standard
+      - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
+      - `mmseq_clust_95` will be removed in next few versions
+  - fix:
+    - update `bin_statistic.contig2bin`,
+      previously it will open a lot of file and may panic if there are more than 1024 bins.
+    - update `pyrule/workflow/binning/single.smk`,
+      now it will just touch output and output.fail if nothing binned
+    - update `prodigal.prodigal_gff_onethread`, now mask by default
+    - update `gff.Parse`
+      - a clearer `__init__` function, and silence at that time
+      - can extract feature across end of (a circular) genome
+  - chore:
+    - update `metadecoder` from `1.0.17` to `1.0.19`
+    - update tests imports
 - 0.2.3:
   - feat!:
     - rename API for snakemake output:
