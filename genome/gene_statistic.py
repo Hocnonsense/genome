@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:37:14
+* @LastEditTime: 2025-07-09 17:42:18
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -18,7 +18,7 @@ Code is modified from https://github.com/faylward/pangenomics/blob/7dbc8269f1618
 import itertools
 import math
 import sys
-from typing import Callable, Final, Iterable, NamedTuple
+from typing import Callable, Container, Final, Iterable, NamedTuple
 from Bio import SeqUtils
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
@@ -83,7 +83,7 @@ class CodonTable:
     def parse(
         self,
         seq_cds: Seq,
-        transl_except: set[int] = set(),
+        transl_except: Container[int] = frozenset(),
         errorfile_handle=sys.stderr,
         id: int | str | None = "*",
     ):
