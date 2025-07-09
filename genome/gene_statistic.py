@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 09:28:45
+* @LastEditTime: 2025-07-09 16:37:14
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -291,7 +291,6 @@ class ARSC(NamedTuple):
             "J": ARSC(C=4, N=0, S=0),
             "B": ARSC(C=2, N=0.5, S=0),
             "Z": ARSC(C=3, N=0.5, S=0),
-            "U": ARSC(C=1, N=0, S=0),
             "O": ARSC(C=10, N=2, S=0),
         }
 
