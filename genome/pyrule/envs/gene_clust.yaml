@@ -1,7 +1,8 @@
-name: drep
+name: mmseq
 channels:
   - conda-forge
   - bioconda
   - defaults
 dependencies:
   - mmseqs2
+  - seqtk

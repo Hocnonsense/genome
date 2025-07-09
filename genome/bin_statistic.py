@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-15 17:05:11
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-05-30 10:31:02
- * @FilePath: /genome/genome/bin_statistic.py
- * @Description:
+* @Date: 2022-10-15 17:05:11
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 20:45:17
+* @FilePath: /genome/genome/bin_statistic.py
+* @Description:
 """
 
 
 import math
+import pickle
+import shutil
+from functools import cached_property
 from pathlib import Path
-from pickle import dump, load
-from typing import Iterable, NamedTuple, Union
+from typing import Callable, Final, Iterable, NamedTuple, Union
 
+import numpy as np
 import pandas as pd
 from Bio import SeqIO, SeqRecord
 from numpy import mean
@@ -22,8 +25,10 @@ from .gff import Parse
 PathLike = Union[str, Path]
 
 
-def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+class Contig2Bin:
     """
+    Usage: Contig2Bin(contig2bin_tsv, contigs).output(outdir)
+
     will read a table such without head such as:
         (format: contig\tbin)
         ```
@@ -33,9 +38,21 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
         k141_172306\tconcoct_0
         k141_18944\tconcoct_0
         ```
+    """
 
-    fix: will also support vamb-format table:
-        (format: contig\tbin)
+    columns: Final = ["contig", "bin"]
+
+    def __init__(self, contig2bin_tsv, contigs, outdir=None):
+        self.contig2bin_tsv = self.parse_contig2bin(contig2bin_tsv)
+        self._contigs = self.parse_contigs(contigs)
+        self._outdir = None
+        if outdir:
+            self.outdir = outdir
+
+    @classmethod
+    def parse_contig2bin(cls, contig2bin_tsv: PathLike | pd.DataFrame | pd.Series):
+        """
+        also support vamb-format table (format: contig\tbin):
         ```
         k141_135186 flag=1 multi=23.0000 len=8785\tvamb-1012                                                                                                         metabat2_90_90  metadecoder  vamb
         k141_420558 flag=0 multi=35.2019 len=10561\tvamb-1012
@@ -43,26 +60,168 @@ def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
         k141_746716 flag=1 multi=21.0002 len=9798\tvamb-1012
         k141_91422 flag=1 multi=50.0000 len=2703\tvamb-1012
         ```
-    """
-    contig2bin_ = (
-        pd.read_csv(contig2bin_tsv, sep="\t", names=["contig", "bin"])
-        .assign(contig_id=lambda df: df["contig"].apply(lambda x: x.strip().split()[0]))
-        .set_index("contig_id")[["bin"]]
+        """
+        if isinstance(contig2bin_tsv, pd.Series):
+            pd_raw = contig2bin_tsv.reset_index()
+            pd_raw.columns = cls.columns
+        elif isinstance(contig2bin_tsv, pd.DataFrame):
+            if set(contig2bin_tsv.columns) >= set(cls.columns):
+                pd_raw = contig2bin_tsv[cls.columns]
+            elif len(contig2bin_tsv.columns) == 1:
+                pd_raw = contig2bin_tsv.reset_index()
+                pd_raw.columns = cls.columns
+            else:
+                raise ValueError(f"columns of table should be {cls.columns}")
+        else:
+            pd_raw = pd.read_csv(contig2bin_tsv, sep="\t", names=cls.columns)
+        return pd_raw.assign(
+            contig_id=lambda df: df["contig"].apply(lambda x: x.strip().split()[0]),
+            bin=lambda df: df["bin"].apply(lambda x: str(x).strip()),
+        ).set_index("contig_id")[["bin"]]
+
+    @cached_property
+    def bin2seqs(self):
+        bin2seqs: dict[str, dict[str, SeqRecord.SeqRecord]] = {
+            b: {} for b in self.contig2bin_tsv["bin"].unique()
+        }
+        for i in self.contigs:
+            if i.name in self.contig2bin_tsv.index:
+                bin2seqs[str(self.contig2bin_tsv.loc[i.name, "bin"])][i.name] = i
+        return bin2seqs
+
+    def parse_contigs(self, contigs: PathLike | Iterable[SeqRecord.SeqRecord]):
+        if isinstance(contigs, (str, Path)):
+            try:
+                next(SeqIO.parse(contigs, "fasta"))
+                return lambda: SeqIO.parse(contigs, "fasta")
+            except ValueError:
+                return Parse(contigs)
+        elif isinstance(contigs, Iterable):
+            return lambda: list(contigs)
+        else:
+            raise ValueError("contigs should be a path or a iterable of SeqRecord")
+
+    @property
+    def contigs(self) -> Iterable[SeqRecord.SeqRecord]:
+        return self._contigs()
+
+    @property
+    def outdir(self):
+        if self._outdir is None:
+            raise ValueError(".outdir not set")
+        return self._outdir
+
+    @outdir.setter
+    def outdir(self, outdir: Path):
+        """Set the output directory for bins
+        and create the directory on desk.
+        """
+        td = Path(outdir)
+        td.mkdir(parents=True, exist_ok=True)
+        self._outdir = outdir
+        return td
+
+    def __call__(self, outdir: PathLike):
+        """Write the binned sequences to files in the specified output directory.
+
+        it is recommended to use than extract1 or extract methods
+        as it only call `self.bin2seqs` once and write all sequences to disk.
+        """
+        self.outdir = Path(outdir)
+        bin2seqs = self.bin2seqs
+        for b, seqs in bin2seqs.items():
+            SeqIO.write(seqs.values(), self.outdir / f"{b}.fa", "fasta-2line")
+        return self.output
+
+    @property
+    def output(self):
+        """Expected output directory for binned sequences, may on disk or not."""
+        return Binput(self.outdir, list(self.bin2seqs), ".fa")
+
+    def extract1(self, bin_name: str | int):
+        if isinstance(bin_name, int):
+            b = self.contig2bin_tsv["bin"].unique()[bin_name]
+        else:
+            b = bin_name
+        bout = self.outdir / f"{b}.fa"
+        SeqIO.write(self.bin2seqs[b].values(), bout, "fasta-2line")
+        return bout
+
+    def extract(self, *bin_names: str | int):
+        return (self.extract1(b) for b in bin_names)
+
+
+class Binput(NamedTuple):
+    bindir: Path
+    binids: list[str]
+    suffix: str
+
+    @classmethod
+    def parse(
+        cls,
+        bin_output: PathLike,
+        bin_input: PathLike,
+        support: Union[PathLike, str],
+        keep_if_avail=True,
+    ):
+        """
+        Create a folder of binned sequences.
+
+        Input can
+        - either be a directory containing files with the specified suffix
+        - or a single file with the specified suffix.
+
+        if `support` given as suffix, and not endswith ".fa":
+            it will be replaced with ".fa"
+
+        if {param keep_if_avail}:
+            Only if bin_input is a dir and required genomes endswith "fa",
+            bin_output will be kept as bin_input and ignored.
+
+        This is designed to support snakemake to handle and keep intermediate files
+        """
+        bin_input = Path(bin_input)
+        (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
+        if bin_input.is_dir():
+            assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
+            suffix = str(support)
+            support_str_len = len(suffix)
+            if suffix.endswith(".fa") and keep_if_avail:
+                binids = [i.stem for i in bin_input.glob(f"*{support}")]
+                bindir = bin_input
+            else:
+                suffix = ".fa"
+                bindir = bin_output_
+                binids = []
+                for bin_file in bin_input.glob(f"*{support}"):
+                    binids.append(
+                        bin_name := bin_file.name[:-support_str_len].rstrip(".")
+                    )
+                    shutil.copy(bin_file, bindir / f"{bin_name}.fa")
+            return cls(bindir, binids, suffix)
+        else:
+            assert bin_input.is_file() and Path(support).is_file()
+            return Contig2Bin(bin_input, support)(bin_output_)
+
+    def fas(self):
+        return (self.bindir / f"{i}{self.suffix}" for i in self.binids)
+
+    def fas_with(self, suffix: str):
+        return Binput(self.bindir, self.binids, suffix).fas()
+
+
+format_bin_input = Binput.parse
+
+
+def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+    import warnings
+
+    warnings.warn(
+        "contig2bin() is deprecated; use the Contig2Bin class instead",
+        DeprecationWarning,
+        stacklevel=2,
     )
-
-    td = Path(outdir)
-    td.mkdir(parents=True, exist_ok=True)
-
-    bin2seqs: dict[str, set[str]] = {b: set() for b in contig2bin_["bin"].unique()}
-    for i in Parse(contigs)():
-        if i.name in contig2bin_.index:
-            bin2seqs[contig2bin_.loc[i.name, "bin"]].add(i.format("fasta-2line"))
-    for b, seqs in bin2seqs.items():
-        with open(td / f"{b}.fa", "w") as po:
-            for seq in seqs:
-                print(seq, file=po)
-
-    return td, list(bin2seqs)
+    return Contig2Bin(contig2bin_tsv, contigs)(outdir)
 
 
 def calculateN50(seqLens: list[int]):
@@ -85,38 +244,51 @@ class SeqStat(NamedTuple):
     gc: int = 0
     at: int = 0
     n: int = 0
-    n_aa: int = 0
-    len_aa: int = 0
+    n_cds: int = 0
+    len_cds: int = 0
 
     @classmethod
-    def load_seq_stats(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
+    def parse(
+        cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0, min_aa_len=33
+    ):
         _seq_stats: dict[str, SeqStat] = {}
-        for seq in seq_iter:
-            if len(seq.seq) < min_contig_len:
+        min_gene_len = int(min_aa_len) * 3
+        for rec_enum, rec in enumerate(seq_iter):
+            if len(rec.seq) < min_contig_len:
                 continue
-            upper_seq = seq.seq.upper()
-            a, c, g, t, u, n = (upper_seq.count(base) for base in "ACGTUN")
+            sequence_arr = np.frombuffer(bytes(rec.seq).upper(), dtype="S1")
+            base_count = {
+                b.decode(): int(n)
+                for b, n in zip(*np.unique(sequence_arr, return_counts=True))
+            }
+            at = sum(base_count.get(i, 0) for i in "ATWU")
+            gc = sum(base_count.get(i, 0) for i in "CGS")
 
-            at = a + u + t
-            gc = g + c
+            gc_content = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
 
-            gcContent = 0.0 if (gcat := gc + at) <= 0 else float(gc) / gcat
-
-            cc: list[int] = [
-                # fet: SeqFeature.SeqFeature
-                int(fet.location.end - fet.location.start)
-                for fet in seq.features
-                if fet.type == "CDS" and fet.location
-            ]
-
-            assert seq.id
-            _seq_stats[seq.id] = cls(len(seq), gcContent, gc, at, n, len(cc), sum(cc))
+            cds_mask = np.zeros(len(rec.seq))
+            n_cds = 0
+            for fet in rec.features:
+                if fet.type == "CDS" and fet.location is not None:
+                    if len(fet) < min_gene_len:
+                        continue
+                    cds_mask[fet.location.start : fet.location.end] = 1
+                    n_cds += 1
+            seq_n = sequence_arr == b"N"
+            cds_mask[seq_n] = 0
+            _seq_stats[rec.id or str(rec_enum)] = cls(
+                len(rec),
+                gc_content,
+                gc,
+                at,
+                int(sum(seq_n)),
+                n_cds,
+                int(np.sum(cds_mask)),
+            )
         return _seq_stats
 
     @classmethod
-    def quick_load_seq_stats(
-        cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0
-    ):
+    def quick_parse(cls, seq_iter: Iterable[SeqRecord.SeqRecord], min_contig_len=0):
         """
         warning: Every statement except contig length are disabled
         """
@@ -130,53 +302,63 @@ class SeqStat(NamedTuple):
         return _seq_stats
 
 
-class BinStatisticContainer:
-    """
-    modified from checkm
-    """
-
+class _BinStatisticContainer:
     @classmethod
     def read_gff(
         cls,
         filename: PathLike,
         refernce_file: PathLike | None = None,
         min_contig_len=0,
+        min_aa_len=33,
     ):
         parser = Parse(filename)
         if refernce_file:
             parser = parser.reset_reference(refernce_file)
-
-        return cls(SeqStat.load_seq_stats(parser()), filename, min_contig_len)
+        return cls(parser(), filename, min_contig_len, min_aa_len=min_aa_len)
 
     @classmethod
-    def read_gff_parser(
-        cls,
-        parser: Parse,
-        min_contig_len=0,
-    ):
-        return cls(SeqStat.load_seq_stats(parser()), parser.gff_file, min_contig_len)
+    def read_gff_parser(cls, parser: Parse, min_contig_len=0, min_aa_len=33):
+        return cls(parser(), parser.gff_file, min_contig_len, min_aa_len=min_aa_len)
 
     @classmethod
     def read_contig(cls, filename, format="fasta", min_contig_len=0):
-        return cls(
-            SeqStat.load_seq_stats(SeqIO.parse(filename, format)),
-            filename,
-            min_contig_len,
-        )
+        return cls(SeqIO.parse(filename, format), filename, min_contig_len)
 
+    def __init__(
+        self,
+        seqiter: Iterable[SeqRecord.SeqRecord],
+        source_file,
+        min_contig_len=0,
+        loader: Callable[
+            [Iterable[SeqRecord.SeqRecord], int], dict[str, SeqStat]
+        ] = SeqStat.parse,
+        **parse_kwargs,
+    ):
+        self._seq_stats = loader(seqiter, min_contig_len, **parse_kwargs)
+        self.source_file = source_file
+        self.min_contig_len = min_contig_len
+
+    @classmethod
+    def to_data_frame(cls, states: dict):
+        all_fields = sorted({i._fields for i in states.values()})
+        field_order = [i for j in all_fields for i in j]
+        fields = sorted({i for j in all_fields for i in j}, key=field_order.index)
+
+        bs = pd.DataFrame(
+            {i: v._asdict() for i, v in states.items()},
+        ).T
+        return bs[fields]
+
+
+class BinStatisticContainer(_BinStatisticContainer):
     @classmethod
     def quick_read_contig(cls, filename, format="fasta", min_contig_len=0):
         return cls(
-            SeqStat.quick_load_seq_stats(SeqIO.parse(filename, format)),
+            SeqIO.parse(filename, format),
             filename,
             min_contig_len,
+            SeqStat.quick_parse,
         )
-
-    @classmethod
-    def read_seqiter(
-        cls, seqiter: Iterable[SeqRecord.SeqRecord], filename, min_contig_len=0
-    ):
-        return cls(SeqStat.load_seq_stats(seqiter), filename, min_contig_len)
 
     def seq_stats(self, min_contig_len=0):
         _min_contig_len = max(min_contig_len, self.min_contig_len)
@@ -185,16 +367,6 @@ class BinStatisticContainer:
             for seq_id, seq_stat in self._seq_stats.items()
             if seq_stat.len >= _min_contig_len
         )
-
-    def __init__(
-        self,
-        seq_stats: dict[str, SeqStat],
-        source_file,
-        min_contig_len=0,
-    ):
-        self._seq_stats = seq_stats
-        self.source_file = source_file
-        self.min_contig_len = min_contig_len
 
     class BinStatistic(NamedTuple):
         gc: float
@@ -225,7 +397,7 @@ class BinStatisticContainer:
             contig_n50=gss.n50,
             ambiguous_bases_num=gss.numN,
             contig_cutoff=min_contig_len,
-            coding_density=float(coding_len) / gss.sum,
+            coding_density=float(coding_len) / (gss.sum - gss.numN),
             genes_num=num_orfs,
         )
 
@@ -289,8 +461,8 @@ class BinStatisticContainer:
         len_aa = 0
         n_aa = 0
         for _, seq_stat in self.seq_stats(min_contig_len):
-            len_aa += seq_stat.len_aa
-            n_aa += seq_stat.n_aa
+            len_aa += seq_stat.len_cds
+            n_aa += seq_stat.n_cds
 
         return len_aa, n_aa
 
@@ -302,9 +474,9 @@ class BinStatisticContainer:
             pickle_filename = Path(filename)
         pickle_filename.parent.mkdir(parents=True, exist_ok=True)
         with open(pickle_filename, "wb") as po:
-            dump(self, po)
+            pickle.dump(self, po)
 
     @classmethod
     def load(cls, filename: PathLike) -> "BinStatisticContainer":
         with open(filename, "rb") as pi:
-            return load(pi)
+            return pickle.load(pi)

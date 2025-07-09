@@ -1,21 +1,22 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-25 16:45:32
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:17:07
- * @FilePath: /genome/genome/binning.py
- * @Description:
+* @Date: 2022-10-25 16:45:32
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 20:26:55
+* @FilePath: /genome/genome/binning.py
+* @Description:
 """
 
 
 import os
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Final, Literal, NamedTuple
 
 import yaml
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 PathLike = str | Path
 AVAIL_MIN_BIN_CONTIG_LEN: Final = 1000
@@ -121,11 +122,12 @@ class BinningConfig:
             tpmf_out = self.output(out_basename)
             tmp_config = self.to_config(f"{_td}/config")
 
-            target_smk_file = smk_workflow / "binning" / "genomecall.smk"
+            target_smk_file = shlex.quote(str(rules_dir / "binning" / "genomecall.smk"))
+            ctg2mag = shlex.quote(str(tpmf_out.ctg2mag))
 
             smk_params2 = (
                 f"-s {target_smk_file} "
-                f"{tpmf_out.ctg2mag} "
+                f"{ctg2mag} "
                 f"--nolock "
                 # f"--drop-metadata "  # add this if necessary
                 f"--use-conda "

@@ -1,10 +1,11 @@
 """
  * @Date: 2022-10-10 16:48:56
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-03-29 15:25:40
- * @FilePath: /genome/genome/pyrule/workflow/genome.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 17:31:24
+* @FilePath: /genome/genome/pyrule/workflow/genome.smk
  * @Description:
 """
+
 import os
 
 
@@ -31,10 +32,12 @@ rule gff_2_fa:
 
         SeqIO.write(
             sorted(
-                gff.Parse(input.gff).extract(
-                    translate=params.suffix == "faa",
-                    min_aa_length=int(params.min_aa_len),
-                ),
+                gff.to_dict(
+                    gff.Parse(input.gff).extract(
+                        translate="faa" == params.suffix,
+                        min_aa_length=int(params.min_aa_len),
+                    )
+                ).values(),
                 key=lambda x: x.id,
             ),
             output.faa,
@@ -90,8 +93,6 @@ rule prokka_fix:
     output:
         filetype="{any}-prokka_{kingdom}.{suffix}",
     run:
-        from pathlib import Path
-
         rename_dict: dict[str, str] = {}
         i = 0
         with open(input.log) as log_in:

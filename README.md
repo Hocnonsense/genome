@@ -1,7 +1,7 @@
 <!--
  * @Date: 2022-10-10 15:01:33
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-04-28 20:08:38
+ * @LastEditTime: 2025-07-09 19:57:56
  * @FilePath: /genome/README.md
  * @Description:
 -->
@@ -12,7 +12,8 @@ genome
 
 ---
 ## introduction
-- mantains some snakemake modules, and can also import python functions to handle the output.
+This package maintains several Snakemake modules and can import Python functions to post-process their output.
+
 
 ## installation
 ### create environment
@@ -25,7 +26,7 @@ pip install git+https://github.com/Hocnonsense/genome.git
 
 or with a specific version:
 ```bash
-version="0.2.3"
+version="0.2.4"
 mamba env create -p snakemake-g-$version -f https://raw.githubusercontent.com/Hocnonsense/genome/$version/genome/pyrule/envs/genome.yaml
 conda activate snakemake-g-$version
 pip install git+https://github.com/Hocnonsense/genome.git@$version
@@ -42,7 +43,7 @@ checkm data setRoot $CHECKM_DATA_PATH
 ```
 
 ### update
-it is recommanded to create a new conda environment
+It is recommended to create a new conda environment for the new version.
 
 ### create other conda environment
 ```python

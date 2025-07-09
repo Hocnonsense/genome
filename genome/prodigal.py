@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 16:35:45
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-06-17 14:48:16
+ * @LastEditTime: 2025-01-13 16:39:12
  * @FilePath: /genome/genome/prodigal.py
  * @Description:
 """
@@ -11,22 +11,20 @@
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-from typing import Final, Iterable, Literal, Union, Optional
+from typing import Final, Iterable, Literal
 
 from Bio import SeqIO, SeqRecord
 import pyrodigal
 
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 
-PathLike = Union[str, Path]
+PathLike = str | Path
 prodigal_mode: Final = ["single", "meta", "gvmeta"]
 
 
-def check_genome_length_prodigal(
-    genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]]
-):
-    """check if givem genome size is long enough to use prodigal single mode"""
+def check_genome_length_prodigal(genome: PathLike | Iterable[SeqRecord.SeqRecord]):
+    """check if given genome size is long enough to use prodigal single mode"""
     if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
     else:
@@ -35,14 +33,15 @@ def check_genome_length_prodigal(
 
 
 def prodigal_gff_onethread(
-    genome: Union[PathLike, Iterable[SeqRecord.SeqRecord]],
+    genome: PathLike | Iterable[SeqRecord.SeqRecord],
     mode: Literal["single", "meta", "gvmeta"] = "single",
     gff_out: PathLike = "",
-) -> Optional[Path]:
+    trans_table=11,
+) -> Path:
     # infer gff_out automatically if not given in some cases
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
-            raise ValueError("without gff output, inital filename must be provided")
+            raise ValueError("without gff output, initial filename must be provided")
         if not str(genome).endswith(".fa"):
             raise ValueError("without gff output, genome file must endswith '.fa'")
         gff_out_ = Path(str(genome)[:-3] + f"-prodigal_{mode}.gff")
@@ -62,9 +61,9 @@ def prodigal_gff_onethread(
         if mode == "meta":
             gf = pyrodigal.GeneFinder(meta=True, mask=True)
         elif mode == "single":
+            gf = pyrodigal.GeneFinder(meta=False, mask=True, closed=True)
             seqs = list(seqs)
-            gf = pyrodigal.GeneFinder(meta=False, mask=True)
-            gf.train(*(bytes(i.seq) for i in seqs))
+            gf.train(*(bytes(i.seq) for i in seqs), translation_table=trans_table)
 
     with NamedTemporaryFile("w+", suffix=".fa", delete=True) as tmpf:
         tpmf_out = Path(f"{tmpf.name[:-3]}-prodigal_{mode}.gff")
@@ -135,7 +134,7 @@ def prodigal_multithread(
     else:
         genome_files.extend(_genome_files)
 
-    target_smk_file = smk_workflow / "genome.smk"
+    target_smk_file = rules_dir / "genome.smk"
 
     # region quick fix suffix
     if suffix in ["faa", "fna"]:

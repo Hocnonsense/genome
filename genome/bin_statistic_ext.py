@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-11-24 16:23:50
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:14:47
- * @FilePath: /genome/genome/bin_statistic_ext.py
- * @Description:
+* @Date: 2022-11-24 16:23:50
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 17:07:03
+* @FilePath: /genome/genome/bin_statistic_ext.py
+* @Description:
 """
 import os
 import shutil
@@ -15,16 +15,19 @@ from typing import Optional, Union, overload
 
 import pandas as pd
 
-from .bin_statistic import contig2bin
+from .bin_statistic import format_bin_input
 from .prodigal import prodigal_multithread
-from .pyrule import smk, smk_workflow, smk_conda_env
+from .pyrule import smk, rules_dir, smk_conda_env
 
 PathLike = Union[str, Path]
 
 
 @dataclass
 class CheckMFakeOptions:
-    from checkm.defaultValues import DefaultValues
+    try:
+        from checkm.defaultValues import DefaultValues
+    except ImportError:
+        DefaultValues = type("DefaultValues", (), {"E_VAL": 1e-10, "LENGTH": 0.7})
 
     subparser_name = "lineage_wf"
     output_dir: str = "./"
@@ -47,8 +50,8 @@ class CheckMFakeOptions:
     aai_strain: float = 0.9
     alignment_file: Optional[str] = None
     bIgnoreThresholds: bool = False
-    e_value: float = DefaultValues.E_VAL
-    length: float = DefaultValues.LENGTH
+    e_value: float = DefaultValues.E_VAL  # type: ignore[reportAttributeAccessIssue]
+    length: float = DefaultValues.LENGTH  # type: ignore[reportAttributeAccessIssue]
     bQuiet: bool = False
     bTabTable = True
     pplacer_threads = 1
@@ -72,42 +75,6 @@ class CheckMFakeOptions:
         checkmParser = OptionsParser()
         checkmParser.parseOptions(self)
         return self.output_dir
-
-
-def format_bin_input(
-    bin_output: PathLike,
-    bin_input: PathLike,
-    support: Union[PathLike, str],
-    keep_if_avail=True,
-):
-    """
-    if {param kept_if_avail}:
-        Only if bin_input is a dir and required genomes endswith "fa",
-        bin_output will be kept as bin_input.
-
-    This is designed to support snakemake to handle and keep intermediate files
-    """
-    bin_input = Path(bin_input)
-    (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
-    if bin_input.is_dir():
-        assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-        if str(support).endswith(".fa") and keep_if_avail:
-            binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
-            suffix = str(support)
-            bin_input_dir = bin_input
-        else:
-            suffix = ".fa"
-            bin_input_dir = bin_output_
-            support_str_len = len(str(support))
-            binids = []
-            for bin_file in bin_input.glob(f"*{support}"):
-                binids.append(bin_name := bin_file.name[:-support_str_len].rstrip("."))
-                shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
-    else:
-        assert bin_input.is_file() and Path(support).is_file()
-        bin_input_dir, binids = contig2bin(bin_output_, bin_input, support)
-        suffix = ".fa"
-    return bin_input_dir, binids, suffix
 
 
 def checkm(
@@ -154,7 +121,7 @@ def gunc(
         should not be a existing directory
 
     include 3 steps:
-    1.  extrat genome with "contig2bin"
+    1.  extract genome with "contig2bin"
     2.  annot gene with "prodigal_gff_multithread"
     3.  gunc
 
@@ -170,7 +137,7 @@ def gunc(
                 shutil.copy(bin_file, bin_faa_dir)
             suffix = str(support)
         else:
-            bin_input_dir, suffix = format_bin_input(
+            bin_input_dir, binids, suffix = format_bin_input(
                 bin_output=f"{_td}/bin_fa_input",
                 bin_input=bin_input,
                 support=support,
@@ -188,7 +155,7 @@ def gunc(
         # gunc_out_tsv = f"{_td}/out-gunc.tsv"
         # gunc_out_dir = f"{_td}/out-gunc-dir"
 
-        target_smk_file = smk_workflow.parent / "gunc.smk"
+        target_smk_file = rules_dir.parent / "gunc.smk"
         tpmf_outs = f"{_td}/out-bins-gunc.tsv"
         smk_params = (
             f"-s {target_smk_file} "
@@ -224,8 +191,7 @@ def bin_filter(
     checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     threads=10,
-):
-    ...
+): ...
 
 
 @overload
@@ -236,8 +202,7 @@ def bin_filter(
     *,
     checkm_tsv_file: Union[PathLike, pd.DataFrame],
     gunc_tsv_file: Union[PathLike, pd.DataFrame],
-):
-    ...
+): ...
 
 
 def bin_filter(

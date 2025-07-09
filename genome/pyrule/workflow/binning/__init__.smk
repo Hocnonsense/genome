@@ -28,7 +28,6 @@ rule clean_input_references:
     run:
         import os
         import yaml
-        from pathlib import Path
         from Bio import SeqIO
 
         config_path = Path(input.config).parent
