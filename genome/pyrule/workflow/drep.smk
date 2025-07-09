@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-04 21:15:46
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-22 11:55:31
+* @LastEditTime: 2025-07-09 16:02:36
 * @FilePath: /genome/genome/pyrule/workflow/drep.smk
  * @Description:
 """
@@ -20,7 +20,7 @@ rule drep_create:
             )
         ],
     params:
-        drep_out="{any}-drep",
+        drep_out=subpath(input.binls, ancestor=1),
     conda:
         "../envs/drep.yaml"
     threads: 64
@@ -54,7 +54,7 @@ rule drep_create_uncheck:
             )
         ],
     params:
-        drep_out="{any}-drep",
+        drep_out=subpath(input.binls, ancestor=1),
     conda:
         "../envs/drep.yaml"
     threads: 64
@@ -82,7 +82,7 @@ rule drep_create_nocheck:
             ("{any}-drep/data_tables/" f"{table}.csv") for table in ("Bdb", "Cdb")
         ],
     params:
-        drep_out="02_magdb/meer_rv2_vs_pub_{trench}/subdb/refgenome-drep",
+        drep_out=subpath(input.binls, ancestor=1),
     conda:
         "../envs/drep.yaml"
     threads: 64
@@ -112,16 +112,11 @@ rule drep2redundant:
         Cdb="{any}-drep/data_tables/Cdb.csv",
     output:
         binls="{any}-redundant_bins.ls",
-    params:
-        drep_wd="{any}-drep",
     run:
         import pandas as pd
-        from pathlib import Path
 
-        wd = Path(params.drep_wd)
-
-        Cdb = pd.read_csv(wd / "data_tables" / "Cdb.csv")
-        Bdb = pd.read_csv(wd / "data_tables" / "Bdb.csv")
+        Cdb = pd.read_csv(input.Cdb)
+        Bdb = pd.read_csv(input.Bdb)
         Bdb.merge(Cdb)[["location"]].to_csv(output.binls, index=False, header=False)
 
 
@@ -131,16 +126,11 @@ rule drep2gtdbtk:
         Bdb="{any}-drep/data_tables/Bdb.csv",
     output:
         binls="{any}-dereplicated_bins.ls",
-    params:
-        drep_wd="{any}-drep",
     run:
         import pandas as pd
-        from pathlib import Path
 
-        wd = Path(params.drep_wd)
-
-        Wdb = pd.read_csv(wd / "data_tables" / "Wdb.csv")
-        Bdb = pd.read_csv(wd / "data_tables" / "Bdb.csv")
+        Wdb = pd.read_csv(input.Wdb)
+        Bdb = pd.read_csv(input.Bdb)
         Wdb.merge(Bdb)[["location"]].to_csv(output.binls, index=False, header=False)
 
 
