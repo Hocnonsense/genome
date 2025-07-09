@@ -1,7 +1,7 @@
 """
 * @Date: 2022-10-10 15:30:31
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-05-21 22:28:39
+* @LastEditTime: 2025-07-09 16:36:11
 * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
 * @Description:
     use mmseq to cluster genes
@@ -249,7 +249,7 @@ rule mmseq_cdhit_est:
     input:
         fna="{any}.fna",
     output:
-        cluster="{any}-cdhit95.clstr",
+        cluster="{any}-mmseq95.tsv",
     threads: 64
     shadow:
         "minimal"
@@ -270,5 +270,5 @@ rule mmseq_cdhit_est:
 
         mmseqs createtsv --threads {threads} \
             smk-mmseq/seqdb smk-mmseq/seqdb smk-mmseq/clustdb smk-mmseq/clust.tsv
-        mv smk-mmseq/clust.tsv {output.tsv_family}
+        mv smk-mmseq/clust.tsv {output.cluster}
         """
