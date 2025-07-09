@@ -2,21 +2,18 @@
 """
 * @Date: 2025-01-25 14:18:14
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-22 11:10:03
+* @LastEditTime: 2025-07-09 16:30:30
 * @FilePath: /genome/genome/clust.py
 * @Description:
 """
 # """
 
-import numpy as np
-import pandas as pd
-import scipy.cluster
-from scipy.spatial import distance as ssd
-
 from typing import Iterable, TypeVar
 
 import numpy as np
 import pandas as pd
+import scipy.cluster
+from scipy.spatial import distance as ssd
 
 
 class UnionFind:
@@ -110,7 +107,9 @@ def read_fastani(out_base):
     odb = pd.read_csv(
         out_base, names=["reference", "query", "ani", "j1", "j2"], sep="\t"
     ).assign(
-        alignment_fraction=lambda df: [(j1 / j2) for j1, j2 in zip(df["j1"], df["j2"])],
+        alignment_fraction=lambda df: np.where(
+            df["j2"] != 0, df["j1"] / df["j2"], np.nan
+        ),
         ani=lambda df: df["ani"].apply(lambda x: x / 100),
     )
     fdb = (
@@ -141,10 +140,15 @@ def run_pairwise_ani(
             lambda s: (_min_cov < s["alignment_fraction"]) * s["ani"],
             axis=1,
         ),
-        av_ani=lambda df: df.set_index(["query", "reference"])["ani"].pipe(
-            lambda s: [r == q or np.mean([s[q, r], s[r, q]]) for q, r in s.index]
+        av_ani=lambda df: df.merge(
+            df[["query", "reference", "ani"]].rename(
+                columns={"query": "reference", "reference": "query", "ani": "ani_r"}
+            ),
+            how="left",
+        )[["ani", "ani_r"]].mean(axis=1),
+        dist=lambda df: np.where(
+            df["query"] == df["reference"], 0, 1 - df["av_ani"].astype(float)
         ),
-        dist=lambda df: 1 - df["av_ani"].astype(float),
     )
     Gdb, linkage = cluster_hierarchical(
         Ldb.pivot(index="reference", columns="query", values="dist"),
@@ -160,7 +164,7 @@ def run_pairwise_ani(
     )
     mdb = (
         pd.DataFrame({"genome": m2_groups})
-        .assign(_cluster_single=lambda df: range(1, len(df["genome"]) + 1))
+        .assign(_cluster_single=lambda df: df.reset_index().index + 1)
         .explode("genome")
     )
     cdb2 = (
