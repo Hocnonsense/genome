@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-15 17:05:11
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:14:28
+* @LastEditTime: 2025-07-09 17:29:12
 * @FilePath: /genome/genome/bin_statistic.py
 * @Description:
 """
@@ -152,7 +152,7 @@ class Contig2Bin:
 
 
 class Binput(NamedTuple):
-    bin_input: Path
+    bindir: Path
     binids: list[str]
     suffix: str
 
@@ -171,6 +171,9 @@ class Binput(NamedTuple):
         - either be a directory containing files with the specified suffix
         - or a single file with the specified suffix.
 
+        if `support` given as suffix, and not endswith ".fa":
+            it will be replaced with ".fa"
+
         if {param keep_if_avail}:
             Only if bin_input is a dir and required genomes endswith "fa",
             bin_output will be kept as bin_input and ignored.
@@ -181,30 +184,30 @@ class Binput(NamedTuple):
         (bin_output_ := Path(bin_output)).mkdir(parents=True, exist_ok=True)
         if bin_input.is_dir():
             assert list(bin_input.glob(f"*{support}")), "input is not a valid bin path"
-            if str(support).endswith(".fa") and keep_if_avail:
-                binids: list[str] = [str(i)[:-3] for i in bin_input.glob(f"*{support}")]
-                suffix = str(support)
-                bin_input_dir = bin_input
+            suffix = str(support)
+            support_str_len = len(suffix)
+            if suffix.endswith(".fa") and keep_if_avail:
+                binids = [i.stem for i in bin_input.glob(f"*{support}")]
+                bindir = bin_input
             else:
                 suffix = ".fa"
-                bin_input_dir = bin_output_
-                support_str_len = len(str(support))
+                bindir = bin_output_
                 binids = []
                 for bin_file in bin_input.glob(f"*{support}"):
                     binids.append(
                         bin_name := bin_file.name[:-support_str_len].rstrip(".")
                     )
-                    shutil.copy(bin_file, bin_input_dir / f"{bin_name}.fa")
-            return cls(bin_input_dir, binids, suffix)
+                    shutil.copy(bin_file, bindir / f"{bin_name}.fa")
+            return cls(bindir, binids, suffix)
         else:
             assert bin_input.is_file() and Path(support).is_file()
             return Contig2Bin(bin_input, support)(bin_output_)
 
     def fas(self):
-        return (self.bin_input / f"{i}{self.suffix}" for i in self.binids)
+        return (self.bindir / f"{i}{self.suffix}" for i in self.binids)
 
     def fas_with(self, suffix: str):
-        return Binput(self.bin_input, self.binids, suffix).fas()
+        return Binput(self.bindir, self.binids, suffix).fas()
 
 
 format_bin_input = Binput.parse
