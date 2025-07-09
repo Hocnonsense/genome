@@ -67,6 +67,11 @@ def test_mo_from_prefix_modify():
 
 @temp_output
 def test_mo_load_rep2all(test_temp: Path):
+    """
+    Tests the MmseqOut.load_rep2all() method for correct DataFrame output under different 'keep' parameter settings.
+    
+    Creates temporary cluster output files, loads representative-to-all mappings, and verifies the resulting DataFrame's CSV output for default, boolean, and list-based 'keep' arguments.
+    """
     mo = MmseqOut.from_prefix(test_temp / "some_gene")
     with open(mo.all_100, "w") as f100:
         f100.write("A1\tA1\n" "A1\tA2\n" "A1\tA3\n" "B1\tB1\n" "C1\tC1\n")
@@ -101,6 +106,9 @@ def test_mmseq_clust(test_temp: Path):
 @pytest_mark_resource
 @temp_output
 def test_uniref_clust(test_temp: Path):
+    """
+    Tests UniRefClu clustering and sequence extraction by running clustering on extracted protein sequences and verifying that representative sequences can be retrieved from the clustering results.
+    """
     gffs = [
         test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff",
     ]

@@ -16,6 +16,14 @@ from tests import Path, temp_output, test_files, test_temp
 class TestMantisAnnot:
     @staticmethod
     def make_file(test_temp: Path):
+        """
+        Create a temporary Mantis annotation file with predefined tab-separated gene annotation data.
+        
+        The file includes columns for query identifiers, reference files, hits, consensus hits, total hits, and various annotation links. Each line represents a gene annotation entry with multiple annotation sources and associated metadata.
+        
+        Returns:
+            Path: The path to the created annotation file.
+        """
         lines = (
             "Query\tRef_Files\tRef_Hits\tConsensus_hits\tTotal_hits\t|\tLinks\n"
             "BCX55083.1\tNOGG_merged;Pfam-A\t688245.CtCNB1_4570;RHH_4\t2\t2\t|\tcog:COG4321\tdescription:Ribbon-helix-helix domain\teggnog:1MZP2\teggnog:2VU7X\teggnog:4AEFF\teggnog:COG4321\tpfam:PF13467\tpfam:RHH_4\n"
@@ -29,6 +37,9 @@ class TestMantisAnnot:
 
     @temp_output
     def test_get_ref_annots(self, test_temp: Path):
+        """
+        Tests that reference annotations are correctly parsed from a Mantis annotation file and match the expected CSV output.
+        """
         file = self.make_file(test_temp)
         annots = gene_annot.MantisAnnot.get_ref_annots(file)
         assert annots.to_csv() == (
@@ -41,6 +52,11 @@ class TestMantisAnnot:
 
     @temp_output
     def test_get_link_annots(self, test_temp: Path):
+        """
+        Test that `MantisAnnot.get_link_annots` correctly parses linked annotation data from a Mantis annotation file and produces the expected CSV output.
+        
+        This test verifies that the linked annotation fields (KO, COG, PFAM, EC, description, eggnog, go, etc.) are accurately extracted and formatted from a controlled input file.
+        """
         file = self.make_file(test_temp)
         annots = gene_annot.MantisAnnot.get_link_annots(file)
         assert annots.to_csv() == (

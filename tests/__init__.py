@@ -21,6 +21,11 @@ test_files = Path(__file__).parent / "file"
 
 
 def temp_output(f: Callable):
+    """
+    Decorator that provides a temporary directory to the decorated function via the `test_temp` keyword argument.
+    
+    When the decorated function is called, a temporary directory is created and its `Path` is passed as the `test_temp` keyword argument. The temporary directory is automatically cleaned up after the function completes.
+    """
     def _f(*args, **kwargs):
         with TemporaryDirectory(prefix=str(test_temp)) as _td:
             return f(*args, **kwargs, test_temp=Path(_td))

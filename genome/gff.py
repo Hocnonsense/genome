@@ -30,12 +30,14 @@ PathLike = str | Path
 
 
 def as_text_io(data: PathLike | TextIO) -> TextIO:
-    """Allowed input:
-    - TextIO
-        - anything apply "read" method
-    - filename
-        - string
-        - Path
+    """
+    Opens a file or returns a text stream for reading, supporting both plain and gzipped files.
+    
+    Parameters:
+        data: A file path (string or Path) or an existing text stream.
+    
+    Returns:
+        A readable text stream (TextIO) for the provided file or stream.
     """
     if hasattr(data, "read"):
         return data  # type: ignore  # I'm sure this will return a TextIO
@@ -51,8 +53,15 @@ def write(
     include_fasta=False,
 ):
     """
-    High level interface to write GFF files into SeqRecords and SeqFeatures.
-    Add type hints to this function.
+    Writes an iterable of SeqRecord objects to a GFF file.
+    
+    Parameters:
+    	recs (Iterable[SeqRecord]): The sequence records to write.
+    	out_handle (PathLike | TextIO): Output file path or writable file-like object. Supports gzip compression if the filename ends with '.gz'.
+    	include_fasta (bool): If True, includes FASTA sequences in the output.
+    
+    Returns:
+    	The result of GFFOutput.write, typically None.
     """
     if not hasattr(out_handle, "write"):
         if str(out_handle).endswith(".gz"):
@@ -66,6 +75,12 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
     open_function = staticmethod(as_text_io)  # type: ignore[reportAssignmentType]
 
     def _custom_iter(self):
+        """
+        Iterates over lines in a GFF file, yielding parsed features and detecting the start of the FASTA section.
+        
+        Yields:
+            Parsed feature objects from valid GFF lines until the FASTA section is encountered. Updates the `fasta_start_pointer` attribute to mark the start of the FASTA section when detected.
+        """
         self.fasta_start_pointer = -1
         self.directives = []
         valid_lines = 0
@@ -109,6 +124,12 @@ class _FastaGffFileIterator(_GffutilsFileIterator):
             raise IOError("data closed unexpectedly")
 
     def parse_seq(self):
+        """
+        Parses and yields FASTA sequences from the point in the file where the FASTA section begins.
+        
+        Yields:
+            SeqRecord: Each sequence record parsed from the FASTA section.
+        """
         with self.open_function(self.data) as fh:
             fh.seek(self.fasta_start_pointer)
             rec: SeqRecord
@@ -135,11 +156,26 @@ class InferGeneId:
 
     @classmethod
     def rec(cls, fn: FUNC_TYPE):
+        """
+        Registers a gene ID inference function under its name in the class-level registry.
+        
+        Returns:
+            The original function, unmodified.
+        """
         cls.funcs[fn.__name__] = fn
         return fn
 
     @classmethod
     def get(cls, fn) -> FUNC_TYPE:
+        """
+        Retrieve a registered gene ID inference function by name or return the function if already provided.
+        
+        Parameters:
+        	fn: The name of a registered inference function (str) or a callable function.
+        
+        Returns:
+        	A callable gene ID inference function.
+        """
         if isinstance(fn, str):
             return cls.funcs[fn]
         return fn
@@ -150,6 +186,16 @@ PRODIGAL_ID_PATERN = re.compile(r"^\d+_(\d+)$")
 
 @InferGeneId.rec
 def infer_gene_id(rec_id: str | None, fet: SeqFeature):
+    """
+    Infers a gene ID from a SeqFeature using the "Name" or "gene_group" qualifiers, or falls back to the feature's ID.
+    
+    Parameters:
+    	rec_id (str | None): The record ID, used as a prefix if the "gene_group" qualifier is present.
+    	fet (SeqFeature): The feature from which to infer the gene ID.
+    
+    Returns:
+    	str: The inferred gene ID.
+    """
     if fet.qualifiers and (name := fet.qualifiers.get("Name")) and name[0]:
         return name[0]
     if (group := fet.qualifiers.get("gene_group")) and group[0]:
@@ -159,17 +205,47 @@ def infer_gene_id(rec_id: str | None, fet: SeqFeature):
 
 @InferGeneId.rec
 def infer_prodigal_gene_id(rec_id: str | None, fet: SeqFeature):
+    """
+    Generate a gene ID for a Prodigal-annotated feature by appending the numeric suffix from the feature's ID to the record ID.
+    
+    Parameters:
+    	rec_id (str | None): The sequence record ID to prefix.
+    	fet (SeqFeature): The feature whose ID contains the numeric suffix.
+    
+    Returns:
+    	str: The constructed gene ID in the format "{rec_id}_{number}".
+    """
     return f"{rec_id}_" + str(int(fet.id.rsplit("_", 1)[1]))
 
 
 @InferGeneId.rec
 def infer_refseq_gene_id(rec_id: str | None, fet: SeqFeature):
+    """
+    Infers a gene ID from a RefSeq-style feature by extracting the suffix after the last hyphen in the feature's ID.
+    
+    Parameters:
+    	rec_id (str | None): The record ID (unused).
+    	fet (SeqFeature): The feature from which to extract the gene ID.
+    
+    Returns:
+    	str: The extracted gene ID suffix.
+    """
     return fet.id.rsplit("-", 1)[1]
 
 
 @InferGeneId.rec
 def feat_id(rec_id: str | None, fet: SeqFeature):
     # assert fet.id.startswith(rec_id)
+    """
+    Returns the feature ID from a SeqFeature object.
+    
+    Parameters:
+    	rec_id (str | None): The record ID, not used in this function.
+    	fet (SeqFeature): The feature from which to extract the ID.
+    
+    Returns:
+    	str: The ID of the provided feature.
+    """
     return fet.id
 
 
@@ -181,16 +257,15 @@ _biopython_strand = {"+": 1, "-": -1, ".": 0}
 
 def to_seqfeature(feature: gffutils.feature.Feature):
     """
-    Converts a gffutils.Feature object to a Bio.SeqFeature object.
-
-    The GFF fields `source`, `score`, `seqid`, and `frame` are stored as
-    qualifiers.  GFF `attributes` are also stored as qualifiers.
-
-    Parameters
-    ----------
-    feature : Feature object, or string
-        If string, assume it is a GFF or GTF-format line; otherwise just use
-        the provided feature directly.
+    Convert a gffutils Feature object to a Biopython SeqFeature.
+    
+    Transfers GFF fields (`source`, `score`, `seqid`, `frame`) and all attributes into the SeqFeature's qualifiers. Coordinates are converted from 1-based (GFF) to 0-based (Biopython), and strand is mapped to Biopython's convention.
+    
+    Parameters:
+        feature: A gffutils Feature object to convert.
+    
+    Returns:
+        SeqFeature: The corresponding Biopython SeqFeature with mapped qualifiers and location.
     """
     qualifiers = {
         "source": [feature.source],
@@ -211,6 +286,16 @@ def to_seqfeature(feature: gffutils.feature.Feature):
 
 
 def parse(gff: PathLike, fa: PathLike | None = None):
+    """
+    Create a `Parse` object for reading and processing GFF files, optionally with an associated FASTA file.
+    
+    Parameters:
+        gff: Path to the GFF file.
+        fa: Optional path to a FASTA file containing sequence data.
+    
+    Returns:
+        Parse: An instance configured to parse the provided GFF (and FASTA, if given) files.
+    """
     if fa is None:
         return Parse(gff)
     return Parse(fa, gff)
@@ -218,13 +303,26 @@ def parse(gff: PathLike, fa: PathLike | None = None):
 
 class Parse:
     @overload
-    def __init__(self, gff: PathLike, /): ...
+    def __init__(self, gff: PathLike, /): """
+Initialize the iterator for a GFF file, supporting both plain text and gzipped formats.
+
+Parameters:
+	gff (PathLike): Path to the GFF file to be iterated.
+"""
+...
     @overload
     def __init__(self, fa: PathLike, gff: PathLike, /): ...
     @overload
     def __init__(self, gff_or_fa: PathLike, create_now: bool): ...
 
     def __init__(self, gff_or_fa: PathLike, create_now: bool | PathLike = True):
+        """
+        Initialize a Parse object for parsing GFF and optionally FASTA files.
+        
+        Parameters:
+            gff_or_fa: Path to a GFF or FASTA file.
+            create_now: If True (default), immediately create a gffutils database from the provided file. If a path, use it as the GFF file for database creation. If False, defer database creation.
+        """
         self.fa = _FastaGffFileIterator(gff_or_fa)
         self.db: gffutils.FeatureDB = None  # type: ignore[assignment]
         if isinstance(create_now, (Path, str)):
@@ -258,6 +356,11 @@ class Parse:
         merge_strategy="create_unique",
         **kwargs,
     ):
+        """
+        Creates or loads a gffutils database from a GFF file iterator or the associated FASTA iterator.
+        
+        If a GFF iterator is provided, it is used to build the database; otherwise, the associated FASTA iterator is used. Supports in-memory or file-based databases and custom merge strategies. Issues a warning if no FASTA sequences are found when expected. Handles empty input files gracefully.
+        """
         if gff is not None:
             self.db = gffutils.create_db(
                 gff, dbfn=dbfn, verbose=verbose, merge_strategy=merge_strategy, **kwargs
@@ -282,8 +385,16 @@ class Parse:
         self, limit_info: str | None = None
     ) -> Generator[SeqRecord, None, None]:
         """
-        High level interface to parse GFF files into SeqRecords and SeqFeatures.
-        Add type hints to this function.
+        Yields SeqRecord objects parsed from the GFF file, each annotated with features from the gffutils database if available.
+        
+        If the GFF file does not contain embedded FASTA sequences, yields empty SeqRecords with IDs from the database.
+        Otherwise, yields SeqRecords parsed from the FASTA section, with features attached from the database when present.
+        
+        Parameters:
+            limit_info (str | None): Optional parameter for future extension; currently unused.
+        
+        Returns:
+            Generator[SeqRecord, None, None]: An iterator over SeqRecord objects with features.
         """
         if self.fa.fasta_start_pointer == -1:
             if self.db is None:
@@ -306,6 +417,19 @@ class Parse:
         min_aa_length=33,
         auto_fix=True,
     ):
+        """
+        Extracts features of a specified type from parsed sequence records.
+        
+        Parameters:
+            fet_type (str): The feature type to extract (default is "CDS").
+            call_gene_id (InferGeneId.FUNC_TYPE | str): Function or name for inferring gene IDs.
+            translate (bool): Whether to translate coding sequences to amino acids.
+            min_aa_length (int): Minimum amino acid length for extracted features.
+            auto_fix (bool): Whether to automatically fix translation issues.
+        
+        Returns:
+            Generator[SeqRecord, None, None]: Yields extracted feature sequences as SeqRecord objects.
+        """
         return extract(
             self(),
             fet_type=fet_type,
@@ -319,6 +443,17 @@ class Parse:
 def to_dict(
     seqs: Iterable[SeqRecord],
 ):
+    """
+    Convert an iterable of SeqRecord objects into a dictionary keyed by unique sequence IDs.
+    
+    If multiple SeqRecords share the same ID but have different sequences, appends a numeric suffix to duplicate IDs to ensure uniqueness. Only one entry is kept per unique sequence per ID.
+    
+    Parameters:
+        seqs: An iterable of SeqRecord objects to be indexed.
+    
+    Returns:
+        A dictionary mapping unique sequence IDs to SeqRecord objects.
+    """
     seqd: dict[str, list[SeqRecord]] = {}
     for seq in seqs:
         if not isinstance(seq.id, str):
@@ -344,9 +479,19 @@ def extract(
     auto_fix=True,
 ):
     """
-    `min_aa_length=33` actually refers to
-      - at least 32 aa complete protein with a complete terminal codon.
-      - or at least 33 aa complete protein without terminal codon.
+    Extracts feature sequences of a specified type from an iterable of SeqRecords, with optional translation and filtering.
+    
+    Features of the given type (default "CDS") are extracted from each SeqRecord. For CDS features, sequences shorter than the minimum amino acid length (default 33) are skipped. If translation is enabled, extracted CDS sequences are translated to protein. Gene IDs are inferred using the provided function or function name.
+    
+    Parameters:
+        fet_type (str): The feature type to extract (e.g., "CDS").
+        call_gene_id (InferGeneId.FUNC_TYPE | str): Function or registered name for inferring gene IDs.
+        translate (bool): If True and fet_type is "CDS", translates nucleotide sequences to protein.
+        min_aa_length (int): Minimum amino acid length for CDS features to be included.
+        auto_fix (bool): If True, attempts to auto-correct translation issues.
+    
+    Yields:
+        SeqRecord: Extracted feature sequences, optionally translated and annotated.
     """
     min_gene_length = int(min_aa_length) * 3
     # if fet_type != "CDS":
@@ -374,6 +519,19 @@ def extract1(
     fet: SeqFeature,
     call_gene_id: InferGeneId.FUNC_TYPE = infer_gene_id,
 ):
+    """
+    Extracts a subsequence from a SeqRecord corresponding to a given feature, handling circular genomes and updating metadata.
+    
+    The extracted sequence is assigned a new ID inferred from the feature and record, its description is updated with coordinates and qualifiers, and its features list is replaced with the extracted feature. For CDS features, relevant annotations are updated.
+    
+    Parameters:
+        rec (SeqRecord): The source sequence record.
+        fet (SeqFeature): The feature to extract from the record.
+        call_gene_id (Callable): Function to infer the gene ID for the extracted sequence.
+    
+    Returns:
+        SeqRecord: The extracted subsequence as a new SeqRecord with updated metadata.
+    """
     len_rec = len(rec)
     assert fet.location is not None
     start, end = int(fet.location.start), int(fet.location.end)  # type: ignore[reportArgumentType]
@@ -404,6 +562,15 @@ def extract1(
 
 
 def recover_qualifiers(description: str):
+    """
+    Extracts qualifiers from a description string formatted with a trailing ' # ' segment.
+    
+    Parameters:
+        description (str): A string containing a ' # ' followed by semicolon-separated key=value pairs.
+    
+    Returns:
+        dict: A dictionary mapping qualifier keys to lists of values.
+    """
     _, qualifiers_s = description.rsplit(" # ", 1)
     qualifiers = {
         k: v.split(",") for k, v in (i.split("=", 1) for i in qualifiers_s.split(";"))

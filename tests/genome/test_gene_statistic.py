@@ -18,6 +18,11 @@ from tests import Path, temp_output, test_files, test_temp
 
 
 def test_aa_mw():
+    """
+    Test the calculation of amino acid sequence molecular weight.
+    
+    Verifies that the `aa_mw` function returns the expected molecular weight for a given amino acid sequence and that the result matches the per-residue molecular weight computed by the `ARSC` class.
+    """
     aa_seq = Seq("MATRKGFEPSTSGVTGRRSNQLNYLAEFMVGTTGLEPVTLCL*")
     assert round(aa_mw(aa_seq), 4) == 107.9561
     arsc = ARSC.parse(aa_seq)
@@ -25,6 +30,11 @@ def test_aa_mw():
 
 
 def test_arsc():
+    """
+    Test the ARSC class's parsing and scaling of amino acid residue statistics.
+    
+    Verifies that parsing an amino acid sequence yields correct residue counts, molecular weight, and sequence length, and that scaled residue statistics are normalized by sequence length.
+    """
     aa_seq = Seq("MATRKGFEPSTSGVTGRRSNQLNYLAEFMVGTTGLEPVTLCL*")
     arsc = ARSC.parse(aa_seq)
     assert arsc == (112, 13, 3, arsc.mw, 42)
@@ -33,6 +43,11 @@ def test_arsc():
 
 
 def test_scu():
+    """
+    Test the calculation of codon usage statistics and GC variability for a nucleotide sequence.
+    
+    Verifies that the weighted codon frequencies, synonymous codon usage (SCU), and GC content variability are computed correctly by the CodonTable class for a given nucleotide sequence.
+    """
     na1 = Seq(
         "ATGGCGACCAGGAAGGGGTTCGAACCCTCGACCTCCGGCGTGACAGGCCGGCGTTCTAACCAGCTGAACTACCTGGCCGAATTTATGGTGGGAACAACAGGGCTCGAACCTGTGACCCTCTGCTTGTAA"
     )
@@ -44,7 +59,9 @@ def test_scu():
 
 def test_gene_stat():
     """
-    in GCA_019978365.1.gff, there is a transl_except of Sec. use this case to test gene_statistic
+    Tests gene statistics extraction and computation from a GFF and FASTA file, including handling of translational exceptions.
+    
+    Validates codon table assignment, synonymous codon usage, GC variability, amino acid residue statistics, average protein molecular weight and length, and total gene count for a genome with a known selenocysteine (Sec) translational exception.
     """
     gff = parse(test_files / "GCA_019978365.1.gff", test_files / "GCA_019978365.1.fa")
     # (recds,) = [i for i in gff.extract(translate=False) if i.id == "BCX53216.1"]

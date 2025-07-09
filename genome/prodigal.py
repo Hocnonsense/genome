@@ -24,7 +24,15 @@ prodigal_mode: Final = ["single", "meta", "gvmeta"]
 
 
 def check_genome_length_prodigal(genome: PathLike | Iterable[SeqRecord.SeqRecord]):
-    """check if given genome size is long enough to use prodigal single mode"""
+    """
+    Determine if a genome sequence meets the minimum length requirement for Prodigal single mode.
+    
+    Parameters:
+    	genome: A file path to a FASTA file or an iterable of SeqRecord objects representing genome sequences.
+    
+    Returns:
+    	bool: True if the total sequence length is at least 20,000 base pairs, otherwise False.
+    """
     if isinstance(genome, str) or isinstance(genome, Path):
         genome_iter = SeqIO.parse(genome, "fasta")
     else:
@@ -39,6 +47,18 @@ def prodigal_gff_onethread(
     trans_table=11,
 ) -> Path:
     # infer gff_out automatically if not given in some cases
+    """
+    Run Prodigal gene prediction on a single genome and output results in GFF format.
+    
+    Parameters:
+        genome: Path to a FASTA file or an iterable of SeqRecord objects representing the genome sequences.
+        mode: Prodigal mode to use; one of "single", "meta", or "gvmeta". Determines the gene finder configuration.
+        gff_out: Optional output path for the GFF file. If not provided, the output filename is inferred from the genome input.
+        trans_table: Translation table number to use for gene prediction (default is 11).
+    
+    Returns:
+        Path to the generated GFF output file containing gene predictions and input sequences.
+    """
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
             raise ValueError("without gff output, initial filename must be provided")
@@ -95,12 +115,19 @@ def prodigal_multithread(
     threads: int = 8,
 ) -> Iterable[Path]:
     """
-    If in single mode, length should not shorter than 20000 bp.
-
-    suffix:
-        gff (.gff)
-        -ge33.faa
-        -ge33.fna
+    Run Prodigal gene prediction on multiple genome files in parallel using Snakemake.
+    
+    Filters input genome files to those at least 20,000 bp in length (required for "single" mode), validates file extensions, and optionally copies genomes to an output directory. Constructs output filenames based on mode and suffix, then executes a Snakemake workflow for parallel gene prediction. Cleans up temporary genome copies if created.
+    
+    Parameters:
+        genomes: Iterable of genome file paths to process.
+        mode: Prodigal mode to use; one of "single", "meta", or "gvmeta".
+        out_dir: Optional directory to copy genome files and store results.
+        suffix: Output file suffix; supports "gff", "-ge33.faa", or "-ge33.fna".
+        threads: Number of parallel threads to use.
+    
+    Returns:
+        List of paths to the generated output files.
     """
     # if many genomes are provided, the file must exist
     _genome_files = [

@@ -28,6 +28,23 @@ def prokka_gff_onethread(
     gff_out: PathLike = "",
 ) -> Path:
     # infer gff_out automatically if not given in some cases
+    """
+    Runs Prokka genome annotation on a single genome input using a single thread and outputs a GFF file.
+    
+    Parameters:
+        genome: Either a file path to a FASTA file ending with `.fa` or an iterable of `SeqRecord` objects representing the genome sequence.
+        kingdom: The kingdom classification for Prokka annotation (default is "Bacteria").
+        gff_out: Optional output path for the resulting GFF file. If not provided, the output path is inferred from the genome filename.
+    
+    Returns:
+        Path to the generated GFF file containing the Prokka annotation results.
+    
+    Raises:
+        ValueError: If the genome input is not a valid file path or iterable of `SeqRecord`, or if the file does not end with `.fa`.
+        FileNotFoundError: If the specified genome file does not exist.
+        RuntimeError: If the Snakemake workflow fails to complete successfully.
+        NotImplementedError: If the workflow does not complete as expected.
+    """
     if not gff_out:
         if not isinstance(genome, str) and not isinstance(genome, Path):
             raise ValueError("initial filename must be provided")
@@ -81,9 +98,18 @@ def prokka_gff_multithread(
     threads: int = 8,
 ) -> Iterable[Path]:
     """
-    generate gff, (support output to a new folder)
-    - if the same file exists in the new folder, you should move it first
-    - if gff already generated, then will follow snakemake's default rules
+    Runs Prokka genome annotation on multiple FASTA files in parallel using Snakemake, generating GFF output files.
+    
+    If an output directory is specified, genome files are copied there before processing, and outputs are written to that directory. Duplicate genome filenames are not allowed. Cleans up temporary genome copies and log files after completion.
+    
+    Parameters:
+        genomes: Iterable of input genome FASTA file paths (must end with `.fa`).
+        kingdom: Kingdom classification for Prokka annotation (default is "Bacteria").
+        gff_out_dir: Optional directory to store genome copies and GFF outputs. If not provided, outputs are written alongside input files.
+        threads: Number of threads to use for parallel Snakemake execution (default is 8).
+    
+    Returns:
+        Iterable of Paths to the generated GFF files.
     """
     # if many genomes are provided, the file must exist
     _genome_files = [Path(file).expanduser().absolute() for file in genomes]

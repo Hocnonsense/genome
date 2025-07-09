@@ -28,6 +28,17 @@ def general_register(
     module_name: str,
     default_config: dict[str, Any] | None = None,
 ):
+    """
+    Creates a registration function for loading and applying Snakemake modules with optional configuration.
+    
+    Parameters:
+        snakefile (str or Path): Path to the Snakemake file to register.
+        module_name (str): Name to assign to the registered module.
+        default_config (dict, optional): Default configuration to merge with user-provided config.
+    
+    Returns:
+        Callable: A function that registers the module with a workflow and returns a rule application helper.
+    """
     def register(workflow: _wf.Workflow, name=None, config=None):
         name = name or module_name
         workflow.module(

@@ -16,6 +16,11 @@ from tests import Path, temp_output, test_files, test_temp
 
 @temp_output
 def test_gff_extract_protein_fa(test_temp: Path):
+    """
+    Test extracting protein sequences from a GFF file and writing them to a FASTA file with a minimum amino acid length filter.
+    
+    This test verifies that protein sequences parsed from the GFF file are correctly filtered by length, sorted by sequence ID, and written in two-line FASTA format to the specified output path.
+    """
     gffi = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
 
     test_out = test_temp / "binny_contigs_4bins-top10-prodigal.gvmeta-ge33.faa"
@@ -28,6 +33,9 @@ def test_gff_extract_protein_fa(test_temp: Path):
 
 @temp_output
 def test_gff_reset_reference(test_temp: Path):
+    """
+    Tests extraction of protein sequences from a GFF file using a reference genome, ensuring sequences of at least 33 amino acids are written to a FASTA file in sorted order.
+    """
     gffi = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
     genome = test_files / "binny_contigs_4bins.fa"
 
