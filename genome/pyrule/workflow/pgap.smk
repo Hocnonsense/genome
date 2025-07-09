@@ -1,10 +1,16 @@
 """
 * @Date: 2025-06-27 21:32:58
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-08 16:55:06
-* @FilePath: /2025_01-BurkComamonas/home/hwrn/software/genome/genome/pyrule/workflow/pgap.smk
+* @LastEditTime: 2025-07-09 16:34:44
+* @FilePath: /genome/genome/pyrule/workflow/pgap.smk
 * @Description: https://github.com/ncbi/pgap
 """
+
+import re
+
+
+def encode_id(s: str):
+    return "".join(c if re.match(r"[A-Za-z0-9]", c) else f"_{ord(c):02X}" for c in s)
 
 
 rule pgap_run_auto:
@@ -93,10 +99,6 @@ rule pgap_download_db:
         """
 
 
-def encode_id(s: str):
-    return "".join(c if re.match(r"[A-Za-z0-9]", c) else f"_{ord(c):02X}" for c in s)
-
-
 rule pgap_clean_fa_input:
     input:
         fa="{any}.fa",
@@ -105,7 +107,6 @@ rule pgap_clean_fa_input:
         tsv="{any}.ncbi_valid.tsv.gz",
     run:
         from Bio import SeqIO
-        import re
         import pandas as pd
 
         name_mappng = {}
