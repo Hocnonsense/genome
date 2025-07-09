@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-02-07 21:43:25
+ * @LastEditTime: 2025-07-09 20:23:24
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -13,57 +13,73 @@ changelog for genome
 
 ## changelog
 
-- 0.2.4+:
-  - feat:
-    - `rename_filtered_ls_tsv` to rename bin name after filtering
-    - `gff.parse` may make things clearer
-      - separate `extract`
-      - separate `translate` (as well as alias `_translate`)
-    - `gene_statistic` that estimate feature of gene,
-      - i.e.:
-        - [scu](https://doi.org/10.1093/molbev/mss201)
-        - [gc_variability](https://www.nature.com/articles/s41564-017-0008-3)
-        - [N-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
-        - [C-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
-      - the values can be calculated for entire genome using `GeneStatisticContainer.statistic`
-    - update `bin_statistic.contig2bin` to `Contig2Bin` and `Binput`
-      - `bin_statistic.contig2bin` alias to `bin_statistic.Contig2Bin(contig2bin_tsv, contigs)(outdir)`
-      - `bin_statistic_ext.format_bin_input` alias to `bin_statistic.Binput.parse`
-      - old APIs will be removed in next few versions
-    - update `call_gene_id` usage in `gff.Parse.extract`
-      - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
-    - rename `smk_workflow` to `rules_dir`,
-    - add `rules_dir / "pan_concat.smk"` from meer_omics
-    - add `rules_dir / "include_genomedb.smk"` to handle all methods other than binning methods for quick usage
-    - add `mmseq_family` to cluster genes
-    - `gff_2_fa_label` to extract gene with genome label from gff
-    - add `InferGeneId` in gff to better handle gene id inference
-    - add `mmseq_species` to cluster genes and related functions in `gene_clust`
-    - `BinStatisticContainer` encoding filter using `min_aa_len=33`
-    - `aai.smk` to calculate AAI
-    - muscle in `tree.smk`
-    - extract_fna_ko in `genomedb.smk`
-    - drep methods
-    - update `gff` and `gene_statistic`  to handle transl_execpt case such as `Sec`
-    - ignore sequence with illegal char in `gene_statistic`
 - 0.2.4:
   - feat:
-    - `UniRefClu` method to cluster genes
-      - `gene_clust.UniRefClu` to clust gene in UniRef standard
-      - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
-      - `mmseq_clust_95` will be removed in next few versions
-  - fix:
-    - update `bin_statistic.contig2bin`,
-      previously it will open a lot of file and may panic if there are more than 1024 bins.
-    - update `pyrule/workflow/binning/single.smk`,
-      now it will just touch output and output.fail if nothing binned
-    - update `prodigal.prodigal_gff_onethread`, now mask by default
-    - update `gff.Parse`
-      - a clearer `__init__` function, and silence at that time
-      - can extract feature across end of (a circular) genome
-  - chore:
-    - update `metadecoder` from `1.0.17` to `1.0.19`
-    - update tests imports
+    - Added comprehensive workflows for genome dereplication, gene clustering (including MMseqs2 and CD-HIT), phylogenetic tree construction, and genome annotation (PGAP).
+      - `UniRefClu` method to cluster genes
+        - `gene_clust.UniRefClu` to clust gene in UniRef standard
+        - `mmseq_uniref_cluster` and `mmseq_uniref_cluster_extract` in `smk_workflow / "gene_clust.smk"`
+        - `mmseq_clust_95` will be removed in next few versions
+      - add `mmseq_species` to cluster genes and related functions in `gene_clust`
+      - add `mmseq_family` to cluster genes
+      - add `rules_dir / "pan_concat.smk"` from meer_omics
+      - add `rules_dir / "include_genomedb.smk"` to handle all methods other than binning methods for quick usage
+      - `aai.smk` to calculate AAI
+      - muscle in `tree.smk`
+      - extract_fna_ko in `genomedb.smk`
+      - drep methods
+    - Introduced modules for advanced gene statistics, codon usage, and amino acid composition analysis.
+      - `gene_statistic` that estimate feature of gene,
+        - i.e.:
+          - [scu](https://doi.org/10.1093/molbev/mss201)
+          - [gc_variability](https://www.nature.com/articles/s41564-017-0008-3)
+          - [N-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+          - [C-ARSC](https://www.nature.com/articles/s41564-017-0008-3)
+        - the values can be calculated for entire genome using `GeneStatisticContainer.statistic`
+    - Enhanced support for translational exceptions in gene translation and annotation.
+      - `gff.parse` may make things clearer
+        - separate `extract`
+        - separate `translate` (as well as alias `_translate`)
+      - extract translate to a seperate module
+      - add `InferGeneId` in gff to better handle gene id inference
+    - Provided new tools for genome bin renaming, statistics aggregation, and flexible Snakemake workflow inclusion.
+      - `rename_filtered_ls_tsv` to rename bin name after filtering
+      - `gff_2_fa_label` to extract gene with genome label from gff
+  - fix
+    - Corrected typos and improved error messages across modules.
+      - update `pyrule/workflow/binning/single.smk`,
+        now it will just touch output and output.fail if nothing binned
+    - Fixed file handling and improved robustness in sequence extraction and annotation parsing.
+      - update `prodigal.prodigal_gff_onethread`, now mask by default
+      - update `bin_statistic.contig2bin`,
+        previously it will open a lot of file and may panic if there are more than 1024 bins.
+      - update `gff` and `gene_statistic`  to handle transl_execpt case such as `Sec`
+      - update `call_gene_id` usage in `gff.Parse.extract`
+        - if `call_gene_id` is a function, the second parameter should be `SeqFeature`
+      - `BinStatisticContainer` encoding filter using `min_aa_len=33`
+      - ignore sequence with illegal char in `gene_statistic`
+      - update `gff.Parse`
+        - a clearer `__init__` function, and silence at that time
+        - can extract feature across end of (a circular) genome
+  - refactor
+    - Unified and modularized clustering, binning, and annotation codebases for greater extensibility.
+      - update `bin_statistic.contig2bin` to `Contig2Bin` and `Binput`
+        - `bin_statistic.contig2bin` alias to `bin_statistic.Contig2Bin(contig2bin_tsv, contigs)(outdir)`
+        - `bin_statistic_ext.format_bin_input` alias to `bin_statistic.Binput.parse`
+        - old APIs will be removed in next few versions
+    - Updated parameter names and class structures for clarity and consistency.
+  - doc
+    - Improved README, changelog, and added detailed workflow documentation for new features and usage.
+  - style
+    - Standardized naming conventions and code formatting across scripts and workflows.
+      - rename `smk_workflow` to `rules_dir`,
+  - tests
+    - Added extensive tests for new features, including gene statistics, clustering, annotation parsing, and translation exception handling.
+      - update tests imports
+  - chores
+    - Updated environment files and workflow configurations for improved reproducibility and integration.
+      - update `metadecoder` from `1.0.17` to `1.0.19`
+    - Added and removed workflow and environment files as needed to support new features.
 - 0.2.3:
   - feat!:
     - rename API for snakemake output:
