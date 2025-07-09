@@ -28,6 +28,9 @@ from genome.binning import (
 
 @temp_output
 def test_binning_input_to_config(test_temp: Path):
+    """
+    Test that a BinningInput instance correctly generates a YAML configuration file with expected paths for contig, JGI, and BAM list files.
+    """
     f = BinningInput(
         contig=str(test_files / "binny_contigs_4bins.fa"),
         lsbams=check_bams(test_temp / "binny_test_binning", []),
@@ -58,6 +61,11 @@ def test_binning_config_to_config(test_temp: Path):
 @pytest_mark_resource
 @temp_output
 def test_unitem_profile(test_temp: Path):
+    """
+    Runs the bin union process using the 'unitem_unanimous' method and loads the resulting contig-to-bin assignments.
+    
+    This test executes the bin union workflow with specified binning methods and input files, then reads and groups the resulting contig-to-bin mapping to verify output structure.
+    """
     binunion_tsv = bin_union(
         method="unitem_unanimous",
         marker="",
@@ -81,6 +89,11 @@ def test_unitem_profile(test_temp: Path):
 
 @temp_output
 def test_smk_filter__rename_filtered_ls_tsv(test_temp: Path):
+    """
+    Test that the Snakemake filter workflow correctly renames filtered bin files and updates associated metadata.
+    
+    This test creates mock CheckM output and a list of bin FASTA files, runs the `filter.smk` Snakemake rule to rename bins, and verifies that both the TSV metadata and the list file reflect the new naming convention.
+    """
     prefix = test_temp / "{any}-bins/filter/{method}{marker}-{check}_bins".format(
         any="any", method="method", marker="marker", check="check"
     )

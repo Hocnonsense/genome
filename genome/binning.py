@@ -105,11 +105,19 @@ class BinningConfig:
         threads=10,
     ):
         """
-        @param method: only given methods are supported
-
-        @param marker: name for identify, will add after "dastool"
-            - [if not given], name will be "dastool" only
-            - else, name will be like "dastool-{marker}"
+        Runs a specified binning union method using a Snakemake workflow and returns the output paths.
+        
+        Parameters:
+            method (Literal["dastool", "unitem_greedy", "unitem_consensus", "unitem_unanimous"]): The binning union method to execute.
+            marker (str, optional): Optional identifier appended to the output name for distinguishing runs.
+            threads (int, optional): Number of threads to use for the workflow.
+        
+        Returns:
+            BinningOutput: Object containing paths to the binning results.
+        
+        Raises:
+            RuntimeError: If the Snakemake workflow fails to execute successfully.
+            NotImplementedError: If the workflow does not complete as expected.
         """
         out_basename: str = method
         if marker:

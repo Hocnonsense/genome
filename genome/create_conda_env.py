@@ -14,6 +14,19 @@ from .pyrule import smk, rules_dir, smk_conda_env
 
 
 def create_conda_env(*envs: str):
+    """
+    Create one or more conda environments using Snakemake rules.
+    
+    Parameters:
+        *envs (str): Names of the conda environments to create.
+    
+    Returns:
+        bool: True if all specified environments are created successfully.
+    
+    Raises:
+        RuntimeError: If Snakemake fails to create the environments.
+        NotImplementedError: If the function exits the context manager unexpectedly.
+    """
     with TemporaryDirectory() as tmpd:
         rule_files = [f"{tmpd}/create_conda_env-{env}-finished" for env in envs]
         target_smk_file = rules_dir / "create_conda_env.smk"

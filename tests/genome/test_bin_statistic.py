@@ -16,6 +16,11 @@ from tests import Path, temp_output, test_files, test_temp
 
 @temp_output
 def test_contig2bin(test_temp: Path):
+    """
+    Tests the Contig2Bin class by generating bin files from a contig-to-bin mapping and a FASTA file.
+    
+    This function verifies that Contig2Bin correctly processes a TSV mapping file and a corresponding FASTA file, producing bin files in a temporary output directory.
+    """
     test_fa = test_files / "binny_contigs_4bins.fa"
     test_c2b = test_files / "binny_unitem_unanimous.tsv"
     temp_bin = test_temp / "binny_unitem_unanimous"
@@ -24,6 +29,11 @@ def test_contig2bin(test_temp: Path):
 
 
 def test_prokka_gff_bin_statistic():
+    """
+    Test that bin statistics computed from a Prokka GFF annotation file match expected values.
+    
+    Validates GC content, GC standard deviation, base pair size, maximum contig length, number of contigs, N50 contig length, ambiguous base count, coding density, and gene count for a known test GFF file.
+    """
     gff = test_files / "binny_contigs_4bins-top10-prodigal.gvmeta.gff"
     bsc = BinStatisticContainer.read_gff(gff, min_aa_len=0)
     bs = bsc.statistic()
@@ -40,6 +50,11 @@ def test_prokka_gff_bin_statistic():
 
 
 def test_genome_bin_statistic():
+    """
+    Test computation of genome bin statistics from FASTA and GFF files.
+    
+    This test verifies that `BinStatisticContainer` correctly computes various statistics for genome bins, including GC content, GC standard deviation, total base pairs, maximum contig length, number of contigs, N50, ambiguous base count, coding density, and gene count. It checks results for multiple minimum contig length cutoffs and validates output formats for both DataFrame and dictionary representations.
+    """
     genome = test_files / "binny_contigs_4bins.fa"
     bsc = BinStatisticContainer.read_contig(genome, "fasta")
     test_contig_cutoffs = (0, 500, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 10000)
@@ -79,6 +94,11 @@ def test_genome_bin_statistic():
 
 
 def test_genome_stat_speed(report=False):
+    """
+    Test that quick and standard contig reading methods produce identical sequence statistics.
+    
+    Optionally reports the execution time for both methods over multiple iterations.
+    """
     genome = test_files / "binny_contigs_4bins.fa"
     bsc_seq_quick = BinStatisticContainer.quick_read_contig(
         genome, "fasta"

@@ -27,22 +27,51 @@ GENE_CLUST_SMK = rules_dir / "gene_clust.smk"
 class _CluBase:
     @classmethod
     def in_faa(cls, prefix: PathLike = "{prefix}"):
+        """
+        Return the path to the input FASTA (.faa) file corresponding to the given prefix.
+        
+        Parameters:
+            prefix: The file prefix or base name for the FASTA file.
+        
+        Returns:
+            Path to the input FASTA file with a `.faa` extension.
+        """
         return Path(f"{prefix}.faa")
 
     @classmethod
     def from_in_faa(cls, faa: PathLike):
-        "create UniRefClu from input faa file"
+        """
+        Create a new instance from the given input FASTA (.faa) file by inferring the prefix.
+        
+        Parameters:
+            faa: Path to the input FASTA file. Must end with the '.faa' extension.
+        
+        Returns:
+            An instance initialized with file paths derived from the input FASTA file's prefix.
+        """
         assert f"{faa}".endswith(".faa")
         return cls.from_prefix(str(faa)[:-4])
 
     @classmethod
     def from_prefix(cls, prefix: PathLike):
-        "create UniRefClu from prefix of output files"
+        """
+        Create an instance from a given file prefix by formatting all output file paths accordingly.
+        
+        Parameters:
+        	prefix: The base path or prefix used to construct output file paths.
+        
+        Returns:
+        	An instance with all file paths set based on the provided prefix.
+        """
         return cls(*(Path(f"{i}".format(prefix=prefix)) for i in cls()))
 
     @classmethod
     def from_aout(cls, aout: PathLike):
-        "auto recognize prefix from output"
+        """
+        Create an instance by inferring the file prefix from an output file path.
+        
+        Attempts to match the provided output file path against known suffix patterns to extract the prefix. Raises a KeyError if the suffix cannot be determined.
+        """
         aout_ = str(aout)
         for suffix in (i.name.format(prefix="") for i in cls()):
             if aout_.endswith(suffix):
@@ -50,6 +79,15 @@ class _CluBase:
         raise KeyError("Cannot determine suffix, please check file name")
 
     def _modify(self, *modify: PathLike | None):
+        """
+        Return a new instance with specified file paths replaced by new values.
+        
+        Parameters:
+            modify: Optional new path values for each field; if a value is None, the original path is retained.
+        
+        Returns:
+            A new instance of the same class with updated file paths.
+        """
         return self.__class__(
             *(
                 Path(modify) if modify else default
@@ -60,6 +98,17 @@ class _CluBase:
     TSV_COLS: tuple[str, ...] = ("All",)
 
     def _load_rep2all(self, *files):
+        """
+        Load and merge cluster membership TSV files into a single DataFrame.
+        
+        Each input file is read as a two-column TSV with column names determined by the class's `TSV_COLS` attribute. Files are merged sequentially on their shared columns to produce a unified mapping of representative to member sequences.
+        
+        Parameters:
+            files: One or more file paths to TSV files containing cluster membership data.
+        
+        Returns:
+            pd.DataFrame: Merged DataFrame mapping representative sequences to all members across clustering levels.
+        """
         rep2all: pd.DataFrame
         for i, f in enumerate(files):
             names = self.TSV_COLS[i : i + 2][::-1]
@@ -67,15 +116,30 @@ class _CluBase:
             rep2all = df if i == 0 else rep2all.merge(df)
         return rep2all
 
-    def load_rep2all(self, keep: Literal[True] = True) -> pd.DataFrame: ...
+    def load_rep2all(self, keep: Literal[True] = True) -> pd.DataFrame: """
+Load and return the merged cluster membership DataFrame for this clustering result.
+
+Parameters:
+	keep (Literal[True] or tuple of str): If True, returns all columns; if a tuple of column names, returns only those columns.
+
+Returns:
+	pd.DataFrame: DataFrame containing cluster membership information, filtered by the specified columns.
+"""
+...
 
     @property
     def rep2all(self):
+        """
+        Load and return the full cluster membership DataFrame for all available columns.
+        """
         return self.load_rep2all(keep=True)
 
     if TYPE_CHECKING:
 
         def __iter__(self):
+            """
+            Yields a single empty Path object when the instance is iterated over.
+            """
             yield Path()
 
     @classmethod
@@ -87,6 +151,23 @@ class _CluBase:
         threads=4,
         profile: PathLike | None = None,
     ):
+        """
+        Executes the gene clustering Snakemake workflow on provided sequence files or records and returns the resulting cluster membership data as a DataFrame.
+        
+        Parameters:
+            files (Iterable[PathLike] | None): Input FASTA file paths containing sequences to cluster.
+            faas (Iterable[SeqRecord.SeqRecord] | None): Sequence records to cluster, written to a temporary FASTA file if provided.
+            keep_prefix (PathLike | Literal[False] | None): If set, moves the temporary input FASTA to this prefix directory and uses it as the output location; if False or None, uses a temporary file.
+            threads (int): Number of threads to use for Snakemake execution.
+            profile (PathLike | None): Optional Snakemake profile directory for workflow execution.
+        
+        Returns:
+            pandas.DataFrame: DataFrame containing cluster membership information as defined by the class's `rep2all` property.
+        
+        Raises:
+            RuntimeError: If the Snakemake workflow fails to execute successfully.
+            NotImplementedError: If execution path is incomplete or not implemented.
+        """
         assert files or faas
         with NamedTemporaryFile("w", suffix=".faa", delete=True) as tmpf:
             with open(tmpf.name) as fi:
@@ -153,6 +234,18 @@ class UniRefClu(_UniRefClu, _CluBase):
         u90: PathLike | None = None,
         u50: PathLike | None = None,
     ):
+        """
+        Create a new instance from a prefix, optionally overriding the default output file paths.
+        
+        Parameters:
+            prefix: The base path used to construct default output file paths.
+            u100: Optional custom path for the UniRef100 output file.
+            u90: Optional custom path for the UniRef90 output file.
+            u50: Optional custom path for the UniRef50 output file.
+        
+        Returns:
+            An instance with file paths set according to the prefix and any provided overrides.
+        """
         return cls.from_prefix(prefix)._modify(u100, u90, u50)
 
     TSV_COLS = "All", "U100", "U90", "U50"
@@ -165,9 +258,13 @@ class UniRefClu(_UniRefClu, _CluBase):
         ),
     ):
         """
-        keep:
-            if True, keep all columns,
-            else: keep the columns in the list
+        Load and return UniRef cluster membership data as a DataFrame, selecting specified columns.
+        
+        Parameters:
+            keep: If True, returns all columns; otherwise, returns only the columns listed.
+        
+        Returns:
+            pandas.DataFrame containing cluster membership information for the selected columns.
         """
         keep_ = list(self.TSV_COLS if keep is True else keep)
         return self._load_rep2all(self.u100, self.u90, self.u50)[keep_]
@@ -178,6 +275,19 @@ def extract(
     files: Iterable[PathLike] | None = None,
     faas: Iterable[SeqRecord.SeqRecord] | None = None,
 ):
+    """
+    Yield sequence records whose IDs are present in the given subset.
+    
+    Either sequence files or an iterable of sequence records must be provided. For each sequence, yields only those whose ID is found in `subset`.
+    
+    Parameters:
+        subset (Collection[str]): Set of sequence IDs to extract.
+        files (Iterable[PathLike], optional): Sequence file paths to search for matching records.
+        faas (Iterable[SeqRecord.SeqRecord], optional): Iterable of sequence records to filter.
+    
+    Yields:
+        SeqRecord.SeqRecord: Sequence records with IDs in `subset`.
+    """
     assert files or faas
     if faas:
         for faa in faas:
@@ -205,6 +315,18 @@ class MmseqOut(_MmseqOut, _CluBase):
         all_clu: PathLike | None = None,
         all_clu_faa: PathLike | None = None,
     ):
+        """
+        Create a new instance using a prefix, with optional overrides for output file paths.
+        
+        Parameters:
+            prefix: The base path used to construct default output file paths.
+            all_100: Optional path to override the default 100% identity cluster TSV file.
+            all_clu: Optional path to override the default cluster TSV file.
+            all_clu_faa: Optional path to override the default representative sequences FASTA file.
+        
+        Returns:
+            An instance with file paths set according to the prefix and any provided overrides.
+        """
         return cls.from_prefix(prefix)._modify(all_100, all_clu, all_clu_faa)
 
     TSV_COLS = "All", "Rep100", "Rep"
@@ -216,6 +338,15 @@ class MmseqOut(_MmseqOut, _CluBase):
             "Rep",
         ),
     ):
+        """
+        Load and return cluster membership data for MMseqs2 clustering as a DataFrame.
+        
+        Parameters:
+            keep: Iterable of column names to retain in the output DataFrame, or True to keep all columns. Valid options are "All", "Rep100", and "Rep".
+        
+        Returns:
+            pandas.DataFrame: Cluster membership data with the specified columns.
+        """
         keep_ = list(self.TSV_COLS if keep is True else keep)
         return self._load_rep2all(self.all_100, self.all_clu)[keep_]
 
@@ -227,6 +358,18 @@ def mmseq_clust(
     threads=4,
 ) -> MmseqOut:
     # infer gff_out automatically if not given in some cases
+    """
+    Run MMseqs2 clustering on input sequence files or records and return output file paths.
+    
+    Parameters:
+        files: Iterable of input FASTA file paths, or None if using sequence records.
+        faas: Iterable of SeqRecord objects, or None if using input files.
+        out_prefix: Output prefix path or MmseqOut instance specifying output file locations.
+        threads: Number of threads to use for clustering.
+    
+    Returns:
+        MmseqOut: An instance containing paths to the MMseqs2 clustering output files.
+    """
     if not isinstance(out_prefix, tuple):
         _out_prefix = MmseqOut.from_prefix(out_prefix)
     else:
@@ -254,6 +397,16 @@ class MmFamily(_MmFamily, _CluBase):
         mf100: PathLike | None = None,
         mfamily: PathLike | None = None,
     ):
+        """
+        Create an instance using a prefix, with optional overrides for the `mf100` and `mfamily` file paths.
+        
+        Parameters:
+        	mf100: Optional path to override the default 100% family cluster TSV file.
+        	mfamily: Optional path to override the default family cluster TSV file.
+        
+        Returns:
+        	Instance with file paths set according to the prefix and any provided overrides.
+        """
         return cls.from_prefix(prefix)._modify(mf100, mfamily)
 
     TSV_COLS = "All", "F100", "Family"
@@ -266,9 +419,13 @@ class MmFamily(_MmFamily, _CluBase):
         ),
     ):
         """
-        keep:
-            if True, keep all columns,
-            else: keep the columns in the list
+        Load and return the merged family clustering membership DataFrame, optionally filtering columns.
+        
+        Parameters:
+            keep: If True, returns all columns; otherwise, returns only the specified columns ("All", "F100", "Family").
+        
+        Returns:
+            pandas.DataFrame: DataFrame containing cluster membership information for the selected columns.
         """
         keep_ = list(self.TSV_COLS if keep is True else keep)
         return self._load_rep2all(self.mf100, self.mfamily)[keep_]
@@ -294,6 +451,17 @@ class MmSpecies(_MmSpecies, _CluBase):
         mf100: PathLike | None = None,
         mspecies: PathLike | None = None,
     ):
+        """
+        Create an instance from a prefix, optionally overriding the `mf100` and `mspecies` file paths.
+        
+        Parameters:
+            prefix: The base path used to construct default output file paths.
+            mf100: Optional custom path for the 100% family cluster TSV file.
+            mspecies: Optional custom path for the species cluster TSV file.
+        
+        Returns:
+            An instance with file paths set according to the prefix and any provided overrides.
+        """
         return cls.from_prefix(prefix)._modify(mf100, mspecies)
 
     TSV_COLS = "All", "F100", "Species"
@@ -306,9 +474,13 @@ class MmSpecies(_MmSpecies, _CluBase):
         ),
     ):
         """
-        keep:
-            if True, keep all columns,
-            else: keep the columns in the list
+        Load and return the merged DataFrame of species-level cluster memberships.
+        
+        Parameters:
+            keep: If True, include all columns; otherwise, include only the specified columns ("All", "F100", "Species").
+        
+        Returns:
+            pandas.DataFrame: DataFrame containing cluster membership information for the selected columns.
         """
         keep_ = list(self.TSV_COLS if keep is True else keep)
         return self._load_rep2all(self.mf100, self.mspecies)[keep_]

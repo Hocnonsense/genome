@@ -78,7 +78,14 @@ class GFF3Writer:
         pass
 
     def write(self, recs, out_handle, include_fasta=False):
-        """Write the provided records to the given handle in GFF3 format."""
+        """
+        Writes one or more Biopython SeqRecords to the output handle in GFF3 format, optionally including sequence data in FASTA format.
+        
+        Parameters:
+        	recs: A single SeqRecord or an iterable of SeqRecords to be written.
+        	out_handle: A writable file-like object where the GFF3 output will be written.
+        	include_fasta (bool): If True, appends the corresponding sequence(s) in FASTA format after the GFF3 features.
+        """
         id_handler = _IdHandler()
         self._write_header(out_handle)
         fasta_recs = []
@@ -115,10 +122,21 @@ class GFF3Writer:
 
     def _write_rec(self, rec, out_handle):
         # if we have a SeqRecord, write out optional directive
+        """
+        Writes the GFF3 sequence-region directive for a SeqRecord if it contains a non-empty sequence.
+        
+        The directive specifies the region covered by the sequence, using 1-based coordinates.
+        """
         if rec.seq and len(rec.seq) > 0:
             out_handle.write("##sequence-region %s 1 %s\n" % (rec.id, len(rec.seq)))
 
     def _get_phase(self, feature):
+        """
+        Determine the phase value for a feature in GFF3 format.
+        
+        For CDS features, calculates the phase from the 'codon_start' qualifier if present; otherwise, uses the 'phase' qualifier or defaults to '.'.
+        Returns the phase as a string.
+        """
         if "phase" in feature.qualifiers:
             phase = feature.qualifiers["phase"][0]
         elif feature.type == "CDS":
@@ -128,7 +146,19 @@ class GFF3Writer:
         return str(phase)
 
     def _write_feature(self, feature, rec_id, out_handle, id_handler, parent_id=None):
-        """Write a feature with location information."""
+        """
+        Writes a single feature and its subfeatures to the output in GFF3 format, including location, attributes, and parent-child relationships.
+        
+        Parameters:
+            feature: The SeqFeature to write.
+            rec_id: The sequence record identifier for the feature.
+            out_handle: Output stream to write the GFF3 line.
+            id_handler: Handler for generating and tracking unique feature IDs.
+            parent_id: Optional parent feature ID for hierarchical relationships.
+        
+        Returns:
+            Updated ID handler reflecting any new IDs assigned during the write process.
+        """
         if feature.strand == 1:
             strand = "+"
         elif feature.strand == -1:

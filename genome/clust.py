@@ -18,13 +18,31 @@ from scipy.spatial import distance as ssd
 
 class UnionFind:
     def __init__(self, *elements: str, dynamic=False):
+        """
+        Initialize the union-find data structure with the given elements.
+        
+        Parameters:
+            elements (str): Elements to include in the initial disjoint sets.
+            dynamic (bool): If True, allows dynamic addition of new elements during find/union operations.
+        """
         self.parent = {e: e for e in elements}
         self.dynamic = dynamic
 
     def __contains__(self, x):
+        """
+        Check if the specified element is present in the union-find structure.
+        
+        Returns:
+            bool: True if the element exists, False otherwise.
+        """
         return x in self.parent
 
     def find(self, x):
+        """
+        Finds and returns the representative element (root) of the set containing `x`, applying path compression for efficiency.
+        
+        If `dynamic` is enabled and `x` is not present, adds `x` as its own parent.
+        """
         if self.dynamic and x not in self:
             return self.parent.setdefault(x, x)
         if self.parent[x] != x:
@@ -32,12 +50,23 @@ class UnionFind:
         return self.parent[x]
 
     def union(self, x, y):
+        """
+        Unites the sets containing elements x and y.
+        
+        If the union-find is not dynamic and either element is missing, the operation is skipped.
+        """
         if not self.dynamic:
             if not (x in self and y in self):
                 return
         self.parent[self.find(y)] = self.find(x)
 
     def groups(self):
+        """
+        Return all groups of connected elements as sets.
+        
+        Returns:
+        	A collection of sets, each containing elements that are connected in the union-find structure.
+        """
         groups: dict[str, set[str]] = {}
         for e in self.parent:
             groups.setdefault(self.find(e), set()).add(e)
@@ -49,6 +78,16 @@ class UnionFind:
         links: Iterable[tuple[str, str]],
         elements: Iterable[str] = tuple(),
     ):
+        """
+        Create groups of connected elements from a list of pairwise links using the union-find algorithm.
+        
+        Parameters:
+            links: Iterable of pairs representing connections between elements.
+            elements: Optional iterable of elements to initialize the union-find structure.
+        
+        Returns:
+            A collection of sets, each set containing elements that are connected.
+        """
         uf = cls(*elements)
         uf.dynamic = len(uf.parent) == 0
         for x, y in links:
@@ -60,15 +99,17 @@ def cluster_hierarchical(
     db: pd.DataFrame, linkage_method="single", linkage_cutoff=0.10
 ):
     """
-    Perform hierarchical clustering on a symmetrical distance matrix
-
-    Args:
-        db: result of db.pivot usually
-        linkage_method: passed to scipy.cluster.hierarchy.fcluster
-        linkage_cutoff: distance to draw the clustering line (default = .1)
-
+    Performs hierarchical clustering on a symmetric distance matrix and assigns cluster labels.
+    
+    Parameters:
+        db (pd.DataFrame): Symmetric distance matrix with genomes as columns and rows.
+        linkage_method (str): Linkage method for hierarchical clustering (default is "single").
+        linkage_cutoff (float): Distance threshold for forming flat clusters (default is 0.10).
+    
     Returns:
-        list: [Cdb, linkage]
+        tuple: A tuple containing:
+            - pd.DataFrame: DataFrame mapping each genome to its assigned cluster.
+            - np.ndarray: Linkage matrix produced by hierarchical clustering.
     """
     # Generate linkage dataframe
     arr = ssd.squareform(np.asarray(db))
@@ -92,6 +133,19 @@ def resolve_ungroup(
     clu_compare: Iterable[K],
     diff_clu_namer=lambda c1, c2: f"{c1}_{c2}",
 ):
+    """
+    Resolve cluster label conflicts between two cluster assignments by combining labels for ambiguous cases.
+    
+    For each pair of cluster labels from `clu_main` and `clu_compare`, if either label is associated with multiple unique pairs, a combined label is generated using `diff_clu_namer`. Otherwise, the primary cluster label from `clu_main` is retained.
+    
+    Parameters:
+        clu_main: Primary cluster labels.
+        clu_compare: Secondary cluster labels.
+        diff_clu_namer: Function to generate a combined label from two cluster labels (default: concatenation with underscore).
+    
+    Returns:
+        pd.Series: Series of resolved cluster labels, with combined labels for conflicts.
+    """
     check = pd.DataFrame({"c1": clu_main, "c2": clu_compare})
     uniq = check.drop_duplicates()
     warn1 = uniq["c1"].value_counts().pipe(lambda s: s[s > 1]).index
@@ -104,6 +158,15 @@ def resolve_ungroup(
 
 
 def read_fastani(out_base):
+    """
+    Read and process a FastANI output file, returning ANI and alignment fraction data in long format.
+    
+    Parameters:
+        out_base (str): Path to the FastANI output file.
+    
+    Returns:
+        pd.DataFrame: DataFrame with columns `reference`, `query`, `ani` (as a fraction), and `alignment_fraction` (fraction of aligned sequence).
+    """
     odb = pd.read_csv(
         out_base, names=["reference", "query", "ani", "j1", "j2"], sep="\t"
     ).assign(
@@ -133,6 +196,21 @@ def read_fastani(out_base):
 def run_pairwise_ani(
     ndb: pd.DataFrame, s_lmethod="single", link_single=True, cov=0.5, ani=0.99
 ):
+    """
+    Performs pairwise ANI clustering on genome similarity data using hierarchical and optional single-linkage methods.
+    
+    Filters genome pairs by alignment coverage and computes a distance metric as 1 minus the average ANI. Performs hierarchical clustering on the resulting distance matrix. If `link_single` is True, additionally identifies connected components using single-linkage grouping and resolves cluster assignments between the two methods.
+    
+    Parameters:
+        ndb (pd.DataFrame): DataFrame containing columns 'reference', 'query', 'ani', and 'alignment_fraction'.
+        s_lmethod (str, optional): Linkage method for hierarchical clustering (default is "single").
+        link_single (bool, optional): Whether to perform additional single-linkage grouping (default is True).
+        cov (float, optional): Minimum alignment coverage threshold (default is 0.5).
+        ani (float, optional): ANI threshold for clustering (default is 0.99).
+    
+    Returns:
+        tuple: A tuple containing a DataFrame with columns 'genome', 'cluster', and 'cluster_single' (if `link_single` is True), or just 'genome' and 'cluster' (if False), and the hierarchical clustering linkage matrix.
+    """
     s_l_cutoff = 1 - ani
     _min_cov = float(cov)
     Ldb = ndb.assign(

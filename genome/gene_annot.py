@@ -157,6 +157,12 @@ class Gene2KO:
         return pd.Series(self.get_gene_KOs(), name="KO")
 
     def __init__(self, pattern: Union[Path, list[Path]]):
+        """
+        Initializes the Gene2KO instance by locating annotation files matching known annotator names from the provided path or list of paths.
+        
+        Raises:
+            FileNotFoundError: If no annotation files matching the expected patterns are found.
+        """
         if not isinstance(pattern, list):
             pattern = [pattern]
         ann_files_ = self._infer_ann_files(pattern)
@@ -170,6 +176,15 @@ class Gene2KO:
         self.ann_files = ann_files
 
     def _infer_ann_files(self, patterns: list[Path]):
+        """
+        Identify and return annotation files matching known annotator sources from the provided path patterns.
+        
+        Parameters:
+            patterns (list[Path]): List of file path patterns to search for annotation files.
+        
+        Returns:
+            dict: A dictionary mapping annotator indices to their corresponding annotation file paths. If no file is found for an annotator, the value is an empty Path.
+        """
         ann_files = {i: Path() for i, _ in enumerate(self.Annoters.iters)}
 
         for pattern in reversed(patterns):
@@ -188,6 +203,18 @@ class Gene2KO:
 def get_all_gene_annots(
     gene_annots: pd.Series, rep2all: pd.Series | pd.DataFrame | None = None
 ):
+    """
+    Expands a Series of gene-to-KO annotations into a DataFrame with one KO per row, optionally mapping representative genes to all genes.
+    
+    If `rep2all` is provided, merges the KO annotations with the mapping to associate KOs with all genes in the mapping.
+    
+    Parameters:
+        gene_annots (pd.Series): Series mapping gene identifiers to colon-separated KO strings.
+        rep2all (pd.Series | pd.DataFrame | None): Optional mapping from representative genes to all genes.
+    
+    Returns:
+        pd.DataFrame: DataFrame with gene identifiers as index and a single KO per row.
+    """
     ko_exploded = pd.DataFrame(
         gene_annots.apply(lambda x: x.split(":") if x.startswith("K") else [])
         .explode()
@@ -210,6 +237,18 @@ def main(
     all_clu_path: Path,
     all_gene_annots_path: Optional[Path] = None,
 ):
+    """
+    Loads gene annotation files, expands representative gene KO annotations to all genes, and optionally saves the full annotation DataFrame.
+    
+    Parameters:
+        annot_prefix: Path prefix or pattern to locate gene annotation files.
+        all_100_path (Path): Path to the representative gene FASTA file.
+        all_clu_path (Path): Path to the gene clustering output file.
+        all_gene_annots_path (Optional[Path]): Optional path to save the resulting annotation DataFrame as a CSV file.
+    
+    Returns:
+        pd.DataFrame: DataFrame mapping all genes to their KO annotations.
+    """
     from .gene_clust import MmseqOut
 
     rep2all = MmseqOut(all_100_path, all_clu_path, Path()).load_rep2all()
@@ -231,6 +270,15 @@ class MantisAnnot(NamedTuple):
 
     @staticmethod
     def parse_links(links: Iterable[tuple[str, str]]):
+        """
+        Aggregate annotation links into a dictionary mapping each key to a list of associated values.
+        
+        Parameters:
+            links: An iterable of (key, value) tuples representing annotation links.
+        
+        Returns:
+            A dictionary where each key maps to a list of all values associated with that key.
+        """
         all_annots: dict[str, list[str]] = {}
         for k, v in links:
             all_annots.setdefault(k, []).append(v)
@@ -238,6 +286,15 @@ class MantisAnnot(NamedTuple):
 
     @classmethod
     def from_links(cls, line: str):
+        """
+        Parses a Mantis annotation line containing detailed annotation links and returns a MantisAnnot instance.
+        
+        Parameters:
+            line (str): A tab-delimited string from a Mantis annotation file, where the last field contains annotation links.
+        
+        Returns:
+            MantisAnnot: An instance with the query, reference files, and a dictionary of annotation lists.
+        """
         (query, ref_files, ref_hits, consensus_hits, total_hits, _links) = (
             line.strip().split("\t", 5)
         )
@@ -249,6 +306,15 @@ class MantisAnnot(NamedTuple):
 
     @classmethod
     def from_refs(cls, line: str):
+        """
+        Parse a Mantis annotation line containing reference hits and return a MantisAnnot instance.
+        
+        Parameters:
+            line (str): A tab-delimited string from a Mantis annotation file, where reference files and their corresponding hits are provided as semicolon-separated lists.
+        
+        Returns:
+            MantisAnnot: An instance containing the query, list of reference files, and a dictionary mapping each reference file to its associated hits.
+        """
         (query, ref_files, ref_hits, consensus_hits, total_hits, _links) = (
             line.strip().split("\t", 5)
         )
@@ -261,7 +327,15 @@ class MantisAnnot(NamedTuple):
     @classmethod
     def get_link_annots(cls, mantis_file: Path):
         """
-        >>> mantis_file = Path("results/genes-mantis.tsv")
+        Parse a Mantis annotation TSV file and return a DataFrame of extracted gene annotations.
+        
+        Reads the provided Mantis annotation file, parses each line to extract annotation categories such as KO, COG, arCOG, PFAM, and EC, and organizes them into a DataFrame indexed by gene query. Any additional annotation types present are also included as columns.
+         
+        Parameters:
+            mantis_file (Path): Path to the Mantis annotation TSV file.
+        
+        Returns:
+            pd.DataFrame: DataFrame with gene queries as the index and annotation categories as columns.
         """
         total_annots: dict[str, dict[str, list[str]]] = {}
         with open(mantis_file) as fi:
@@ -285,7 +359,9 @@ class MantisAnnot(NamedTuple):
     @classmethod
     def get_ref_annots(cls, mantis_file: Path):
         """
-        >>> mantis_file = Path("results/genes-mantis.tsv")
+        Parse a Mantis TSV file to extract reference annotations for each query.
+        
+        Reads the provided Mantis annotation file, parses each line to associate reference files with their corresponding hits for each query, and returns a DataFrame indexed by query with reference annotations.
         """
         total_annots: dict[str, dict[str, list[str]]] = {}
         with open(mantis_file) as fi:

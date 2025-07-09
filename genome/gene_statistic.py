@@ -32,6 +32,14 @@ class CodonTable:
         family: Seq
 
     def __init__(self, table: int | str = 11):
+        """
+        Initialize the CodonTable with codon-to-amino acid mappings and codon family groupings for a specified genetic code table.
+        
+        Constructs mappings from codons to amino acids, identifies stop codons, and organizes codons into families based on amino acid, codon count, and GC content rank. Also builds pseudo codon families for further codon usage analysis.
+        
+        Parameters:
+            table (int | str): NCBI translation table number or name specifying the genetic code (default is 11).
+        """
         self.table = table
         _table = {
             i: i.translate(table)  # type: ignore[reportArgumentType]
@@ -76,6 +84,17 @@ class CodonTable:
 
     @classmethod
     def get(cls, table: int | str = 11, _table_cache={}) -> "CodonTable":
+        """
+        Return a cached CodonTable instance for the specified translation table.
+        
+        If the CodonTable for the given table number or name does not exist in the cache, it is created and stored for future use.
+        
+        Parameters:
+            table (int | str): NCBI translation table number or name.
+        
+        Returns:
+            CodonTable: Cached CodonTable instance corresponding to the specified translation table.
+        """
         if table not in _table_cache:
             _table_cache[table] = cls(table)
         return _table_cache[table]
@@ -87,6 +106,23 @@ class CodonTable:
         errorfile_handle=sys.stderr,
         id: int | str | None = "*",
     ):
+        """
+        Parses a coding DNA sequence (excluding the start codon) to count codon usage and assess GC variability.
+        
+        Checks for stop codons, incomplete codons, ambiguous bases ('N'), and unknown codons, raising a ValueError with details if an error is encountered. Returns a `_CodonUsage` object containing codon usage counts, translation table, gene codon length, and GC variability statistics.
+        
+        Parameters:
+            seq_cds (Seq): Coding DNA sequence to parse, excluding the start codon.
+            transl_except (Container[int], optional): Codon positions (by index) to ignore stop codon errors, typically for translation exceptions.
+            errorfile_handle: File-like object for error output.
+            id (int | str | None, optional): Identifier for the sequence, used in error messages.
+        
+        Returns:
+            _CodonUsage: Codon usage statistics and GC variability metrics for the parsed sequence.
+        
+        Raises:
+            ValueError: If a stop codon (not in transl_except), incomplete codon, or ambiguous base is encountered.
+        """
         codon_used = {c: 0 for c in self.codon_table}
         gene_codon_length = 0
         var_gc_aanum = 0
@@ -132,6 +168,20 @@ class CodonTable:
     def get_parse(
         cls, *_seq_cds: Seq | SeqRecord, errorfile_handle=sys.stderr, table=None
     ):
+        """
+        Parses multiple coding DNA sequences or SeqRecords to aggregate codon usage statistics.
+        
+        Parameters:
+            *_seq_cds: One or more coding DNA sequences (Seq or SeqRecord) to be parsed.
+            errorfile_handle: File-like object for error reporting (default: sys.stderr).
+            table: Optional translation table identifier to use if not specified in SeqRecord annotations.
+        
+        Returns:
+            _CodonUsage: An aggregated codon usage statistics object for all input sequences.
+        
+        Raises:
+            ValueError: If multiple translation tables are detected among the input sequences.
+        """
         id2seqs: dict[str | int, Seq] = {}
         id2except: dict[str | int, set[int]] = {}
         code_tables = set()
@@ -176,6 +226,12 @@ class CodonTable:
         @property
         def gc_variability(self):
             # calculate GC rank sums
+            """
+            Calculate the average GC rank variability for codons with GC variability.
+            
+            Returns:
+                float: The mean GC rank among codons with variable GC content, or NaN if none are present.
+            """
             gc_variability = (
                 float(self.var_gc_sumrank) / float(self.var_gc_aanum)
                 if self.var_gc_aanum != 0
@@ -184,6 +240,15 @@ class CodonTable:
             return gc_variability
 
         def getCFs(self, m: int):
+            """
+            Yield pseudo codon families of a specified size with usage statistics.
+            
+            Parameters:
+                m (int): The size of the codon family to retrieve.
+            
+            Yields:
+                CodonTable.PseudoCodonFamily: An object containing the total count, F value, codon set, and amino acid for each pseudo codon family of size m.
+            """
             code_table = CodonTable.get(self.table)
             for aa in code_table.pcf[m]:
                 for cs in code_table.pcf[m][aa]:
@@ -197,6 +262,17 @@ class CodonTable:
                     )
 
         def wighted_F(self, m: int):
+            """
+            Calculate the weighted F value for codon families of size `m`.
+            
+            The weighted F value is used in codon usage analysis to assess codon bias within families of synonymous codons of a given size. If no codons are present in families of size `m`, returns `m`. For singleton families (`m == 1`), returns 1.
+            
+            Parameters:
+                m (int): The size of the codon family.
+            
+            Returns:
+                float: The weighted F value for codon families of size `m`.
+            """
             if m == 1:
                 return 1
             cfs = list(self.getCFs(m))
@@ -208,11 +284,10 @@ class CodonTable:
         @property
         def SCU(self):
             """
-            Reference:
-
-              An Improved Implementation of Effective Number of Codons (Nc)
-
-              Molecular Biology and Evolution, Volume 30, Issue 1, January 2013, Pages 191–196, https://doi.org/10.1093/molbev/mss201
+            Calculate the effective number of codons (Nc) for the coding sequence using weighted codon family statistics.
+            
+            Returns:
+                float: The effective number of codons (Nc) as defined in the referenced Molecular Biology and Evolution publication.
             """
             pcf = CodonTable.get(self.table).pcf
             return sum(
@@ -221,6 +296,19 @@ class CodonTable:
 
         @classmethod
         def concat(cls, cus: Iterable["CodonTable._CodonUsage"], table=None):
+            """
+            Aggregate multiple `_CodonUsage` instances into a single summary object.
+            
+            Parameters:
+            	cus (Iterable[CodonTable._CodonUsage]): An iterable of `_CodonUsage` objects to be combined.
+            	table (optional): The translation table to use. If not provided, all input objects must share the same table.
+            
+            Returns:
+            	CodonTable._CodonUsage: A new `_CodonUsage` instance with summed codon usage counts and statistics from all inputs.
+            
+            Raises:
+            	ValueError: If input objects use different translation tables and no table is specified.
+            """
             if table is None:
                 cus = list(cus)
                 code_tables = set(cu.table for cu in cus)
@@ -264,6 +352,12 @@ class ARSC(NamedTuple):
 
     @staticmethod
     def AA_DICT() -> dict[str, "ARSC"]:
+        """
+        Return a dictionary mapping amino acid single-letter codes to their ARSC (carbon, nitrogen, sulfur counts) values.
+        
+        Returns:
+            dict: A dictionary where keys are amino acid codes and values are ARSC instances representing elemental composition.
+        """
         return {
             "K": ARSC(C=4, N=1, S=0),
             "R": ARSC(C=4, N=3, S=0),
@@ -295,9 +389,13 @@ class ARSC(NamedTuple):
     @classmethod
     def parse(cls, seq_aa: Seq):
         """
-        This functions takes an amino acid sequence coded in single letters and returns N/C ARSC and Molecular Weight
-        N and S counts come from page 30 of 'Understanding Bioinformatics' by Zvelbil and Baum
-        molecular weights from http://www.webqc.org/aminoacids.php
+        Parses an amino acid sequence to compute total counts of carbon (C), nitrogen (N), and sulfur (S) atoms, as well as molecular weight and sequence length, excluding stop codons.
+        
+        Parameters:
+        	seq_aa (Seq): Amino acid sequence in single-letter code.
+        
+        Returns:
+        	ARSC: An instance containing total C, N, S counts, molecular weight, and length of the sequence (excluding stop codons).
         """
         aa_dict = cls.AA_DICT()
 
@@ -320,12 +418,22 @@ class ARSC(NamedTuple):
         )
 
     def __add__(self, other):
+        """
+        Add two ARSC instances by summing their respective fields.
+        
+        If the other operand is not an ARSC instance, returns the concatenation of the ARSC tuple with the other object.
+        """
         if isinstance(other, self.__class__):
             s_d, o_d = self._asdict(), other._asdict()
             return self.__class__(**{k: s_d[k] + o_d[k] for k in s_d})
         return tuple(self) + other
 
     def scale(self):
+        """
+        Return a new ARSC instance with all values normalized by sequence length.
+        
+        If the sequence length is zero, returns the original instance unchanged.
+        """
         if self.len == 0:
             return self
         return self.__class__(
@@ -338,6 +446,15 @@ class ARSC(NamedTuple):
 
     @classmethod
     def concat(cls, arscs: Iterable["ARSC"]):
+        """
+        Aggregate multiple ARSC instances by summing their elemental counts, molecular weights, and sequence lengths.
+        
+        Parameters:
+            arscs (Iterable[ARSC]): An iterable of ARSC instances to be combined.
+        
+        Returns:
+            ARSC: A new ARSC instance representing the sum of all input ARSCs.
+        """
         arsc = cls()
         for arsc_ in arscs:
             arsc += arsc_
@@ -346,11 +463,13 @@ class ARSC(NamedTuple):
 
 def aa_mw(seq_aa: Seq):
     """
-    A simple one compard to ARSC.parse:
-
-    >>> aa = Seq("MATRKGFEPSTSGVTGRRSNQLNYLAEFMVGTTGLEPVTLCL*")
-    >>> arsc = ARSC.parse(aa)
-    >>> assert aa_mw(aa) == arsc.mw / arsc.len
+    Calculate the average molecular weight of an amino acid sequence, excluding any terminal stop codon.
+    
+    Parameters:
+    	seq_aa (Seq): Amino acid sequence as a Biopython Seq object.
+    
+    Returns:
+    	float: Average molecular weight per residue, excluding the stop codon if present.
     """
     # remove whitespaces and stop codon at end of sequences
     stop_pos = seq_aa.rfind("*")
@@ -381,6 +500,20 @@ class GeneStat(NamedTuple):
         min_aa_length=33,
         call_gene_id="infer_gene_id",
     ):
+        """
+        Parses an iterable of SeqRecord objects to extract gene statistics for coding sequences (CDS).
+        
+        For each sequence, extracts CDS features, filters by minimum contig and amino acid length, translates CDS to amino acids, and skips pseudogenes or sequences with ambiguous bases. Computes codon usage and amino acid residue side chain (ARSC) statistics for each valid gene.
+        
+        Parameters:
+            seq_iter (Iterable[SeqRecord]): Iterable of sequence records to process.
+            min_contig_len (int, optional): Minimum nucleotide length for a contig to be considered.
+            min_aa_length (int, optional): Minimum amino acid length for a CDS to be included.
+            call_gene_id (str, optional): Method or attribute to use for determining gene IDs.
+        
+        Returns:
+            dict[tuple[str, str], GeneStat]: Dictionary mapping (sequence ID, gene ID) to GeneStat instances containing codon usage and ARSC statistics for each gene.
+        """
         seqaa2stat: dict[tuple[str, str], GeneStat] = {}
         for seq in seq_iter:
             if len(seq.seq) < min_contig_len:
@@ -423,10 +556,26 @@ class GeneStatisticContainer(_BinStatisticContainer):
         ] = GeneStat.parse,
         min_aa_len=33,
     ):
+        """
+        Initializes the GeneStatisticContainer by loading gene statistics from a sequence iterable.
+        
+        Parameters:
+            seqiter (Iterable[SeqRecord]): An iterable of sequence records containing gene data.
+            source_file: Reference to the source file from which sequences are loaded.
+            min_contig_len (int, optional): Minimum contig length required for a sequence to be included. Defaults to 0.
+            loader (Callable, optional): Function to parse sequence records and extract gene statistics. Defaults to GeneStat.parse.
+            min_aa_len (int, optional): Minimum amino acid length required for a gene to be included. Defaults to 33.
+        """
         self._aa_stats = loader(seqiter, min_contig_len, min_aa_len)
         self.source_file = source_file
 
     def statistic(self):
+        """
+        Aggregate codon usage and amino acid statistics across all genes in the container.
+        
+        Returns:
+            GeneStatistic: A named tuple containing the effective number of codons (SCU), GC variability, translation table, scaled ARSC values (C, N, S), average protein molecular weight, average protein length, and total gene count.
+        """
         csf_all = CodonTable._CodonUsage.concat(
             (seq_cds.codon_usage for seq_cds in self._aa_stats.values())
         )

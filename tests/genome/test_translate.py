@@ -15,6 +15,11 @@ from genome import translate
 
 def test_transl_except():
     # fmt: off
+    """
+    Test translation of nucleotide sequences with translational exceptions and reading frames.
+    
+    Creates multiple `SeqRecord` objects with annotated features specifying translational exceptions (such as selenocysteine incorporation) and optional reading frames. For each record, asserts that the translated protein sequence matches the expected amino acid sequence, verifying correct handling of exceptions and frame shifts on both forward and reverse strands.
+    """
     g1 = SeqRecord.SeqRecord(seq=Seq.Seq("ATGGTCCAATTCTCCAGACGCCAGTTCATGAAAGTGACTGGTTCGACTCTGGCGGGTTCCAGCTTGGCGCTGATGGGTTTCTCACCCACAGCTGCGCTTGCTGAGGTGCGACAGTACAAGCTGTCCGCCACCACCGTCACCCGCCAAACCTGCACCTACTGTTCCGTAGGCTGCGGCATCCTGATGTATTCCCTGGGCGACGGCGGCAAGAACAGCCGCCTGTCCGTGATGCACGTGGAAGGCGATCCGGATCATCCGGTCAATCGCGGCACGCTGTGTCCCAAGGGTGCATCGCTGCTGGACTTCGTGCACAGCCCCAGCCGTCTCAAATACCCCGAGTACCGCGCTCCCGGCTCCTCCGAATGGAAGCGCATGTCCTGGGACGAAGCGCTGGACCGCATCGCCAAGCTGCTCAAGGAAGACCGCGACGCCAATTTCGTTGAGACCAACGAAAAGGGCCAGAAGGTCAACCGCTGGCTCACCACCGGCATGCTGGCCGCTTCGGCCTCCAGCAACGAAGCCGGCTATATCACGCACAAAGTGGCCCGCTCCTGGGGCCTTCTTGCACTCGACAACCAAGCACGTGTCTGACACGGCCCGACGGTGGCAGGTCTTGCCCCGACGTTTGGCCGTGGAGCGATGACGAACCATTGGGTCGACATCAAGAACGCGGACGTTATTTTGATCATGGGCGGCAATGCCGCCGAAGCACACCC"),
                              id="WP_309467740.1",
                              features=[SeqFeature.SeqFeature(location=SeqFeature.SimpleLocation(195118, 195834, 1),
@@ -44,7 +49,9 @@ def test_transl_except():
 
     def report(rec: SeqRecord.SeqRecord):
         """
-        e1 = _extract("GCF_031286875.1", "WP_309467740.1")
+        Prints detailed information about the position of a translational exception within a translated peptide sequence.
+        
+        The function extracts the first feature from the given SeqRecord, determines the reading frame and feature location, parses the translational exception, and computes its index within the translated peptide sequence. It then prints the record ID, frame, feature location, translational exception details, the position of the stop codon in the peptide, and the calculated index of the exception.
         """
         feat = rec.features[0]
         frame = translate.check_frame(feat.qualifiers)

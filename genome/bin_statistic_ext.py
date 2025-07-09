@@ -57,6 +57,12 @@ class CheckMFakeOptions:
     pplacer_threads = 1
 
     def run(self):
+        """
+        Executes the CheckM lineage workflow with the configured options.
+        
+        Returns:
+            str: The path to the output directory containing CheckM results.
+        """
         import checkm
 
         versionFile = open(os.path.join(checkm.__path__[0], "VERSION"))
@@ -84,6 +90,19 @@ def checkm(
     threads=10,
     **checkm_options,
 ):
+    """
+    Run the CheckM lineage workflow on genome bins and return quality metrics as a DataFrame.
+    
+    Parameters:
+        bin_input: Path to input genome bins.
+        support: File extension or format indicator for the input bins.
+        output_dir: Optional directory to store CheckM outputs.
+        threads: Number of threads to use for CheckM.
+        **checkm_options: Additional keyword arguments for CheckM options.
+    
+    Returns:
+        DataFrame containing CheckM quality metrics for each genome bin.
+    """
     with TemporaryDirectory() as _td:
         file = f"{_td}/checkm.tsv"
         bin_input_, binids_, support_ = format_bin_input(
@@ -114,17 +133,15 @@ def gunc(
     threads=10,
 ):
     """
-    @param support:
-        if endswith "faa", will just use bin_input as directory of faa files.
-    @param output_dir:
-        if not None: will just detect output files in the output_dir and return
-        should not be a existing directory
-
-    include 3 steps:
-    1.  extract genome with "contig2bin"
-    2.  annot gene with "prodigal_gff_multithread"
-    3.  gunc
-
+    Run GUNC contamination detection on genome bins and return the results as a DataFrame.
+    
+    If `output_dir` is provided and contains GUNC output files, loads and returns the results directly. Otherwise, prepares protein FASTA files from the input bins (using Prodigal if necessary), runs the GUNC workflow via Snakemake, and returns the resulting contamination metrics as a pandas DataFrame.
+    
+    Parameters:
+        support: If the value ends with "faa", treats `bin_input` as a directory of protein FASTA files; otherwise, nucleotide bins are converted to protein FASTA using Prodigal.
+    
+    Returns:
+        DataFrame containing GUNC contamination detection results for each input bin.
     """
     if output_dir:
         for gunc_tsv_file in Path(output_dir).glob("GUNC.*maxCSS_level.tsv"):
@@ -191,7 +208,22 @@ def bin_filter(
     checkm_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     gunc_output_dir: Optional[Union[PathLike, pd.DataFrame]] = None,
     threads=10,
-): ...
+): """
+    Filters genome bins based on CheckM and GUNC quality metrics, using the provided GUNC database.
+    
+    Parameters:
+        bin_out_dir: Directory to store bins that pass quality filtering.
+        bin_input: Input genome bins to be filtered.
+        support: File extension or format indicator for the input bins.
+        gunc_db_path: Path to the GUNC database used for contamination detection.
+        checkm_output_dir: Optional directory or DataFrame containing precomputed CheckM results.
+        gunc_output_dir: Optional directory or DataFrame containing precomputed GUNC results.
+        threads: Number of threads to use for processing.
+    
+    Returns:
+        pd.DataFrame: DataFrame containing quality metrics for bins that pass the filtering criteria.
+    """
+    ...
 
 
 @overload
@@ -202,7 +234,20 @@ def bin_filter(
     *,
     checkm_tsv_file: Union[PathLike, pd.DataFrame],
     gunc_tsv_file: Union[PathLike, pd.DataFrame],
-): ...
+): """
+    Filter genome bins based on precomputed CheckM and GUNC quality metrics.
+    
+    Parameters:
+        bin_out_dir: Directory to store bins that pass quality filtering.
+        bin_input: Input genome bins.
+        support: File extension or format indicator for the input bins.
+        checkm_tsv_file: CheckM results as a TSV file or DataFrame.
+        gunc_tsv_file: GUNC results as a TSV file or DataFrame.
+    
+    Returns:
+        pd.DataFrame: DataFrame of bins that pass the quality filters.
+    """
+    ...
 
 
 def bin_filter(
@@ -212,14 +257,27 @@ def bin_filter(
     **kwargs,
 ):
     """
-    filter input genomes carefully, applying two checks
-    1.  checkm: 50, 10
-    2.  gunc: passed (in single mode)
-
-    other genomes will be put into bin_out_dir / "discard"
-
-    intermediate checkm and gunc table can be provided as DataFrame;
-    or will be used as output dir
+    Filter genome bins based on CheckM and GUNC quality metrics, moving passing bins to the output directory and discarding others.
+    
+    This function applies two quality checks to input genome bins:
+    1. CheckM: bins must have completeness ≥ 50% and contamination ≤ 10%.
+    2. GUNC: bins must pass the GUNC contamination check.
+    
+    Bins that pass both criteria are moved to `bin_out_dir`; bins that fail are moved to `bin_out_dir/discard`, along with a merged CheckM-GUNC results table for discarded bins. Intermediate CheckM and GUNC results can be provided as DataFrames or file paths.
+    
+    Parameters:
+        bin_out_dir: Directory where filtered bins will be stored.
+        bin_input: Input genome bins (directory or archive).
+        support: File extension or format indicator for input bins.
+        **kwargs: Additional arguments, including either:
+            - gunc_db_path (str): Path to the GUNC database (triggers full workflow).
+            - checkm_output_dir, gunc_output_dir (optional): Output directories or DataFrames for intermediate results.
+            - threads (int, optional): Number of threads to use.
+          Or:
+            - checkm_tsv_file, gunc_tsv_file: Precomputed CheckM and GUNC result files or DataFrames.
+    
+    Returns:
+        pandas.DataFrame: DataFrame of bins passing both CheckM and GUNC filters.
     """
     if "gunc_db_path" in kwargs:
         gunc_db_path = kwargs["gunc_db_path"]
