@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-08 11:54:54
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-23 11:24:03
- * @FilePath: /genome/genome/pyrule/workflow/tree.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 16:08:58
+* @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
 """
@@ -82,8 +82,7 @@ rule filter_genomes_by_n_markers:
 
 
         def passed_genomes(min_markers):
-            _ = markers.isna().apply(lambda x: sum(1 ^ x) < min_markers, axis=1)
-            return set(_.index[1 ^ _])
+            return set(markers.index[markers.notna().sum(axis=1) >= min_markers])
 
 
         genomes = passed_genomes(int(params.min_markers))
