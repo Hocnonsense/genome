@@ -1,9 +1,9 @@
 """
  * @Date: 2025-01-08 17:39:43
  * @Authors: Antonio Camargo antoniop.camargo@gmail.com
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-18 10:55:39
- * @FilePath: /genome/genome/pyrule/workflow/aai.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 20:32:11
+* @FilePath: /genome/genome/pyrule/workflow/aai.smk
  * @Description:
 
  retrieved from:
@@ -138,6 +138,8 @@ rule aaicalc:
             for genome_pair, gene_pairs in genome_pairs_genes.items():
                 genome_1, genome_2 = sorted(genome_pair)
                 min_n_genes = min(gene_count[genome_1], gene_count[genome_2])
+                if min_n_genes == 0:
+                    continue
                 n_shared_genes = len(gene_pairs)
                 if (params["min_n_shared_genes"] <= n_shared_genes) and (
                     params["min_cov"] <= n_shared_genes / min_n_genes

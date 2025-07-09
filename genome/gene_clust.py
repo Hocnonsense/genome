@@ -2,13 +2,14 @@
 """
 * @Date: 2022-10-15 21:29:41
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-01 16:40:24
+* @LastEditTime: 2025-07-09 20:44:21
 * @FilePath: /genome/genome/gene_clust.py
 * @Description:
 """
 
 
 import os
+import shlex
 import shutil
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -60,6 +61,7 @@ class _CluBase:
     TSV_COLS: tuple[str, ...] = ("All",)
 
     def _load_rep2all(self, *files):
+        assert len(files) == len(self.TSV_COLS) - 1, "files must match TSV_COLS length"
         rep2all: pd.DataFrame
         for i, f in enumerate(files):
             names = self.TSV_COLS[i : i + 2][::-1]
@@ -113,11 +115,10 @@ class _CluBase:
                 tpmf_out = cls.from_prefix(keep_prefix)
             else:
                 tpmf_out = cls.from_prefix(tmpf.name[:-4])
-            tpmf_out_str = " ".join([str(i) for i in tpmf_out])
-            if profile:
-                profile_str = f"--profile {profile}"
+            tpmf_out_str = " ".join([shlex.quote(str(i)) for i in tpmf_out])
+            profile_str = f"--profile {shlex.quote(str(profile))}" if profile else ""
             smk_params = (
-                f"-s {GENE_CLUST_SMK} "
+                f"-s {shlex.quote(str(GENE_CLUST_SMK))} "
                 f"{tpmf_out_str} "
                 f"--use-conda "
                 f"{profile_str} "

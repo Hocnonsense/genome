@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-15 17:05:11
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 19:27:35
+* @LastEditTime: 2025-07-09 20:45:17
 * @FilePath: /genome/genome/bin_statistic.py
 * @Description:
 """
@@ -148,7 +148,7 @@ class Contig2Bin:
         return bout
 
     def extract(self, *bin_names: str | int):
-        return (self.extract(b) for b in bin_names)
+        return (self.extract1(b) for b in bin_names)
 
 
 class Binput(NamedTuple):

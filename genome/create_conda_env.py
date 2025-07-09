@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2022-10-23 17:07:05
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:17:26
- * @FilePath: /genome/genome/create_conda_env.py
- * @Description:
+* @Date: 2022-10-23 17:07:05
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 20:27:45
+* @FilePath: /genome/genome/create_conda_env.py
+* @Description:
 """
 
+import shlex
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from .pyrule import smk, rules_dir, smk_conda_env
+from .pyrule import rules_dir, smk, smk_conda_env
 
 
 def create_conda_env(*envs: str):
     with TemporaryDirectory() as tmpd:
         rule_files = [f"{tmpd}/create_conda_env-{env}-finished" for env in envs]
-        target_smk_file = rules_dir / "create_conda_env.smk"
+        target_smk_file = shlex.quote(str(rules_dir / "create_conda_env.smk"))
         smk_params = (
             f"-s {target_smk_file} "
             f"{' '.join(rule_files)} "
