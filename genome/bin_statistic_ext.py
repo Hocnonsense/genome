@@ -2,7 +2,7 @@
 """
 * @Date: 2022-11-24 16:23:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-13 14:53:04
+* @LastEditTime: 2025-07-09 15:52:07
 * @FilePath: /genome/genome/bin_statistic_ext.py
 * @Description:
 """
@@ -15,7 +15,7 @@ from typing import Optional, Union, overload
 
 import pandas as pd
 
-from .bin_statistic import contig2bin, Binput
+from .bin_statistic import Binput
 from .prodigal import prodigal_multithread
 from .pyrule import smk, rules_dir, smk_conda_env
 
@@ -50,8 +50,8 @@ class CheckMFakeOptions:
     aai_strain: float = 0.9
     alignment_file: Optional[str] = None
     bIgnoreThresholds: bool = False
-    e_value: float = DefaultValues.E_VAL
-    length: float = DefaultValues.LENGTH
+    e_value: float = DefaultValues.E_VAL  # type: ignore[reportAttributeAccessIssue]
+    length: float = DefaultValues.LENGTH  # type: ignore[reportAttributeAccessIssue]
     bQuiet: bool = False
     bTabTable = True
     pplacer_threads = 1
@@ -146,7 +146,7 @@ def gunc(
                 shutil.copy(bin_file, bin_faa_dir)
             suffix = str(support)
         else:
-            bin_input_dir, suffix = format_bin_input(
+            bin_input_dir, binids, suffix = format_bin_input(
                 bin_output=f"{_td}/bin_fa_input",
                 bin_input=bin_input,
                 support=support,
