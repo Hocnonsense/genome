@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:38:38
+* @LastEditTime: 2025-07-09 19:24:14
 * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -124,11 +124,8 @@ rule markers_align_trim_collect:
         cat_seqs = {genome: "" for genome in genomes}
 
         for marker in input.markers:
-            for i in SeqIO.parse(marker, "fasta"):
-                break
-            else:
+            if not any(SeqIO.parse(marker, "fasta")):
                 continue
-
             tmp = {k: "" for k in cat_seqs.keys()}
             for record in AlignIO.read(marker, "fasta"):
                 cat_seqs[record.id] += record.seq
@@ -277,8 +274,8 @@ rule phylophlan_download_db:
         db_folder=subpath(output.db, ancestor=1),
     shell:
         """
-        mkdir {params.db_folder}
-        cd    {params.db_folder}
+        mkdir -p {params.db_folder}
+        cd       {params.db_folder}
             wget {params.url_tar}
             wget {params.url_md5}
             tar -xvf `basename {params.url_tar}`
@@ -341,7 +338,7 @@ rule phylophlan:
 
         ln smk-phylophlan/phylophlan/{params.basename}_concatenated.aln \
             {output.aln}
-        ln smk-phylophlan/phylophlan{params.basename}.tre.treefile \
+        ln smk-phylophlan/phylophlan/{params.basename}.tre.treefile \
             {output.tre}
         mv smk-phylophlan/phylophlan {params.outdir}
         """

@@ -1,7 +1,7 @@
 """
  * @Date: 2024-01-11 20:38:07
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:31:04
+* @LastEditTime: 2025-07-09 19:26:46
 * @FilePath: /genome/genome/pyrule/workflow/pan_concat.smk
  * @Description:
 """
@@ -271,7 +271,7 @@ rule collect_mantis_ko:
         g2m = {}
 
         for genome, mantis in zip(params.genomes, input.db_mant_s):
-            gene_annots = pd.concat([Gene2KO(Path(mantis)).get_gene_annots()])
+            gene_annots = Gene2KO(Path(mantis)).get_gene_annots()
             ko_exploded = (
                 gene_annots.apply(lambda x: x.split(":") if x.startswith("K") else [])
                 .explode()

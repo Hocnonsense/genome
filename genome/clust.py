@@ -2,7 +2,7 @@
 """
 * @Date: 2025-01-25 14:18:14
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:30:30
+* @LastEditTime: 2025-07-09 19:26:17
 * @FilePath: /genome/genome/clust.py
 * @Description:
 """
@@ -60,7 +60,7 @@ def cluster_hierarchical(
     db: pd.DataFrame, linkage_method="single", linkage_cutoff=0.10
 ):
     """
-    Perform hierarchical clustering on a symmetrical distiance matrix
+    Perform hierarchical clustering on a symmetrical distance matrix
 
     Args:
         db: result of db.pivot usually

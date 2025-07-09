@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """
- * @Date: 2023-08-06 18:29:50
- * @LastEditors: Hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2024-01-14 17:27:47
- * @FilePath: /genome/genome/pyrule/gunc.py
- * @Description:
+* @Date: 2023-08-06 18:29:50
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-09 19:32:17
+* @FilePath: /genome/genome/pyrule/gunc.py
+* @Description:
 """
 
-from . import general_register, _wf, rules_dir
-
+from . import _wf, general_register, rules_dir
 
 DEFAULT_GUNC_DB_PATH = "data/database/gunc_db"
 

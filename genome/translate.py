@@ -2,7 +2,7 @@
 """
 * @Date: 2025-07-04 08:22:24
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 08:31:34
+* @LastEditTime: 2025-07-09 19:37:50
 * @FilePath: /genome/genome/translate.py
 * @Description:
 """
@@ -28,7 +28,6 @@ class TranslExcept:
         return super().__new__(cls)
 
     def __init__(self, text: str):
-        # GFF entry 是一行 GFF 文件的记录 (字符串)
         self.text = text
         _region, self.strand = self.parse_transl_except(text)
         self.start = int(_region[0])

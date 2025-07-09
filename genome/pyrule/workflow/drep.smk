@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-04 21:15:46
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:02:36
+* @LastEditTime: 2025-07-09 19:25:19
 * @FilePath: /genome/genome/pyrule/workflow/drep.smk
  * @Description:
 """
@@ -95,7 +95,7 @@ rule drep_create_nocheck:
             -p {threads} \
             --ignoreGenomeQuality \
             -pa 0.9 -sa 0.95 \
-            -g {params.drep_out}/bins_nocheck.ls \
+            -g {input.binls} \
             --skip_plots \
             --debug
 

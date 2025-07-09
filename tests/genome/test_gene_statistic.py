@@ -2,7 +2,7 @@
 """
 * @Date: 2024-12-26 10:26:38
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-13 15:00:33
+* @LastEditTime: 2025-07-09 17:58:36
 * @FilePath: /genome/tests/genome/test_gene_statistic.py
 * @Description:
 """
@@ -20,6 +20,8 @@ from tests import Path, temp_output, test_files, test_temp
 def test_aa_mw():
     aa_seq = Seq("MATRKGFEPSTSGVTGRRSNQLNYLAEFMVGTTGLEPVTLCL*")
     assert round(aa_mw(aa_seq), 4) == 107.9561
+    arsc = ARSC.parse(aa_seq)
+    assert aa_mw(aa_seq) == arsc.mw / arsc.len
 
 
 def test_arsc():

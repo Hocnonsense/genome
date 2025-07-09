@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:42:18
+* @LastEditTime: 2025-07-09 19:22:33
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -156,10 +156,8 @@ class CodonTable:
         code_tables -= {None}
         if len(code_tables) > 1:
             raise ValueError(f"Multiple translation tables found: {code_tables}")
-        if not code_tables:
-            code_table = cls.get()
-        else:
-            code_table = cls.get(list(code_tables)[0])
+        code_table = cls.get() if not code_tables else cls.get(list(code_tables)[0])
+
         return cls._CodonUsage.concat(
             (
                 code_table.parse(seq, id2except[id], errorfile_handle, id)
@@ -304,7 +302,8 @@ class ARSC(NamedTuple):
         aa_dict = cls.AA_DICT()
 
         # remove invalid char from the string
-        seq_aa_no_stop = seq_aa[: seq_aa.rfind("*")]
+        stop_pos = seq_aa.rfind("*")
+        seq_aa_no_stop = seq_aa[:stop_pos] if stop_pos != -1 else seq_aa
         total_molecular_weight = SeqUtils.molecular_weight(
             seq_aa_no_stop, seq_type="protein"
         )
@@ -323,7 +322,7 @@ class ARSC(NamedTuple):
     def __add__(self, other):
         if isinstance(other, self.__class__):
             s_d, o_d = self._asdict(), other._asdict()
-            return self.__class__(**{k: s_d[k] + o_d[k] for k in s_d.keys()})
+            return self.__class__(**{k: s_d[k] + o_d[k] for k in s_d})
         return tuple(self) + other
 
     def scale(self):
@@ -347,11 +346,15 @@ class ARSC(NamedTuple):
 
 def aa_mw(seq_aa: Seq):
     """
-    This functions takes a protein sequence coded in nucleotides and returns N-ARSC.
-    Internal stop codons will cause this script problems
+    A simple one compard to ARSC.parse:
+
+    >>> aa = Seq("MATRKGFEPSTSGVTGRRSNQLNYLAEFMVGTTGLEPVTLCL*")
+    >>> arsc = ARSC.parse(aa)
+    >>> assert aa_mw(aa) == arsc.mw / arsc.len
     """
     # remove whitespaces and stop codon at end of sequences
-    seq_aa_no_stop = seq_aa[: seq_aa.rfind("*")]
+    stop_pos = seq_aa.rfind("*")
+    seq_aa_no_stop = seq_aa[:stop_pos] if stop_pos != -1 else seq_aa
     total_molecular_weight = SeqUtils.molecular_weight(
         seq_aa_no_stop, seq_type="protein"
     )

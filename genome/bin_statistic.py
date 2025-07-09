@@ -2,7 +2,7 @@
 """
 * @Date: 2022-10-15 17:05:11
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:29:12
+* @LastEditTime: 2025-07-09 19:27:35
 * @FilePath: /genome/genome/bin_statistic.py
 * @Description:
 """
@@ -90,7 +90,7 @@ class Contig2Bin:
         return bin2seqs
 
     def parse_contigs(self, contigs: PathLike | Iterable[SeqRecord.SeqRecord]):
-        if isinstance(contigs, str) or isinstance(contigs, Path):
+        if isinstance(contigs, (str, Path)):
             try:
                 next(SeqIO.parse(contigs, "fasta"))
                 return lambda: SeqIO.parse(contigs, "fasta")

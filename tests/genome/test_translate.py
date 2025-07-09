@@ -2,16 +2,15 @@
 """
  * @Date: 2022-10-12 19:53:55
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-04 09:16:12
+* @LastEditTime: 2025-07-09 19:33:54
 * @FilePath: /genome/tests/genome/test_translate.py
  * @Description:
-__file__ = "tests/genome/test_prokka.py"
+__file__ = "tests/genome/test_translate.py"
 """
 
-from genome import translate
-from Bio import SeqRecord, SeqFeature, Seq
+from Bio import Seq, SeqFeature, SeqRecord
 
-from tests import Path, temp_output, test_files, test_temp
+from genome import translate
 
 
 def test_transl_except():

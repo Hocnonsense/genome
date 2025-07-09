@@ -2,15 +2,13 @@
 """
  * @Date: 2022-10-12 19:53:55
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-06-27 15:24:11
+* @LastEditTime: 2025-07-09 19:31:54
 * @FilePath: /genome/tests/genome/test_bin_statistic_ext.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
 """
 
 import pytest
-
-from checkm.defaultValues import DefaultValues
 
 from genome.bin_statistic_ext import checkm, format_bin_input
 
