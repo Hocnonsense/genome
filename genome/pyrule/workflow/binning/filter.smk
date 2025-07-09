@@ -1,7 +1,7 @@
 """
  * @Date: 2023-12-21 21:28:10
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:32:09
+* @LastEditTime: 2025-07-09 20:55:04
 * @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
@@ -193,7 +193,14 @@ rule rename_filtered_ls_tsv:
             if file_target.is_file() and file_source.lstat() == file_target.lstat():
                 pass
             else:
-                file_target.hardlink_to(file_source)
+                try:
+                    file_target.hardlink_to(file_source)
+                except OSError as e:
+                    # Fall back to symlink or copy if hard link fails (e.g., cross-device)
+                    print(
+                        f"Warning: Hard link failed for {file_source} -> {file_target}: {e}"
+                    )
+                    file_target.symlink_to(file_source)
             return file_target
 
 

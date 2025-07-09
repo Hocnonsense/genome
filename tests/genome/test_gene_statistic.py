@@ -2,7 +2,7 @@
 """
 * @Date: 2024-12-26 10:26:38
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 19:56:00
+* @LastEditTime: 2025-07-09 20:54:11
 * @FilePath: /genome/tests/genome/test_gene_statistic.py
 * @Description:
 """
@@ -52,7 +52,6 @@ def test_gene_stat():
     gsc = GeneStatisticContainer.read_gff_parser(gff)
     gs = gsc.statistic()
     assert gs.table == "11"
-    print(gs)
     assert round(gs.scu, 4) == 41.7683
     assert round(gs.gc_variability, 4) == 0.2562
     assert round(gs.C_ARSC, 4) == 2.8389

@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-04 21:15:46
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 19:25:19
+* @LastEditTime: 2025-07-09 20:56:51
 * @FilePath: /genome/genome/pyrule/workflow/drep.smk
  * @Description:
 """
@@ -134,8 +134,11 @@ rule drep2gtdbtk:
         Wdb.merge(Bdb)[["location"]].to_csv(output.binls, index=False, header=False)
 
 
-def threads_fastani(wc_l: str | int, maxthreds=64):
+def threads_fastani(wc_l: str | int, maxthreds=64, per_thread_factor=20):
     """
+    Calculate threads for FastANI based on number of genomes.
+    Divides total comparisons by 20 as each thread can efficiently handle ~20 comparisons.
+
     >>> threads_fastani(1)
     1
     >>> threads_fastani(4)
@@ -150,7 +153,7 @@ def threads_fastani(wc_l: str | int, maxthreds=64):
     64
     """
     compares = int(wc_l) ** 2
-    return min(maxthreds, max(compares // 20, 1))
+    return min(maxthreds, max(compares // per_thread_factor, 1))
 
 
 rule fastani:
