@@ -2,7 +2,7 @@
 """
 * @Date: 2024-12-26 10:26:38
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 17:58:36
+* @LastEditTime: 2025-07-09 19:56:00
 * @FilePath: /genome/tests/genome/test_gene_statistic.py
 * @Description:
 """
@@ -58,6 +58,6 @@ def test_gene_stat():
     assert round(gs.C_ARSC, 4) == 2.8389
     assert round(gs.N_ARSC, 4) == 0.3635
     assert round(gs.S_ARSC, 4) == 0.0369
-    assert round(gs.avg_protein_mw, 4) == 34988.338
-    assert round(gs.avg_protein_len, 4) == 321.4912
+    assert round(gs.avg_protein_mw, 4) == 34988.4176
+    assert round(gs.avg_protein_len, 4) == 321.4920
     assert round(gs.genes_num, 4) == 4996

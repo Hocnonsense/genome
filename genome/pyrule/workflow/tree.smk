@@ -126,7 +126,7 @@ rule markers_align_trim_collect:
         for marker in input.markers:
             if not any(SeqIO.parse(marker, "fasta")):
                 continue
-            tmp = {k: "" for k in cat_seqs.keys()}
+            tmp = {k: "" for k in cat_seqs}
             for record in AlignIO.read(marker, "fasta"):
                 cat_seqs[record.id] += record.seq
                 tmp.pop(record.id)

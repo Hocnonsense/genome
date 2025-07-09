@@ -2,7 +2,7 @@
 """
 * @Date: 2025-01-25 14:23:55
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-22 11:36:51
+* @LastEditTime: 2025-07-09 19:49:30
 * @FilePath: /genome/tests/genome/test_clust.py
 * @Description:
 """
@@ -25,6 +25,13 @@ def test_resolve_ungroup():
             [2, 1, "b", "a", "a", "a"],
         )
     ) == [1, 2, 3, "4_a", "4_a", "5_a"]
+
+
+def test_igroup_includes_isolated():
+    elements = ["a", "b", "c"]
+    links = [("a", "b")]  # "c" has no connections
+    clusters = {frozenset(group) for group in UnionFind.igroup(links, elements)}
+    assert clusters == {frozenset({"a", "b"}), frozenset({"c"})}
 
 
 def test_unionfind():
