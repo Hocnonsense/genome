@@ -57,14 +57,9 @@ rule UniteM_profile_bin_temp:
     wildcard_constraints:
         marker="-[^-]+|",
     run:
-        from genome.bin_statistic import contig2bin
+        from genome.bin_statistic import Contig2Bin
 
-        out_dir = Path(output.profile)
-        contig2bin(
-            outdir=out_dir,
-            contig2bin_tsv=input.ctg2bin,
-            contigs=input.contig,
-        )
+        Contig2Bin(input.ctg2bin, input.contig)(output.profile)
 
 
 rule UniteM_profile:

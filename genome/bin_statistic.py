@@ -2,18 +2,18 @@
 """
 * @Date: 2022-10-15 17:05:11
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-06-27 15:12:38
+* @LastEditTime: 2025-07-09 17:14:28
 * @FilePath: /genome/genome/bin_statistic.py
 * @Description:
 """
 
 
-from functools import cached_property
 import math
 import pickle
-from pathlib import Path
 import shutil
-from typing import Callable, Iterable, NamedTuple, Union, Final, overload
+from functools import cached_property
+from pathlib import Path
+from typing import Callable, Final, Iterable, NamedTuple, Union
 
 import numpy as np
 import pandas as pd
@@ -92,8 +92,9 @@ class Contig2Bin:
     def parse_contigs(self, contigs: PathLike | Iterable[SeqRecord.SeqRecord]):
         if isinstance(contigs, str) or isinstance(contigs, Path):
             try:
+                next(SeqIO.parse(contigs, "fasta"))
                 return lambda: SeqIO.parse(contigs, "fasta")
-            except ValueError as e:
+            except ValueError:
                 return Parse(contigs)
         elif isinstance(contigs, Iterable):
             return lambda: list(contigs)
@@ -112,12 +113,20 @@ class Contig2Bin:
 
     @outdir.setter
     def outdir(self, outdir: Path):
+        """Set the output directory for bins
+        and create the directory on desk.
+        """
         td = Path(outdir)
         td.mkdir(parents=True, exist_ok=True)
         self._outdir = outdir
         return td
 
     def __call__(self, outdir: PathLike):
+        """Write the binned sequences to files in the specified output directory.
+
+        it is recommended to use than extract1 or extract methods
+        as it only call `self.bin2seqs` once and write all sequences to disk.
+        """
         self.outdir = Path(outdir)
         bin2seqs = self.bin2seqs
         for b, seqs in bin2seqs.items():
@@ -126,27 +135,20 @@ class Contig2Bin:
 
     @property
     def output(self):
+        """Expected output directory for binned sequences, may on disk or not."""
         return Binput(self.outdir, list(self.bin2seqs), ".fa")
 
-    @overload
-    def extract(self, bin_name: str | int) -> Path: ...
-
-    @overload
-    def extract(
-        self, bin_name: str | int, bin_name2: str | int, /, *bin_names: str | int
-    ) -> Iterable[Path]: ...
-
-    def extract(self, bin_name: str | int, *bin_names: str | int):  # type: ignore[reportInconsistentOverload]
+    def extract1(self, bin_name: str | int):
         if isinstance(bin_name, int):
             b = self.contig2bin_tsv["bin"].unique()[bin_name]
         else:
             b = bin_name
         bout = self.outdir / f"{b}.fa"
         SeqIO.write(self.bin2seqs[b].values(), bout, "fasta-2line")
-        if not bin_names:
-            return bout
-        else:
-            return (*(bout,), *(self.extract(b) for b in bin_names))
+        return bout
+
+    def extract(self, *bin_names: str | int):
+        return (self.extract(b) for b in bin_names)
 
 
 class Binput(NamedTuple):
@@ -163,9 +165,15 @@ class Binput(NamedTuple):
         keep_if_avail=True,
     ):
         """
-        if {param kept_if_avail}:
+        Create a folder of binned sequences.
+
+        Input can
+        - either be a directory containing files with the specified suffix
+        - or a single file with the specified suffix.
+
+        if {param keep_if_avail}:
             Only if bin_input is a dir and required genomes endswith "fa",
-            bin_output will be kept as bin_input.
+            bin_output will be kept as bin_input and ignored.
 
         This is designed to support snakemake to handle and keep intermediate files
         """
@@ -199,7 +207,17 @@ class Binput(NamedTuple):
         return Binput(self.bin_input, self.binids, suffix).fas()
 
 
+format_bin_input = Binput.parse
+
+
 def contig2bin(outdir: PathLike, contig2bin_tsv: PathLike, contigs: PathLike):
+    import warnings
+
+    warnings.warn(
+        "contig2bin() is deprecated; use the Contig2Bin class instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     return Contig2Bin(contig2bin_tsv, contigs)(outdir)
 
 

@@ -2,7 +2,7 @@
 """
 * @Date: 2022-11-24 16:23:50
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 15:52:07
+* @LastEditTime: 2025-07-09 17:07:03
 * @FilePath: /genome/genome/bin_statistic_ext.py
 * @Description:
 """
@@ -15,7 +15,7 @@ from typing import Optional, Union, overload
 
 import pandas as pd
 
-from .bin_statistic import Binput
+from .bin_statistic import format_bin_input
 from .prodigal import prodigal_multithread
 from .pyrule import smk, rules_dir, smk_conda_env
 
@@ -75,15 +75,6 @@ class CheckMFakeOptions:
         checkmParser = OptionsParser()
         checkmParser.parseOptions(self)
         return self.output_dir
-
-
-def format_bin_input(
-    bin_output: PathLike,
-    bin_input: PathLike,
-    support: Union[PathLike, str],
-    keep_if_avail=True,
-):
-    return Binput.parse(bin_output, bin_input, support, keep_if_avail)
 
 
 def checkm(

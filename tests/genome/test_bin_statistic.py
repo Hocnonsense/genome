@@ -2,7 +2,7 @@
 """
  * @Date: 2022-10-12 19:53:55
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-04-24 13:25:29
+* @LastEditTime: 2025-07-09 17:12:16
 * @FilePath: /genome/tests/genome/test_bin_statistic.py
  * @Description:
 __file__ = "test/genome/test_bin_statistic.py"
@@ -10,10 +10,7 @@ __file__ = "test/genome/test_bin_statistic.py"
 
 from timeit import timeit
 
-import pandas as pd
-
-from genome.bin_statistic import BinStatisticContainer, contig2bin
-
+from genome.bin_statistic import BinStatisticContainer, Contig2Bin
 from tests import Path, temp_output, test_files, test_temp
 
 
@@ -23,7 +20,7 @@ def test_contig2bin(test_temp: Path):
     test_c2b = test_files / "binny_unitem_unanimous.tsv"
     temp_bin = test_temp / "binny_unitem_unanimous"
 
-    contig2bin(temp_bin, test_c2b, test_fa)
+    Contig2Bin(test_c2b, test_fa)(temp_bin)
 
 
 def test_prokka_gff_bin_statistic():
