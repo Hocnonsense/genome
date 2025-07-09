@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-08 11:54:54
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:08:58
+* @LastEditTime: 2025-07-09 16:11:01
 * @FilePath: /genome/genome/pyrule/workflow/tree.smk
  * @Description:
     draw tree of mags
@@ -277,11 +277,11 @@ rule phylophlan_download_db:
     params:
         url_tar="http://cmprod1.cibio.unitn.it/databases/PhyloPhlAn/phylophlan.tar",
         url_md5="http://cmprod1.cibio.unitn.it/databases/PhyloPhlAn/phylophlan.md5",
-        db_folder=str(phylophlan_db_folder),
+        db_folder=subpath(input.db, ancestor=1),
     shell:
         """
-        mkdir {db_folder.db}
-        cd    {db_folder.db}
+        mkdir {params.db_folder}
+        cd    {params.db_folder}
             wget {params.url_tar}
             wget {params.url_md5}
             tar -xvf `basename {params.url_tar}`
