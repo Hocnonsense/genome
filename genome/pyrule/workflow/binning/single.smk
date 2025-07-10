@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-27 19:16:12
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:58:16
- * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-10 17:40:57
+* @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
 
@@ -23,7 +23,7 @@ rule metabat2:
     conda:
         "../../envs/binning.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -71,7 +71,7 @@ rule maxbin2:
         "../../envs/binning.yaml"
     priority: 1
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -111,7 +111,7 @@ rule concoct:
     conda:
         "../../envs/concoct.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -153,7 +153,7 @@ rule metadecoder:
     conda:
         "../../envs/metadecoder.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -210,7 +210,7 @@ rule vamb:
     conda:
         "../../envs/vamb.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder} {output.ctg2mag}.fail
@@ -236,6 +236,48 @@ rule vamb:
             done \
             > {output.ctg2mag}
         else
+            touch {output.ctg2mag}
+        fi
+        """
+
+
+rule rosella:
+    input:
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
+        jgi="{any}-bins/input/jgi.tsv",
+    output:
+        ctg2mag="{any}-bins/single/rosella.tsv",
+    params:
+        folder="rosella",
+        extension="fna",
+    threads: 1
+    conda:
+        "../../envs/rosella.yaml"
+    shadow:
+        "minimal"
+    shell:
+        """
+        rm -f {params.folder} {output.ctg2mag}.fail
+        # mkdir -p {params.folder}
+
+        rosella recover \
+            -C {input.jgi} \
+            -r {input.contig} \
+            --output-directory {params.folder} \
+            -t {threads} \
+        || touch {output.ctg2mag}.fail
+
+        rm -f {params.folder}/**_unbinned.{params.extension}
+        if [ -f {params.folder}/*.{params.extension} ] && [ ! -f {output.ctg2mag}.fail ]
+        then
+            for i in {params.folder}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done \
+            > {output.ctg2mag}
+        else
+            touch {output.ctg2mag}.fail
             touch {output.ctg2mag}
         fi
         """
