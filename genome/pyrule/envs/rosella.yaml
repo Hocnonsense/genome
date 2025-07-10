@@ -24,7 +24,6 @@ dependencies:
   - matplotlib
   - tqdm
   - tbb
-  - joblib
   - pebble
   - threadpoolctl
   - biopython

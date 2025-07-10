@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-07-10 17:43:36
+ * @LastEditTime: 2025-07-10 23:21:02
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -14,7 +14,8 @@ changelog for genome
 ## changelog
 
 - 0.2.5-dev:
-  - feat: add binning method [`rosella`](https://github.com/rhysnewell/rosella)
+  - feat: add single binning rule [`rosella`](https://github.com/rhysnewell/rosella).
+    However, currently it will not be added to the default binning pipeline.
 - 0.2.5:
   - feat:
     - Added comprehensive workflows for genome dereplication, gene clustering (including MMseqs2 and CD-HIT), phylogenetic tree construction, and genome annotation (PGAP).

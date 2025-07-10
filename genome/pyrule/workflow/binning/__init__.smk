@@ -4,7 +4,7 @@ bin_methods = config.get(
     [
         *(f"metabat2_{maxP}_{minS}" for maxP in (60, 75, 90) for minS in (60, 75, 90)),
         *(f"maxbin2_{markerset}" for markerset in (40, 107)),
-        *("concoct", "metadecoder", "vamb", "rosella"),
+        *("concoct", "metadecoder", "vamb"),
     ],
 )
 
