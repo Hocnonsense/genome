@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-10 17:40:57
+* @LastEditTime: 2025-07-11 15:34:11
 * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
@@ -82,7 +82,8 @@ rule maxbin2:
             -contig {input.contig} \
             -abund {input.jgi} \
             -out {params.folder}/{params.folder} \
-            -markerset {wildcards.markerset} -thread {threads}
+            -markerset {wildcards.markerset} -thread {threads} \
+        || ls -l {params.folder}
 
         if [ -f {params.folder}/*.{params.extension} ]
         then
