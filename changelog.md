@@ -1,7 +1,7 @@
 <!--
  * @Date: 2023-08-07 15:18:41
  * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-07-11 15:33:45
+ * @LastEditTime: 2025-07-11 15:53:00
  * @FilePath: /genome/changelog.md
  * @Description:
 -->
@@ -16,7 +16,10 @@ changelog for genome
 - 0.2.5-dev:
   - feat: add single binning rule [`rosella`](https://github.com/rhysnewell/rosella).
     However, currently it will not be added to the default binning pipeline.
-  - fix: handle `Marker gene search reveals that the dataset cannot be binned` of `maxbin2`
+  - fix: handle binning errors:
+    - `maxbin2`: `Marker gene search reveals that the dataset cannot be binned`
+    - `metadecoder`: `ValueError: max() arg is an empty sequence`
+    - `UniteM_refine`: `gzip: smk-unitem-out/bins/*.fna.gz: No such file or directory`
 - 0.2.5:
   - feat:
     - Added comprehensive workflows for genome dereplication, gene clustering (including MMseqs2 and CD-HIT), phylogenetic tree construction, and genome annotation (PGAP).

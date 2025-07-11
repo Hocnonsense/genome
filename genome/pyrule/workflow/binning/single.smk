@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-11 15:34:11
+* @LastEditTime: 2025-07-11 15:54:32
 * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
@@ -168,20 +168,22 @@ rule metadecoder:
             sams="$sams $sam"
         done
 
-        metadecoder coverage \
-            -s $sams \
-            -o {params.folder}/metadecoder.coverage.tsv
+        (
+            metadecoder coverage \
+                -s $sams \
+                -o {params.folder}/metadecoder.coverage.tsv
 
-        metadecoder seed \
-            --threads {threads} \
-            -f {input.contig} \
-            -o {params.folder}/metadecoder.seed
+            metadecoder seed \
+                --threads {threads} \
+                -f {input.contig} \
+                -o {params.folder}/metadecoder.seed
 
-        metadecoder cluster \
-            -f {input.contig} \
-            -c {params.folder}/metadecoder.coverage.tsv \
-            -s {params.folder}/metadecoder.seed \
-            -o {params.folder}/{params.folder}
+            metadecoder cluster \
+                -f {input.contig} \
+                -c {params.folder}/metadecoder.coverage.tsv \
+                -s {params.folder}/metadecoder.seed \
+                -o {params.folder}/{params.folder}
+        ) || ls -l {params.folder}
 
         if [ -f {params.folder}/*.{params.extension} ]
         then
@@ -268,7 +270,7 @@ rule rosella:
             -t {threads} \
         || touch {output.ctg2mag}.fail
 
-        rm -f {params.folder}/**_unbinned.{params.extension}
+        rm -f {params.folder}/*_unbinned.{params.extension}
         if [ -f {params.folder}/*.{params.extension} ] && [ ! -f {output.ctg2mag}.fail ]
         then
             for i in {params.folder}/*.{params.extension}
