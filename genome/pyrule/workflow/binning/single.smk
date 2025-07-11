@@ -1,7 +1,7 @@
 """
  * @Date: 2022-10-27 19:16:12
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-11 15:54:32
+* @LastEditTime: 2025-07-11 16:08:57
 * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
@@ -38,18 +38,17 @@ rule metabat2:
             --minContig {params.MIN_BIN_CONTIG_LEN} \
             --minS {params.minS} --maxP {params.maxP}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -85,18 +84,17 @@ rule maxbin2:
             -markerset {wildcards.markerset} -thread {threads} \
         || ls -l {params.folder}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -185,18 +183,17 @@ rule metadecoder:
                 -o {params.folder}/{params.folder}
         ) || ls -l {params.folder}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -261,26 +258,26 @@ rule rosella:
     shell:
         """
         rm -f {params.folder} {output.ctg2mag}.fail
-        # mkdir -p {params.folder}
+        mkdir -p {params.folder}
 
         rosella recover \
             -C {input.jgi} \
             -r {input.contig} \
             --output-directory {params.folder} \
             -t {threads} \
-        || touch {output.ctg2mag}.fail
+        || ls -l {output.ctg2mag}
 
         rm -f {params.folder}/*_unbinned.{params.extension}
-        if [ -f {params.folder}/*.{params.extension} ] && [ ! -f {output.ctg2mag}.fail ]
+
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """

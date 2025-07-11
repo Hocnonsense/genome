@@ -136,7 +136,7 @@ rule UniteM_refine:
             smk-unitem-out \
         |tee {log}
 
-        if [ -f smk-unitem-out/bins/*.fna.gz ]
+        if ls smk-unitem-out/bins/*.fna.gz 1> /dev/null 2>&1
         then
             for i in smk-unitem-out/bins/*.fna.gz
             do
