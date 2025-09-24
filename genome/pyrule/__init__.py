@@ -9,7 +9,7 @@
 
 from pathlib import Path
 from typing import Any, Callable
-import importlib_resources
+import importlib.resources
 
 try:
     from snakemake import main as smk
@@ -18,9 +18,9 @@ except ImportError:
 
 import snakemake.workflow as _wf
 
-envs_dir = Path(importlib_resources.files("genome.pyrule")) / "envs"  # type: ignore[reportArgumentType]
+envs_dir = Path(importlib.resources.files("genome.pyrule")) / "envs"  # type: ignore[reportArgumentType]
 smk_conda_env = Path(__file__).parent.parent.parent / ".snakemake" / "conda"
-rules_dir = Path(importlib_resources.files("genome.pyrule")) / "workflow"  # type: ignore[reportArgumentType]
+rules_dir = Path(importlib.resources.files("genome.pyrule")) / "workflow"  # type: ignore[reportArgumentType]
 
 
 def general_register(
