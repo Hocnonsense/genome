@@ -3,7 +3,7 @@
  * @Date: 2024-12-25 12:06:26
  * @Editors: Jessica_Bryant jessawbryant@gmail.com
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 19:22:33
+* @LastEditTime: 2025-09-26 11:20:37
 * @FilePath: /genome/genome/gene_statistic.py
  * @Description:
 
@@ -255,6 +255,30 @@ class CodonTable:
         aa: Seq
 
 
+def ambiguous_protein_weight(seq: Seq):
+    """replace ambiguous amino acids with most frequent amino acid"""
+    seq_str = str(seq).upper()
+    if "*" in seq_str:
+        seq_str = seq_str[: seq_str.index("*")]
+    aa_freqs: dict[str, int] = {}
+    if "X" in seq_str:
+        aa_freqs = {a: seq_str.count(a) for a in "ACDEFGHIKLMNPQRSTVWY"}
+        seq_str = seq_str.replace("X", max(aa_freqs, key=aa_freqs.__getitem__))
+    if "B" in seq_str:
+        for aa in {"D", "N"} - aa_freqs.keys():
+            aa_freqs[aa] = seq_str.count(aa)
+        # If counts are equal, choose the lighter residue
+        seq_str = seq_str.replace("B", "D" if aa_freqs["D"] > aa_freqs["N"] else "N")
+    if "Z" in seq_str:
+        for aa in {"E", "Q"} - aa_freqs.keys():
+            aa_freqs[aa] = seq_str.count(aa)
+        seq_str = seq_str.replace("Z", "E" if aa_freqs["E"] > aa_freqs["Q"] else "Q")
+    if "J" in seq_str:
+        seq_str = seq_str.replace("J", "L")
+    return SeqUtils.molecular_weight(seq_str, seq_type="protein")
+    # 'U' (Selenocysteine) and 'O' (Pyrrolysine) are supported naively
+
+
 class ARSC(NamedTuple):
     C: float | int = 0
     N: float | int = 0
@@ -304,9 +328,7 @@ class ARSC(NamedTuple):
         # remove invalid char from the string
         stop_pos = seq_aa.rfind("*")
         seq_aa_no_stop = seq_aa[:stop_pos] if stop_pos != -1 else seq_aa
-        total_molecular_weight = SeqUtils.molecular_weight(
-            seq_aa_no_stop, seq_type="protein"
-        )
+        total_molecular_weight = ambiguous_protein_weight(seq_aa_no_stop)
 
         # calculate ARSC and Molecular Weight
         arsc_c = sum(aa_dict[x].C for x in seq_aa_no_stop)

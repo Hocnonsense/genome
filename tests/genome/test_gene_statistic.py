@@ -2,14 +2,20 @@
 """
 * @Date: 2024-12-26 10:26:38
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 20:54:11
+* @LastEditTime: 2025-09-26 11:28:25
 * @FilePath: /genome/tests/genome/test_gene_statistic.py
 * @Description:
 """
 # """
 
 
-from genome.gene_statistic import aa_mw, ARSC, CodonTable, GeneStatisticContainer
+from genome.gene_statistic import (
+    aa_mw,
+    ARSC,
+    CodonTable,
+    GeneStatisticContainer,
+    ambiguous_protein_weight,
+)
 from genome.gff import parse
 
 from Bio.Seq import Seq
@@ -30,6 +36,21 @@ def test_arsc():
     assert arsc == (112, 13, 3, arsc.mw, 42)
     assert round(arsc.mw, 4) == 4534.1558
     assert arsc.scale()[:3] == tuple(i / 42 for i in (112, 13, 3))
+
+
+def test_ambiguous_protein_weight():
+    from Bio import SeqUtils
+
+    aa_seq = Seq("ACDEFGHIKLMNPQRSTVWY")
+    assert ambiguous_protein_weight(aa_seq) == SeqUtils.molecular_weight(
+        aa_seq, seq_type="protein"
+    )
+    assert ambiguous_protein_weight(Seq("JBEZ")) == SeqUtils.molecular_weight(
+        Seq("INEE"), seq_type="protein"
+    )
+    assert ambiguous_protein_weight(Seq("BDZ")) == SeqUtils.molecular_weight(
+        Seq("DDQ"), seq_type="protein"
+    )
 
 
 def test_scu():

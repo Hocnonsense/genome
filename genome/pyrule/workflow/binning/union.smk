@@ -136,15 +136,20 @@ rule UniteM_refine:
             smk-unitem-out \
         |tee {log}
 
-        for i in smk-unitem-out/bins/*.fna.gz
-        do
-            binname=$(echo $(basename $i) | sed "s/\\\\.fna.gz//g")
-            zcat $i \
-            |grep ">" \
-            |awk '{{print $1}}' \
-            |perl -pe "s/\\n/\\t$binname\\n/g" \
-            |perl -pe "s/>//g"
-        done \
+        if ls smk-unitem-out/bins/*.fna.gz 1> /dev/null 2>&1
+        then
+            for i in smk-unitem-out/bins/*.fna.gz
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.fna.gz//g")
+                zcat $i \
+                |grep ">" \
+                |awk '{{print $1}}' \
+                |perl -pe "s/\\n/\\t$binname\\n/g" \
+                |perl -pe "s/>//g"
+            done
+        else
+            touch {output.ctg2mag}.fail
+        fi \
         > {output.ctg2mag}
 
         mv smk-unitem-out \
