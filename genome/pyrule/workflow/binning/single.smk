@@ -1,8 +1,8 @@
 """
  * @Date: 2022-10-27 19:16:12
- * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
- * @LastEditTime: 2025-01-12 14:58:16
- * @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
+* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+* @LastEditTime: 2025-07-11 16:08:57
+* @FilePath: /genome/genome/pyrule/workflow/binning/single.smk
  * @Description:
 """
 
@@ -23,7 +23,7 @@ rule metabat2:
     conda:
         "../../envs/binning.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -38,18 +38,17 @@ rule metabat2:
             --minContig {params.MIN_BIN_CONTIG_LEN} \
             --minS {params.minS} --maxP {params.maxP}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -71,7 +70,7 @@ rule maxbin2:
         "../../envs/binning.yaml"
     priority: 1
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -82,20 +81,20 @@ rule maxbin2:
             -contig {input.contig} \
             -abund {input.jgi} \
             -out {params.folder}/{params.folder} \
-            -markerset {wildcards.markerset} -thread {threads}
+            -markerset {wildcards.markerset} -thread {threads} \
+        || ls -l {params.folder}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -111,7 +110,7 @@ rule concoct:
     conda:
         "../../envs/concoct.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -153,7 +152,7 @@ rule metadecoder:
     conda:
         "../../envs/metadecoder.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder}
@@ -167,33 +166,34 @@ rule metadecoder:
             sams="$sams $sam"
         done
 
-        metadecoder coverage \
-            -s $sams \
-            -o {params.folder}/metadecoder.coverage.tsv
+        (
+            metadecoder coverage \
+                -s $sams \
+                -o {params.folder}/metadecoder.coverage.tsv
 
-        metadecoder seed \
-            --threads {threads} \
-            -f {input.contig} \
-            -o {params.folder}/metadecoder.seed
+            metadecoder seed \
+                --threads {threads} \
+                -f {input.contig} \
+                -o {params.folder}/metadecoder.seed
 
-        metadecoder cluster \
-            -f {input.contig} \
-            -c {params.folder}/metadecoder.coverage.tsv \
-            -s {params.folder}/metadecoder.seed \
-            -o {params.folder}/{params.folder}
+            metadecoder cluster \
+                -f {input.contig} \
+                -c {params.folder}/metadecoder.coverage.tsv \
+                -s {params.folder}/metadecoder.seed \
+                -o {params.folder}/{params.folder}
+        ) || ls -l {params.folder}
 
-        if [ -f {params.folder}/*.{params.extension} ]
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
         then
             for i in {params.folder}/*.{params.extension}
             do
                 binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
                 grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
-            done \
-            > {output.ctg2mag}
+            done
         else
             touch {output.ctg2mag}.fail
-            touch {output.ctg2mag}
-        fi
+        fi \
+        > {output.ctg2mag}
         """
 
 
@@ -210,7 +210,7 @@ rule vamb:
     conda:
         "../../envs/vamb.yaml"
     shadow:
-        "shallow"
+        "minimal"
     shell:
         """
         rm -f {params.folder} {output.ctg2mag}.fail
@@ -238,4 +238,46 @@ rule vamb:
         else
             touch {output.ctg2mag}
         fi
+        """
+
+
+rule rosella:
+    input:
+        contig="{any}-bins/input/" f"filter_GE{MIN_BIN_CONTIG_LEN}.fa",
+        jgi="{any}-bins/input/jgi.tsv",
+    output:
+        ctg2mag="{any}-bins/single/rosella.tsv",
+    params:
+        folder="rosella",
+        extension="fna",
+    threads: 1
+    conda:
+        "../../envs/rosella.yaml"
+    shadow:
+        "minimal"
+    shell:
+        """
+        rm -f {params.folder} {output.ctg2mag}.fail
+        mkdir -p {params.folder}
+
+        rosella recover \
+            -C {input.jgi} \
+            -r {input.contig} \
+            --output-directory {params.folder} \
+            -t {threads} \
+        || ls -l {output.ctg2mag}
+
+        rm -f {params.folder}/*_unbinned.{params.extension}
+
+        if ls {params.folder}/*.{params.extension} 1> /dev/null 2>&1
+        then
+            for i in {params.folder}/*.{params.extension}
+            do
+                binname=$(echo $(basename $i) | sed "s/\\\\.{params.extension}//g")
+                grep ">" $i | perl -pe "s/\\n/\\t$binname\\n/g" | perl -pe "s/>//g"
+            done
+        else
+            touch {output.ctg2mag}.fail
+        fi \
+        > {output.ctg2mag}
         """
