@@ -1,4 +1,0 @@
-recursive-include genome *.py
-
-recursive-include genome/pyrule/envs *.yaml *-deploy.sh
-recursive-include genome/pyrule/workflow *.smk
