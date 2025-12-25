@@ -1,8 +1,8 @@
 """
 * @Date: 2022-10-10 15:30:31
-* @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 16:36:11
-* @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
+ * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
+ * @LastEditTime: 2025-12-25 20:36:19
+ * @FilePath: /genome/genome/pyrule/workflow/gene_clust.smk
 * @Description:
     use mmseq to cluster genes
 
@@ -96,7 +96,7 @@ rule mmseq_uniref_cluster:
         # region 50% nr
         mmseqs cluster ${{DB}}_90 ${{DB}}_clu_50 ${{DB2}} \
             --threads {threads} \
-            --cov-mode 0 -c 0.8 --min-seq-id 0.9
+            --cov-mode 0 -c 0.8 --min-seq-id 0.5
         mmseqs createtsv ${{DB}}_90 ${{DB}}_90 ${{DB}}_clu_50 {output.uniref50} --threads {threads}
         # endregion 50% nr
         #mmseqs createsubdb ${{DB}}_clu_50 ${{DB}}_90 ${{DB}}_50

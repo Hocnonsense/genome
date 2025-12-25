@@ -1,8 +1,8 @@
 """
  * @Date: 2023-12-21 21:28:10
 * @LastEditors: hwrn hwrn.aou@sjtu.edu.cn
-* @LastEditTime: 2025-07-09 20:55:04
-* @FilePath: /genome/genome/pyrule/workflow/binning/filter.smk
+* @LastEditTime: 2025-10-01 23:20:07
+* @FilePath: /bsxwlw/home/hwrn/software/genome/genome/pyrule/workflow/binning/filter.smk
  * @Description:
 """
 
@@ -167,9 +167,12 @@ rule filter_fa_via_checkm2:
             """
             mv smk-fliter.tsv {output.mags_tsv}
             mv smk-fliter {params.mags}
-            realpath {params.mags}/*.fa > {output.lsmags}
             """
         )
+        if checkm2_filter.empty:
+            shell("touch {output.lsmags}")
+        else:
+            shell("realpath {params.mags}/*.fa > {output.lsmags}")
 
 
 rule rename_filtered_ls_tsv:

@@ -11,6 +11,7 @@
 
 !setup.py
 !MANIFEST.in
+!pyproject.toml
 *.egg-info
 
 __pycache__

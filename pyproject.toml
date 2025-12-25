@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "genome"
+dynamic = ["version"]
+description = "genome storage and analysis unit"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [{ name = "hwrn.aou", email = "hwrn.aou@sjtu.edu.cn" }]
+
+dependencies = [
+    # interface
+    "click",
+    # data analysis
+    "pandas",
+    # bioinformation
+    "biopython",
+    "gffutils",
+    # pipeline
+    "snakemake",
+    "snakemake-executor-plugin-cluster-generic",
+    # tools
+    "checkm-genome",
+    "pyrodigal-gv",
+    "tqdm",
+    "KEGG-manual @ git+https://github.com/Hocnonsense/KEGG-manual.git",
+]
+
+[project.optional-dependencies]
+dev = ["mypy", "black", "pytest"]
+
+[project.urls]
+Homepage = "https://github.com/Hocnonsense/genome"
+
+# [project.scripts]
+# genome = "genome.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["genome*"]
+
+[tool.setuptools.package-data]
+"genome.pyrule.envs" = ["*.yaml", "*-deploy.sh"]
+"genome.pyrule.workflow" = ["**/*.smk"]
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0+unknown"
+
+# [tool.setuptools.dynamic]
+# version = { attr = "genome.__version__" }
